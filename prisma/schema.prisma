@@ -1,0 +1,347 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── BUSINESS (Tenant) ──────────────────────────────
+model Business {
+  id                String     @id @default(cuid())
+  name              String
+  slug              String     @unique
+  email             String
+  phone             String?
+  address           String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  isEmailVerified   Boolean    @default(false)
+  onboardingStep    Int        @default(1)  // tracks which step they are on
+  isOnboarded       Boolean    @default(false)
+
+  users             User[]
+  shops             Shop[]
+  products          Product[]
+  customers         Customer[]
+  sales             Sale[]
+  categories        Category[]
+  roles             Role[]
+  discounts         Discount[]
+  auditLogs         AuditLog[]
+
+  @@map("businesses")
+}
+
+//OTP Verification 
+model OTPVerification {
+  id        String   @id @default(cuid())
+  userId    String
+  code      String   // 6 digit code
+  expiresAt DateTime // expires after 10 minutes
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("otp_verifications")
+}
+
+// ── USER ───────────────────────────────────────────
+model User {
+  id         String     @id @default(cuid())
+  firstName  String
+  lastName   String
+  email      String    
+  password   String
+  phone      String?
+  businessId String
+  roleId     String
+  shopId     String?
+  isActive   Boolean    @default(true)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  isVerified Boolean    @default(false)
+  business   Business   @relation(fields: [businessId], references: [id])
+  role       Role       @relation(fields: [roleId], references: [id])
+  shop       Shop?      @relation(fields: [shopId], references: [id])
+  sales      Sale[]
+  stockLogs  StockLog[]
+  timeCards  TimeCard[]
+  auditLogs  AuditLog[]
+
+  @@unique([email, businessId])
+  @@index([businessId])
+  @@map("users")
+  otpverifications OTPVerification[]
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String
+  permissions String[]
+  access      String[]  
+  businessId  String
+  createdAt   DateTime @default(now())
+  business    Business @relation(fields: [businessId], references: [id])
+  users       User[]
+
+  @@index([businessId])
+  @@map("roles")
+}
+
+// ── SHOP ───────────────────────────────────────────
+model Shop {
+  id         String    @id @default(cuid())
+  name       String
+  address    String?
+  phone      String?
+  isActive   Boolean   @default(true)
+  businessId String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  business   Business  @relation(fields: [businessId], references: [id])
+  users      User[]
+  sales      Sale[]
+
+  @@index([businessId])
+  @@map("shops")
+}
+
+
+// ── TIME CARD ──────────────────────────────────────
+model TimeCard {
+  id         String    @id @default(cuid())
+  userId     String
+  businessId String
+  clockIn    DateTime
+  clockOut   DateTime?
+  totalHours Decimal?  @db.Decimal(5,2)
+  date       DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+
+  user       User      @relation(fields: [userId], references: [id])
+
+  @@index([businessId])
+  @@map("time_cards")
+}
+
+// ── CATEGORY ───────────────────────────────────────
+model Category {
+  id         String    @id @default(cuid())
+  name       String
+  businessId String
+  createdAt  DateTime  @default(now())
+
+  business   Business  @relation(fields: [businessId], references: [id])
+  products   Product[]
+
+  @@index([businessId])
+  @@map("categories")
+}
+
+// ── DISCOUNT ───────────────────────────────────────
+model Discount {
+  id         String       @id @default(cuid())
+  name       String
+  type       DiscountType @default(PERCENTAGE)
+  value      Decimal      @db.Decimal(10, 2)
+  isActive   Boolean      @default(true)
+  startDate  DateTime?
+  endDate    DateTime?
+  businessId String
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  business   Business     @relation(fields: [businessId], references: [id])
+  products   Product[]
+  sales      Sale[]
+
+  @@index([businessId])
+  @@map("discounts")
+}
+
+// ── PRODUCT ────────────────────────────────────────
+model Product {
+  id            String     @id @default(cuid())
+  name          String
+  price         Decimal    @db.Decimal(10, 2)
+  costPrice     Decimal    @db.Decimal(10, 2)
+  stock         Int        @default(0)
+  lowStockAlert Int        @default(5)
+  isActive      Boolean    @default(true)
+  businessId    String
+  categoryId    String?
+  discountId    String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  business      Business   @relation(fields: [businessId], references: [id])
+  category      Category?  @relation(fields: [categoryId], references: [id])
+  discount      Discount?  @relation(fields: [discountId], references: [id])
+  saleItems     SaleItem[]
+  stockLogs     StockLog[]
+
+  @@index([businessId])
+  @@map("products")
+}
+
+// ── STOCK LOG ──────────────────────────────────────
+model StockLog {
+  id         String   @id @default(cuid())
+  productId  String
+  userId     String
+  businessId String
+  change     Int
+  reason     String?
+  createdAt  DateTime @default(now())
+
+  product    Product  @relation(fields: [productId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@index([businessId])
+  @@map("stock_logs")
+}
+
+// ── CUSTOMER ───────────────────────────────────────
+model Customer {
+  id               String   @id @default(cuid())
+  firstName        String
+  lastName         String
+  email            String?
+  phone            String?
+  address          String?
+  isCreditCustomer Boolean  @default(false)
+  creditLimit      Decimal  @db.Decimal(10, 2) @default(0)
+  businessId       String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  business         Business  @relation(fields: [businessId], references: [id])
+  sales            Sale[]
+  loyalty          Loyalty?
+
+  @@index([businessId])
+  @@map("customers")
+}
+
+// ── LOYALTY ────────────────────────────────────────
+model Loyalty {
+  id          String   @id @default(cuid())
+  customerId  String   @unique
+  businessId  String
+  points      Int      @default(0)
+  totalEarned Int      @default(0)
+  totalSpent  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  customer    Customer @relation(fields: [customerId], references: [id])
+
+  @@index([businessId])
+  @@map("loyalty")
+}
+
+// ── SALE ───────────────────────────────────────────
+model Sale {
+  id             String      @id @default(cuid())
+  totalAmount    Decimal     @db.Decimal(10, 2)
+  discountAmount Decimal     @db.Decimal(10, 2) @default(0)
+  paymentType    PaymentType @default(CASH)
+  status         SaleStatus  @default(COMPLETED)
+  businessId     String
+  shopId         String?
+  userId         String
+  customerId     String?
+  discountId     String?
+  createdAt      DateTime    @default(now())
+
+  business       Business    @relation(fields: [businessId], references: [id])
+  shop           Shop?       @relation(fields: [shopId], references: [id])
+  user           User        @relation(fields: [userId], references: [id])
+  customer       Customer?   @relation(fields: [customerId], references: [id])
+  discount       Discount?   @relation(fields: [discountId], references: [id])
+  items          SaleItem[]
+  invoice        Invoice?
+
+  @@index([businessId])
+  @@map("sales")
+}
+
+// ── SALE ITEM ──────────────────────────────────────
+model SaleItem {
+  id         String  @id @default(cuid())
+  saleId     String
+  productId  String
+  businessId String
+  quantity   Int
+  unitPrice  Decimal @db.Decimal(10, 2)
+  subtotal   Decimal @db.Decimal(10, 2)
+
+  sale       Sale    @relation(fields: [saleId], references: [id])
+  product    Product @relation(fields: [productId], references: [id])
+
+  @@index([businessId])
+  @@map("sale_items")
+}
+
+// ── INVOICE ────────────────────────────────────────
+model Invoice {
+  id         String   @id @default(cuid())
+  invoiceNo  String
+  businessId String
+  issuedAt   DateTime @default(now())
+  saleId     String   @unique
+
+  sale       Sale     @relation(fields: [saleId], references: [id])
+
+  @@unique([invoiceNo, businessId])
+  @@index([businessId])
+  @@map("invoices")
+}
+
+// ── AUDIT LOG ──────────────────────────────────────
+model AuditLog {
+  id         String   @id @default(cuid())
+  action     String
+  entity     String
+  entityId   String
+  oldValue   String?
+  newValue   String?
+  userId     String
+  businessId String
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id])
+  business   Business @relation(fields: [businessId], references: [id])
+
+  @@index([businessId])
+  @@map("audit_logs")
+}
+
+// ── ENUMS ──────────────────────────────────────────
+enum PaymentType {
+  CASH
+  MOBILE_MONEY
+  CREDIT
+}
+
+enum SaleStatus {
+  COMPLETED
+  REFUNDED
+  PENDING
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}

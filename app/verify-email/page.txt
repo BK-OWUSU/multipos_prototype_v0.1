@@ -1,0 +1,218 @@
+// app/verify-email/page.tsx
+"use client"
+
+import { useState, useEffect, useRef } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+
+export default function VerifyEmailPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const userId = searchParams.get("userId")
+
+  const [otp, setOtp] = useState(["", "", "", "", "", ""])
+  const [error, setError] = useState("")
+  const [message, setMessage] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [resendLoading, setResendLoading] = useState(false)
+  const [countdown, setCountdown] = useState(60) // 60 second resend cooldown
+  const [canResend, setCanResend] = useState(false)
+
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
+
+  // Countdown timer for resend button
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
+      return () => clearTimeout(timer)
+    } else {
+      setCanResend(true)
+    }
+  }, [countdown])
+
+  // Redirect if no userId
+  useEffect(() => {
+    // if (!userId) router.push("/register")
+  }, [userId, router])
+
+  // Handle OTP input
+  const handleChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return // only allow numbers
+
+    const newOtp = [...otp]
+    newOtp[index] = value.slice(-1) // only take last character
+    setOtp(newOtp)
+
+    // Auto focus next input
+    if (value && index < 5) {
+      inputRefs.current[index + 1]?.focus()
+    }
+  }
+
+  // Handle backspace
+  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus()
+    }
+  }
+
+  // Handle paste
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault()
+    const pastedData = e.clipboardData.getData("text").slice(0, 6)
+    if (!/^\d+$/.test(pastedData)) return
+
+    const newOtp = [...otp]
+    pastedData.split("").forEach((char, i) => {
+      newOtp[i] = char
+    })
+    setOtp(newOtp)
+    inputRefs.current[Math.min(pastedData.length, 5)]?.focus()
+  }
+
+  // Submit OTP
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    setLoading(true)
+
+    const code = otp.join("")
+    if (code.length !== 6) {
+      setError("Please enter the complete 6 digit OTP")
+      setLoading(false)
+      return
+    }
+
+    try {
+      const res = await fetch("/api/auth/verify-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, code })
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error || "Verification failed")
+        return
+      }
+
+      setMessage("Email verified successfully! Redirecting...")
+      setTimeout(() => {
+        window.location.href = `/${data.redirectTo}/dashboard`
+      }, 1500)
+
+    } catch {
+      setError("Something went wrong. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Resend OTP
+  const handleResend = async () => {
+    setResendLoading(true)
+    setError("")
+
+    try {
+      const res = await fetch("/api/auth/resend-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId })
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error || "Failed to resend OTP")
+        return
+      }
+
+      setMessage("New OTP sent to your email!")
+      setCanResend(false)
+      setCountdown(60)
+      setOtp(["", "", "", "", "", ""])
+      inputRefs.current[0]?.focus()
+
+    } catch {
+      setError("Something went wrong. Please try again.")
+    } finally {
+      setResendLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="w-full max-w-md bg-white p-8 rounded-lg shadow">
+
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold mb-2">Verify your email</h1>
+          <p className="text-gray-500 text-sm">
+            We sent a 6 digit OTP to your email address.
+            Enter it below to verify your account.
+          </p>
+        </div>
+
+        {/* Success message */}
+        {message && (
+          <div className="bg-green-50 text-green-600 p-3 rounded mb-4 text-sm text-center">
+            {message}
+          </div>
+        )}
+
+        {/* Error message */}
+        {error && (
+          <div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-sm text-center">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          {/* OTP inputs */}
+          <div className="flex gap-2 justify-center mb-6">
+            {otp.map((digit, index) => (
+              <input
+                key={index}
+                ref={(el) => { inputRefs.current[index] = el }}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={digit}
+                onChange={(e) => handleChange(index, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(index, e)}
+                onPaste={handlePaste}
+                className="w-12 h-12 text-center text-xl font-bold border-2 rounded-lg focus:outline-none focus:border-blue-500"
+              />
+            ))}
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
+          >
+            {loading ? "Verifying..." : "Verify Email"}
+          </button>
+        </form>
+
+        {/* Resend OTP */}
+        <div className="text-center mt-4">
+          {canResend ? (
+            <button
+              onClick={handleResend}
+              disabled={resendLoading}
+              className="text-blue-600 hover:underline text-sm disabled:opacity-50"
+            >
+              {resendLoading ? "Sending..." : "Resend OTP"}
+            </button>
+          ) : (
+            <p className="text-gray-500 text-sm">
+              Resend OTP in{" "}
+              <span className="font-medium text-gray-700">{countdown}s</span>
+            </p>
+          )}
+        </div>
+
+      </div>
+    </div>
+  )
+}
