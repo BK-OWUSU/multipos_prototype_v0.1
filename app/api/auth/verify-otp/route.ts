@@ -4,6 +4,7 @@ import { verifyOTP } from "@/lib/otp"
 import { generatePOSToken, POS_COOKIE_NAME, VERIFY_COOKIE_NAME, verifyEmailVerificationToken } from "@/lib/auths"
 import { NextRequest, NextResponse } from "next/server"
 import { cookies } from "next/headers"
+import { JwtPayload } from "@/types/auth"
 
 export async function POST(request: NextRequest) {
   const cookieStore = await cookies();
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
       where: { id: userId },
       data: { isVerified: true }
     })
-
+    // Session token object
      const token_object = {
                 userId: user.id,
                 businessId: user.businessId,
@@ -53,8 +54,9 @@ export async function POST(request: NextRequest) {
                 roleName: user.role.name,
                 firstName: user.firstName,
                 lastName: user.lastName,
-                email: user.email
-          }
+                email: user.email,
+                access: user.role.access
+          } as JwtPayload;
     // Generate token and log user in
     const token = generatePOSToken(token_object)
 

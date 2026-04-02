@@ -45,17 +45,30 @@ export async function proxy(request: NextRequest ) {
     );
   }
 
+  //Slug and RouteKey
+  const urlSlug = pathname.split("/")[1];
+  const routeKey = pathname.split("/")[2];
   // 🔐 3. MULTI-TENANT PROTECTION (VERY IMPORTANT)
   if (session && isProtectedPath) {
-    const urlSlug = pathname.split("/")[1];
-    console.log(`URL Slug: ${urlSlug} | Session Business Slug: ${session.businessSlug}`);
-
+    console.log(`URL Slug: ${urlSlug} | Session Business Slug: ${session.businessSlug} | Access Key: ${routeKey}`);
     // User trying to access another tenant
     if (urlSlug !== session.businessSlug) {
       return NextResponse.redirect(
         new URL(`/${session.businessSlug}/dashboard`, request.url)
       );
     }
+  }
+
+  //Full Access to Business Owner
+  if (session?.access.includes("*")) {
+    return NextResponse.next();
+  }
+
+  //Checking if user has Access to the requested route
+  if(routeKey && session?.access.includes(routeKey)) {
+    return NextResponse.redirect(
+      new URL(`/${session.businessSlug}/dashboard`, request.url)
+    );
   }
 
   return NextResponse.next();

@@ -1,9 +1,11 @@
 "use client";
-
 import React from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useParams } from "next/navigation";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { LayoutDashboard, Users, ShoppingCart, CreditCard } from "lucide-react";
+import hasAccess from "@/lib/accessPermissionSecurity";
 
 type CardColor = "blue" | "green" | "purple" | "orange";
 
@@ -45,10 +47,18 @@ function StatCard({
 export default function Dashboard() {
   const { slug } = useParams();
   const { user, currentSlug } = useAuthStore();
-  console.log("Dashboard slug: ", slug);
-  console.log("User: ", user);
-  console.log("Current Slug: ", currentSlug);
+  const router = useRouter();
+   useEffect(() => {
+    if (!hasAccess(user, "dashboard")) {
+      router.push(`/${user?.business.slug}/dashboard`);
+    }
+  }, [user,router]);
 
+  if (slug !== currentSlug) {
+     router.push(`/${user?.business.slug}/dashboard`);
+  }
+  
+  if (!user || !hasAccess(user, "dashboard")) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">

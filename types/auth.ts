@@ -28,6 +28,7 @@ export type JwtPayload = {
   firstName: string;
   lastName: string;
   email: string;
+  access: string[];
 };
 
 //Token

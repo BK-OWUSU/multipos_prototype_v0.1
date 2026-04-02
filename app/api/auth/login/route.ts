@@ -1,5 +1,6 @@
 import { POS_COOKIE_NAME, generateEmailVerificationToken, generatePOSToken, VERIFY_COOKIE_NAME, verifyPassword } from "@/lib/auths";
 import { prisma } from "@/lib/dbHelper";
+import { JwtPayload } from "@/types/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -61,8 +62,10 @@ export async function POST(request: NextRequest) {
                 roleName: user.role.name,
                 firstName: user.firstName,
                 lastName: user.lastName,
-                email: user.email
-            }
+                email: user.email,
+                access: user.role.access
+            } as JwtPayload;
+            
             const token = generatePOSToken(token_object);
             const response = NextResponse.json({success: true, redirectTo: user.business.slug}, {status: 200})
             //Setting cookies

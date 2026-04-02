@@ -67,8 +67,9 @@ export const useAuthStore = create<AuthStore>((set, get)=>({
 
     logout: async() => {
         try {
-            await apiClient.post("/auth/logout");
+            const response =  await apiClient.post("/auth/logout");
             set({user: null})
+            console.log("Response Logout: ", response)
         } catch (error) {
             console.log("Error during logout: ", error);
         }

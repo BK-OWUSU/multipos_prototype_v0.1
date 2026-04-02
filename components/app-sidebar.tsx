@@ -5,29 +5,30 @@ import { VersionSwitcher } from "@/components/version-switcher"
 import {Collapsible,CollapsibleContent,CollapsibleTrigger} from "@/components/ui/collapsible"
 import {Sidebar,SidebarContent,SidebarGroup,SidebarGroupContent,SidebarGroupLabel,SidebarHeader,SidebarMenu,SidebarMenuButton,SidebarMenuItem,SidebarRail,} from "@/components/ui/sidebar"
 import { ChevronRightIcon } from "lucide-react"
-import { 
-  // navData, 
-  versions } from "@/lib/data-models"
 import { NavItem } from "@/types/types"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { getNavData } from "@/lib/nav-data"
+import { filterNavData, getNavData } from "@/lib/nav-data"
 import { useAuthStore } from "@/store/useAuthStore"
 
-
+import { ChartNetwork } from "lucide-react";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const {currentSlug, user} = useAuthStore();
-  console.log("Current user from Store: ", user);
-    const navData = React.useMemo(() => 
+  const businesses: string[] = ["Business A", "Business B", "Business C"];
+  const navData = React.useMemo(() => 
       currentSlug ? getNavData(currentSlug) : [],
       [currentSlug]
+  );
+  const filteredNavData = React.useMemo(() => 
+      user ? filterNavData(navData, user) : [],
+      [user, navData]
   );
 
   const [openGroup, setOpenGroup] = React.useState<string | null>(() => {
     // On first load, open the group whose child matches current route
-    const activeGroup = navData.find((group) =>
+    const activeGroup = filteredNavData.find((group) =>
       group.items.some((child) => child.url === pathname)
     )
     return activeGroup ? activeGroup.title : null
@@ -35,23 +36,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   //Updating the open group, when route changes
   React.useEffect(() => {
-    const activeGroup = navData.find((group) =>
+    const activeGroup = filteredNavData.find((group) =>
       group.items.some((child) => child.url === pathname)
     )
     setOpenGroup(activeGroup ? activeGroup.title : null)
-  }, [pathname,navData])
+  }, [pathname,filteredNavData])
   
   return (
 <Sidebar {...props}>
       <SidebarHeader>
         <VersionSwitcher
-          versions={versions}
-          defaultVersion={versions[0]}
+          versions={businesses}
+          defaultVersion={businesses[0]}
         />
       
       </SidebarHeader>
       <SidebarContent className="gap-0">
-        {navData.map((item) => (
+        {filteredNavData.map((item) => (
           <Collapsible
             key={item.title}
             title={item.title}
@@ -68,8 +69,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 asChild
                 className={`group/label text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sm`}
               >
-                <CollapsibleTrigger>
-                  {item.title}{" "}
+                <CollapsibleTrigger className="flex items-center gap-2">
+                  {item.icon &&  <item.icon size={20} />}
+                  {item.title}
                   <ChevronRightIcon className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
                 </CollapsibleTrigger>
               </SidebarGroupLabel>
@@ -81,10 +83,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         <SidebarMenuButton asChild isActive={child.url === pathname}>
                           {child.isExternal ? (
                             <a href={child.url} target="_blank" rel="noopener noreferrer">
+                              {child.icon &&  <child.icon size={20} />}
                               {child.title}
                             </a>
                           ) : (
-                            <Link href={child.url}>{child.title}</Link>
+                            <Link href={child.url} className="flex items-center gap-2">
+                               {child.icon &&  <child.icon size={20} />}
+                              <span>{child.title}</span>
+                            </Link>
                           )}
                         </SidebarMenuButton>
                       </SidebarMenuItem>

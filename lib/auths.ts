@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken"
 import bcrypt from "bcrypt"
 // import jwtVerify2 from "jose"
 import {jwtVerify} from "jose"
-import { JwtPayload, Token } from "@/types/auth";
+import { JwtPayload} from "@/types/auth";
 import { cookies } from "next/headers";
 const POS_COOKIE_NAME = "pos_token";
 const VERIFY_COOKIE_NAME = "verify_token";
