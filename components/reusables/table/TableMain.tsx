@@ -4,9 +4,9 @@ import {DropdownMenu,DropdownMenuContent,DropdownMenuLabel,
         DropdownMenuSeparator,
         DropdownMenuCheckboxItem,DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "../../ui/table";
+import {Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "../../ui/table";
 import {flexRender, getCoreRowModel,getSortedRowModel,getFilteredRowModel,
-    getPaginationRowModel,useReactTable,ColumnResizeMode,
+    getPaginationRowModel,useReactTable,
     type SortingState,
     type ColumnFiltersState, 
     type ColumnDef 
@@ -28,7 +28,6 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
     const [globalFilter, setGlobalFilter] = useState("");
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-    const [columnResizeMode, setColumnResizeMode] = useState<ColumnResizeMode>("onChange");
     const [columnVisibility, setColumnVisibility] = useState({});
     const [rowSelection, setRowSelection] = useState({});
     
@@ -38,7 +37,7 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
     const table = useReactTable({
         data,
         columns: finalColumns,
-        columnResizeMode,
+        columnResizeMode: "onChange",
         state: {
             sorting,
             columnFilters,
@@ -110,7 +109,7 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
                         key={header.id}
                         // relative is required so the resizer can stick to the right edge
                         className={`relative font-semibold border-r last:border-0 group ${isSelect ? "p-0" : "px-4"}`}
-                        style={{ width: header.getSize() }}
+                        style={{ width: header.getSize()}}
                         >
                         {header.isPlaceholder ? null : (
                             <div className="flex items-center justify-between h-full">
@@ -119,8 +118,7 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
                                 className={header.column.getCanSort() 
                                 ? "flex items-center gap-2 cursor-pointer select-none hover:text-blue-700 flex-1" 
                                 : "flex items-center gap-2 flex-1"}
-                                onClick={header.column.getToggleSortingHandler()}
-                            >
+                                onClick={header.column.getToggleSortingHandler()}>
                                 {/* Draws either the centered checkbox OR the column name */}
                                 {flexRender(header.column.columnDef.header, header.getContext())}
                                 
@@ -128,8 +126,8 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
                                 {!isSelect && header.column.getCanSort() && (
                                 <span className="text-slate-500">
                                     {{
-                                    asc: <ArrowDownAZ size={16} />,
-                                    desc: <ArrowUpZA size={16} />,
+                                    asc: <ArrowDownAZ size={16}/>,
+                                    desc: <ArrowUpZA size={16}/>,
                                     }[header.column.getIsSorted() as string] ?? <ArrowDownUp size={16} />}
                                 </span>
                                 )}
