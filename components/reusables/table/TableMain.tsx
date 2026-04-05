@@ -28,6 +28,7 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
     const [globalFilter, setGlobalFilter] = useState("");
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+    const [columnResizeMode, setColumnResizeMode] = useState<ColumnResizeMode>("onChange");
     const [columnVisibility, setColumnVisibility] = useState({});
     const [rowSelection, setRowSelection] = useState({});
     
@@ -37,7 +38,7 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
     const table = useReactTable({
         data,
         columns: finalColumns,
-        columnResizeMode: "onChange",
+        columnResizeMode,
         state: {
             sorting,
             columnFilters,
@@ -103,33 +104,51 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
                 {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id} className="hover:bg-transparent">
                     {headerGroup.headers.map((header) => {
-                    const isSelect = header.id === "select"; 
+                    const isSelect = header.id === "select";
                     return (
                         <TableHead
                         key={header.id}
-                        className={`relative font-semibold border-r last:border-0 ${isSelect ? "p-0" : "px-4"}`}
-                        style={{ 
-                            width: header.getSize(),
-                            position: 'relative' // Critical for the resizer absolute positioning
-                        }}
+                        // relative is required so the resizer can stick to the right edge
+                        className={`relative font-semibold border-r last:border-0 group ${isSelect ? "p-0" : "px-4"}`}
+                        style={{ width: header.getSize() }}
                         >
-                        {/* Existing Header Content */}
-                        <div className="flex items-center justify-between group">
-                            {flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.isPlaceholder ? null : (
+                            <div className="flex items-center justify-between h-full">
+                            {/* 1. SORTING & CONTENT WRAPPER */}
+                            <div
+                                className={header.column.getCanSort() 
+                                ? "flex items-center gap-2 cursor-pointer select-none hover:text-blue-700 flex-1" 
+                                : "flex items-center gap-2 flex-1"}
+                                onClick={header.column.getToggleSortingHandler()}
+                            >
+                                {/* Draws either the centered checkbox OR the column name */}
+                                {flexRender(header.column.columnDef.header, header.getContext())}
+                                
+                                {/* Sort Icons (Hidden for selection column) */}
+                                {!isSelect && header.column.getCanSort() && (
+                                <span className="text-slate-500">
+                                    {{
+                                    asc: <ArrowDownAZ size={16} />,
+                                    desc: <ArrowUpZA size={16} />,
+                                    }[header.column.getIsSorted() as string] ?? <ArrowDownUp size={16} />}
+                                </span>
+                                )}
+                            </div>
 
-                            {/* 4. THE RESIZER HANDLE */}
+                            {/* 2. THE RESIZER HANDLE */}
                             {!isSelect && header.column.getCanResize() && (
                                 <div
                                 {...{
                                     onMouseDown: header.getResizeHandler(),
                                     onTouchStart: header.getResizeHandler(),
-                                    className: `resizer ${
-                                    header.column.getIsResizing() ? "isResizing" : ""
-                                    } absolute right-0 top-0 h-full w-1 bg-blue-500 cursor-col-resize select-none touch-none opacity-0 group-hover:opacity-100 transition-opacity`,
+                                    className: `absolute right-0 top-0 h-full w-1 cursor-col-resize select-none touch-none hover:bg-blue-500 transition-colors ${
+                                    header.column.getIsResizing() ? "bg-blue-600 w-1" : "bg-transparent"
+                                    }`,
                                 }}
                                 />
                             )}
-                        </div>
+                            </div>
+                        )}
                         </TableHead>
                     );
                     })}
