@@ -4,7 +4,7 @@ import { NavGroup } from "@/types/types";
 import hasAccess from "./accessPermissionSecurity";
 
 import {
-   ChartNetwork,ShoppingBasket,Settings,HelpCircle,  
+   ChartNetwork,ShoppingBasket,Settings,HelpCircle,Users,FileUser,PackageSearch
   } from "lucide-react";
 
 export const getNavData = (slug: string): NavGroup[] => [
@@ -41,6 +41,7 @@ export const getNavData = (slug: string): NavGroup[] => [
       { title: "Categories", url: `/${slug}/categories`, accessKey: "categories" },
       { title: "Discount", url: `/${slug}/discount`, accessKey: "discount" },
     ],
+    icon: PackageSearch
   },
   {
     title: "Employee",
@@ -51,6 +52,7 @@ export const getNavData = (slug: string): NavGroup[] => [
       { title: "Time Cards", url: `/${slug}/time_cards`, accessKey: "time_cards" },
       { title: "Total Hours Worked", url: `/${slug}/total_hours_worked`, accessKey: "total_hours_worked" },
     ],
+    icon: Users
   },
   {
     title: "Customers",
@@ -60,6 +62,7 @@ export const getNavData = (slug: string): NavGroup[] => [
       { title: "Customer Base", url: `/${slug}/customers_base`, accessKey: "customers_base" },
       { title: "Loyalty", url: `/${slug}/loyalty`, accessKey: "loyalty" },
     ],
+    icon: FileUser
   },
   {
     title: "Settings",

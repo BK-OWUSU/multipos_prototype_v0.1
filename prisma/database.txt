@@ -1,4 +1,17 @@
-// This is your Prisma schema file,
+TO BE ADDED TO THE USER TABLE LATER
+// ... existing fields
+  phone      String?
+  salary     Decimal?   @db.Decimal(10, 2) // If you want to track pay
+  hiredAt    DateTime   @default(now())
+  
+  // This allows you to see who created the employee
+  createdBy  String? 
+  
+  // existing relations...
+
+
+  ///
+  // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 // Get a free hosted Postgres database in seconds: `npx create-db`
@@ -36,8 +49,6 @@ model Business {
   discounts         Discount[]
   auditLogs         AuditLog[]
 
-  @@index([slug])
-  @@index([isOnboarded])
   @@map("businesses")
 }
 
@@ -193,8 +204,6 @@ model Product {
   saleItems     SaleItem[]
   stockLogs     StockLog[]
 
-  @@index([businessId, name])     
-  @@index([businessId, categoryId]) 
   @@index([businessId])
   @@map("products")
 }
@@ -212,8 +221,6 @@ model StockLog {
   product    Product  @relation(fields: [productId], references: [id])
   user       User     @relation(fields: [userId], references: [id])
 
-  @@index([productId, createdAt]) // See stock history for one item
-  @@index([businessId, userId])
   @@index([businessId])
   @@map("stock_logs")
 }
@@ -279,8 +286,6 @@ model Sale {
   items          SaleItem[]
   invoice        Invoice?
 
-  @@index([businessId, createdAt])
-  @@index([businessId, shopId])
   @@index([businessId])
   @@map("sales")
 }
@@ -331,8 +336,7 @@ model AuditLog {
 
   user       User     @relation(fields: [userId], references: [id])
   business   Business @relation(fields: [businessId], references: [id])
-  
-  @@index([businessId, createdAt])
+
   @@index([businessId])
   @@map("audit_logs")
 }

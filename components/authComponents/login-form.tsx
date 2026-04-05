@@ -34,7 +34,6 @@ export function LoginForm({className,...props}: React.ComponentProps<"form">) {
       }
       //Multiple businesses → redirect to business selection page
       if(response.success && response.multipleBusinesses) {
-        // router.push("/select-business");
         return;
       }
       //Handle errors

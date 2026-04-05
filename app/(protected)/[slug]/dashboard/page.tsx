@@ -1,9 +1,8 @@
 "use client";
 import React from "react";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useParams } from "next/navigation";
+import { useParams ,useRouter} from "next/navigation";
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { LayoutDashboard, Users, ShoppingCart, CreditCard } from "lucide-react";
 import hasAccess from "@/lib/accessPermissionSecurity";
 

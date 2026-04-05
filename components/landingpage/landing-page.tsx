@@ -1,10 +1,15 @@
+"use client"
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BarChart3, ShoppingCart, Users, Settings, CreditCard, Zap } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import LandingPageNavBar from "./landing-nav";
+import { useAuthStore } from "@/store/useAuthStore";
+import { footerSections } from "./footerSections";
 
 export default function LandingPage() {
+    const {currentSlug} = useAuthStore()
+    const sectionFooter = footerSections(currentSlug || "");
     const features = [
     {
       icon: <ShoppingCart className="w-8 h-8 text-blue-600" />,
@@ -61,7 +66,7 @@ export default function LandingPage() {
                 Get Started <ArrowRight className="ml-2 w-4 h-4" />
               </Link>
               <Link 
-                href="/dashboard"
+                href={currentSlug ? `/${currentSlug}/dashboard` : `/login`}
                 className="inline-flex items-center justify-center px-8 py-3 border-2 border-blue-400 hover:bg-blue-400 hover:text-slate-900 rounded-lg font-semibold transition-colors"
               >
                 View Dashboard
@@ -193,7 +198,7 @@ export default function LandingPage() {
             Join hundreds of retailers already using MultiPOS to streamline their operations
           </p>
           <Link 
-            href="/sale"
+            href={currentSlug ? `/${currentSlug}/dashboard` : `/login`}
             className="inline-flex items-center px-12 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-lg transition-colors"
           >
             Start Your Free Trial <ArrowRight className="ml-2 w-5 h-5" />
@@ -202,43 +207,59 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 py-12 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h4 className="font-bold text-white mb-4">MultiPOS</h4>
-              <p className="text-sm">The complete point-of-sale solution for modern retail</p>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-4">Features</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/sale" className="hover:text-white">Point of Sale</Link></li>
-                <li><Link href="/sale_summary" className="hover:text-white">Reports</Link></li>
-                <li><Link href="/product_list" className="hover:text-white">Products</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-4">Management</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/employees_list" className="hover:text-white">Employees</Link></li>
-                <li><Link href="/customers_base" className="hover:text-white">Customers</Link></li>
-                <li><Link href="/access_controls" className="hover:text-white">Settings</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-white mb-4">Support</h4>
-              <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white">Documentation</a></li>
-                <li><a href="#" className="hover:text-white">Contact Us</a></li>
-                <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
-              </ul>
-            </div>
+      <footer className="bg-slate-900 text-slate-400 py-12 px-4 border-t border-slate-800">
+      <div className="max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          
+          {/* Brand Column */}
+          <div className="space-y-4">
+            <h4 className="font-bold text-white text-lg">MultiPOS</h4>
+            <p className="text-sm leading-relaxed">
+              The complete point-of-sale solution for modern retail and business management.
+            </p>
           </div>
-          <div className="border-t border-slate-800 pt-8 text-center text-sm">
-            <p>&copy; 2026 MultiPOS. All rights reserved.</p>
+
+          {/* Dynamic Link Columns */}
+          {sectionFooter.map((section) => (
+            <div key={section.title}>
+              <h4 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">
+                {section.title}
+              </h4>
+              <ul className="space-y-2 text-sm">
+                {section.links.map((link) => (
+                  <li key={link.label}>
+                    {link.isExternal ? (
+                      <a 
+                        href={link.href} 
+                        className="hover:text-white transition-colors duration-200"
+                      >
+                        {link.label}
+                      </a>
+                    ) : (
+                      <Link 
+                        href={link.href} 
+                        className="hover:text-white transition-colors duration-200"
+                      >
+                        {link.label}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="border-t border-slate-800 pt-8 mt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
+          <p>&copy; {new Date().getFullYear()} MultiPOS. All rights reserved.</p>
+          <div className="flex gap-6">
+            <a href="#" className="hover:text-white">Status</a>
+            <a href="#" className="hover:text-white">Terms</a>
           </div>
         </div>
-      </footer>
+      </div>
+    </footer>
     </div>
   )
 }
