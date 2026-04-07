@@ -1,15 +1,16 @@
 "use client"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import {Field,FieldDescription,FieldGroup,FieldSeparator} from "@/components/ui/field"
 import { useRouter } from "next/navigation"
-import { FormInput } from "../reusables/FormInput"
+import { FormInput } from "../../components/reusables/FormInput"
 import { useForm, SubmitHandler, FormProvider } from "react-hook-form"
 // import Link from "next/link"
 import { loginSchema, LoginSchema } from "@/types/auth.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useAuthStore } from "@/store/useAuthStore"
 import { LoginResponse } from "@/types/auth"
+import CustomButton from "@/components/reusables/CustomButton"
+import { LogIn } from "lucide-react";
 
 
 
@@ -55,9 +56,13 @@ export function LoginForm({className,...props}: React.ComponentProps<"form">) {
         <FormInput name="email" type="email" placeholder="Enter email"/>
         <FormInput name="password" type="password" placeholder="Enter password"/>
         <Field>
-          <Button type="submit" className="bg-blue-500 text-white hover:bg-blue-400 hover:text-white">
-            {isSubmitting ? "Loading...":"Login"}
-          </Button>
+          <CustomButton 
+            type="submit" 
+            text="Login" 
+            isLoading={isSubmitting} 
+            className="w-full"
+            icon={<LogIn className="w-4 h-4" />}
+          />
         </Field>
         {errors.root && <p className="text-red-500">{errors.root.message}</p>}
         <FieldSeparator>Need an Account</FieldSeparator>

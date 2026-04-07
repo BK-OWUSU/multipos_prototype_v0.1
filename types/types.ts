@@ -21,11 +21,13 @@ export interface NavGroup {
 //Alert interface
 export interface AlertWithDiagProps {
     buttonText: string
-    buttonVariant: "default" | "outline" | "destructive" | "ghost" | "link" | "secondary"
+    buttonVariant?: "default" | "outline" | "destructive" | "ghost" | "link" | "secondary"
+    customVariant?: "primary" | "secondary" | "primary-outline" | "secondary-outline"
     title?: string
     message?: string
     cancelText?: string 
-    confirmText: string
+    confirmText: string,
+    className ?: string,
     cancelFunction?: ()=> void;
     confirmFunction?: ()=> void;
 }

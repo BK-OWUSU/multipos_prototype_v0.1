@@ -1,5 +1,5 @@
 "use client"
-import { LoginForm } from "@/components/authComponents/login-form"
+import { LoginForm } from "@/app/login/login-form"
 
 import Image from "next/image"
 import Link from "next/link"

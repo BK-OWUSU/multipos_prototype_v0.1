@@ -1,5 +1,4 @@
 "use client"
-import { Button } from "@/components/ui/button"
 
 import {
   AlertDialog,
@@ -13,6 +12,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { AlertWithDiagProps } from "@/types/types"
+import CustomButton from "./CustomButton"
 
 export default function AlertWithDialogue({
     buttonText,
@@ -22,15 +22,15 @@ export default function AlertWithDialogue({
     confirmText, 
     cancelFunction, 
     confirmFunction, 
-    buttonVariant
+    buttonVariant,
+    customVariant,
+    className,
 }: AlertWithDiagProps) {
   return (
     <div>
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                <Button variant={buttonVariant ?? "default"}>
-                    {buttonText}
-                </Button>
+                <CustomButton className={className} customVariant={customVariant} text={buttonText}  variant={buttonVariant ?? "default"}/>
             </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>

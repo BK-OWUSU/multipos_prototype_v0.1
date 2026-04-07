@@ -95,6 +95,7 @@ model Role {
   createdAt   DateTime @default(now())
   business    Business @relation(fields: [businessId], references: [id])
   users       User[]
+  isSystem    Boolean  @default(false)
 
   @@index([businessId])
   @@map("roles")

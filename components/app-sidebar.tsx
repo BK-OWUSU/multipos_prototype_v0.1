@@ -11,8 +11,6 @@ import { usePathname } from "next/navigation"
 import { filterNavData, getNavData } from "@/lib/nav-data"
 import { useAuthStore } from "@/store/useAuthStore"
 
-import { ChartNetwork } from "lucide-react";
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const {currentSlug, user} = useAuthStore();
@@ -26,13 +24,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       [user, navData]
   );
 
+  const storageKey = `sidebar_open_group_${currentSlug}`;
   const [openGroup, setOpenGroup] = React.useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) return saved;
+    }
     // On first load, open the group whose child matches current route
     const activeGroup = filteredNavData.find((group) =>
       group.items.some((child) => child.url === pathname)
     )
     return activeGroup ? activeGroup.title : null
   });
+
+  // 2. Persist to LocalStorage whenever openGroup changes
+  React.useEffect(() => {
+    if (openGroup) {
+      localStorage.setItem(storageKey, openGroup);
+    } else {
+      localStorage.removeItem(storageKey);
+    }
+  }, [openGroup, storageKey]);
 
   //Updating the open group, when route changes
   React.useEffect(() => {
@@ -44,14 +56,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   
   return (
 <Sidebar {...props}>
-      <SidebarHeader>
+      <SidebarHeader className="bg-blue-950 text-white">
         <VersionSwitcher
           versions={businesses}
           defaultVersion={businesses[0]}
         />
       
       </SidebarHeader>
-      <SidebarContent className="gap-0">
+      <SidebarContent className="gap-0 bg-blue-950">
         {filteredNavData.map((item) => (
           <Collapsible
             key={item.title}
@@ -62,14 +74,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               // if closing, set to null
               setOpenGroup(isOpen ? item.title : null)
             }}
-            className="group/collapsible"
+            className="group/collapsible text-white"
           >
             <SidebarGroup>
               <SidebarGroupLabel
                 asChild
-                className={`group/label text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sm`}
+                className={`group/label bg-blue-950 text-white  hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sm`}
               >
-                <CollapsibleTrigger className="flex items-center gap-2">
+                <CollapsibleTrigger className={`flex mb-1 items-center gap-2 ${openGroup === item.title ? "animate-pulse" : ""}`}>
                   {item.icon &&  <item.icon size={20} />}
                   {item.title}
                   <ChevronRightIcon className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />

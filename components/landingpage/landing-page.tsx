@@ -61,13 +61,13 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row gap-4">
               <Link 
                 href="/login"
-                className="inline-flex items-center justify-center px-8 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition-colors"
+                className="inline-flex items-center justify-center border-gray-300 border-2 hover:border-2 hover:border-blue-400 px-8 py-3 bg-blue-700 hover:bg-transparent rounded-lg font-semibold transition-colors"
               >
                 Get Started <ArrowRight className="ml-2 w-4 h-4" />
               </Link>
               <Link 
                 href={currentSlug ? `/${currentSlug}/dashboard` : `/login`}
-                className="inline-flex items-center justify-center px-8 py-3 border-2 border-blue-400 hover:bg-blue-400 hover:text-slate-900 rounded-lg font-semibold transition-colors"
+                className="inline-flex items-center justify-center text-blue-900 bg-gray-300 px-8 py-3 border-transparent border-2 hover:bg-blue-500 shadow hover:text-white hover:border-gray-100 rounded-lg font-semibold transition-colors"
               >
                 View Dashboard
               </Link>
@@ -159,7 +159,7 @@ export default function LandingPage() {
               </div>
               <Link 
                 href="/sale"
-                className="inline-flex items-center px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+                className="inline-flex items-center text-white px-8 border-gray-300 hover:text-blue-900 border-2 hover:border-2 hover:border-blue-400 py-3 bg-blue-700 hover:bg-transparent rounded-lg font-semibold transition-colors"
               >
                 Explore Features <ArrowRight className="ml-2 w-4 h-4" />
               </Link>

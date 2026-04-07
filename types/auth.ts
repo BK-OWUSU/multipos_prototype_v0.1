@@ -46,8 +46,13 @@ export type UserWithRelations = Prisma.UserGetPayload<{
 }>
 
 export type OTPResponse = {
-    valid: boolean;
-    message: string;
+    valid?: boolean;
+    message?: string;
+    success?: boolean;
+    redirectTo?: string;
+    error?: string;
+    status?: number;
+    businessesSlug?: string;
 }
 
 export type LoginResponse = {
@@ -62,4 +67,12 @@ export type LoginResponse = {
         slug: string;
     }[];
 }
-  
+
+export type SignUpResponse = {
+    success?: boolean;
+    redirectTo?: string;
+    message?: string;
+    error?: string;
+    status?: number;
+}
+

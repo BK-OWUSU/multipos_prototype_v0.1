@@ -1,4 +1,4 @@
-import { InputOTPForm } from '@/components/authComponents/otp-form'
+import { InputOTPForm } from '@/app/verify-email/otp-form'
 import React from 'react'
 
 export default function VerifyEmail() {

@@ -20,7 +20,8 @@ export default function LogoutButton() {
   return (
     <AlertWithDialogue
       buttonText="Logout"
-      buttonVariant="outline"
+      customVariant="primary"
+      className="p-4"
       confirmText="Yes"
       cancelText="No"
       title="Logout"

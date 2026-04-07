@@ -8,8 +8,13 @@ import { Checkbox } from "@/components/ui/checkbox"
 import {SubmitHandler, useForm, FormProvider } from "react-hook-form"
 import {zodResolver} from "@hookform/resolvers/zod";
 import { FormInput } from "../reusables/FormInput"
+import { useRouter } from "next/navigation"
+import { useAuthStore } from "@/store/useAuthStore"
+import { SignUpResponse } from "@/types/auth"
 
 export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
+  const router = useRouter();
+  const signup = useAuthStore((state)=> state.signup)
   //Declaring forms Component from react use form hook 
   const forms = useForm<SignUpFormSchema>({
           resolver: zodResolver(signupSchema)
@@ -24,8 +29,16 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
  
   //Onsubmit function to handle submit
   const onSubmit: SubmitHandler<SignUpFormSchema> = async(data) => {
-    await new Promise((resolve)=> setTimeout(resolve, 2000))
-    console.log(data)
+    const response = await signup(data) as SignUpResponse;
+    if (response.success && response.message && response.redirectTo) {
+        router.push(response.redirectTo);
+        return;
+      }
+
+    //Handle errors
+       if(response.error && response.status == 401 || 500) {
+         setError("root", {message: response.error})
+       }  
   }
   return (
     <Card {...props}>

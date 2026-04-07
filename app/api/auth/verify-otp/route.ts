@@ -12,11 +12,11 @@ export async function POST(request: NextRequest) {
   const { code } = await request.json();
   try {
     if (!verify_token) {
-      return NextResponse.json({ error: "Unauthorized or expired verification session" },{ status: 401 })
+      return NextResponse.json({ error: "Unauthorized or expired verification session",success: false },{ status: 401 })
     } 
     const decode = verifyEmailVerificationToken(verify_token) || null;
     if (!decode) {
-      return NextResponse.json({ error: "Invalid or expired verification session" },{ status: 401 });
+      return NextResponse.json({ error: "Invalid or expired verification session",success: false },{ status: 401 });
     }
     const {userId, email} = decode; 
     // Find user
@@ -25,21 +25,21 @@ export async function POST(request: NextRequest) {
       include: { business: true, role: true }
     })
     if (!user) {
-      return NextResponse.json({ error: "User not found" },{ status: 404 })
+      return NextResponse.json({ error: "User not found",success: false },{ status: 404 })
     }
     // Check if email matches
     if (user.email !== email) {
-      return NextResponse.json({error: "Invalid verification session" },{status: 401});
+      return NextResponse.json({error: "Invalid verification session",success: false },{status: 401});
     }
     // Already verified
     if (user.isVerified) {
-      return NextResponse.json({ error: "Email already verified" },{ status: 400 })
+      return NextResponse.json({ error: "Email already verified",success: false },{ status: 400 })
     }
     
     // Verify OTP
     const result = await verifyOTP(userId, code)
     if (!result.valid) {
-      return NextResponse.json({ error: result.message },{ status: 400 })
+      return NextResponse.json({ error: result.message, success: false },{ status: 400 })
     }
     // Mark user as verified
     await prisma.user.update({
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         message: "Email verified successfully",
-        redirectTo: user.business.slug
+        businessesSlug: user.business.slug
       },
       { status: 200 }
     )
@@ -75,18 +75,19 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === "production",
       maxAge: 60 * 60
     })
-    // Clear verification token cookie
 
-    // Clear verify cookie
+    // Clear verification token cookie
     response.cookies.set(VERIFY_COOKIE_NAME, "", {
       httpOnly: true,
       expires: new Date(0),
     });
+    
     return response
+
   } catch (error) {
     console.error("Verify email error:", error)
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Internal Server Error", success: false },
       { status: 500 }
     )
   }

@@ -13,6 +13,7 @@ import {
   usePathname, 
   // useRouter 
 } from "next/navigation"
+import { Toaster } from "sonner"
 
 export default function MainLayout({children}:{children: React.ReactNode}) {
   const pathname = usePathname();
@@ -53,7 +54,7 @@ export default function MainLayout({children}:{children: React.ReactNode}) {
       <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="bg-background sticky top-0 flex h-16 justify-between shrink-0 items-center gap-2 border-b px-4">
+        <header className="bg-background sticky top-0 z-50 flex h-16 justify-between shrink-0 items-center gap-2 border-b px-4">
         <div className="flex gap-5 items-center">
           <div className="flex items-center">
           <SidebarTrigger className="-ml-1" />
@@ -74,11 +75,13 @@ export default function MainLayout({children}:{children: React.ReactNode}) {
             {/* {Some codes here for Future analysis} */}
           </div>
         </div>
-        <LogoutButton/> 
+        <LogoutButton /> 
         </header>
        {/* Content — changes per route */}
         <main className="flex flex-1 flex-col gap-4 p-4">
           {children}
+          {/* Toaster */}
+          <Toaster position="top-right" richColors /> 
         </main>
       </SidebarInset>
      </SidebarProvider>

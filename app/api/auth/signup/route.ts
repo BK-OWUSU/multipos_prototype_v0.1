@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     try {
         const {businessName,email,password,firstName,lastName} = await request.json();
         if (!businessName || !email || !password || !firstName || !lastName) {
-            return NextResponse.json({ error: "All fields are required"},{ status: 400 });
+            return NextResponse.json({ error: "All fields are required", success: false},{ status: 400 });
         }
 
         //  //Check if user already exists
@@ -39,6 +39,27 @@ export async function POST(request: NextRequest) {
                     name: "OWNER",
                     permissions: ["*"],
                     access: ["*"],
+                    businessId: business.id,
+                    isSystem: true
+                }
+            });
+
+            //Cresting admin role
+            await transact.role.create({
+                data: {
+                    name: "ADMIN",
+                    permissions: ["manage_users", "manage_sales"],
+                    access: ["dashboard", "employees"],
+                    businessId: business.id
+                }
+            });
+
+            //Cashier Role creating
+            await transact.role.create({
+                data: {
+                    name: "CASHIER",
+                    permissions: ["sell","print"],
+                    access: ["pos"],
                     businessId: business.id
                 }
             });
@@ -59,7 +80,6 @@ export async function POST(request: NextRequest) {
             const otpCode = generateOTP();
             await saveOTP(user.id, otpCode, transact);
             return { user, business, otpCode };
-
         })
         const userEmail = result.user.email;
         const userID = result.user.id;
@@ -73,14 +93,14 @@ export async function POST(request: NextRequest) {
             redirectTo: "/verify-email",
             }, 
             {status: 200})
+
         response.cookies.set(VERIFY_COOKIE_NAME, verifyToken, {
             httpOnly: true,
             sameSite: "lax",
             secure: process.env.NODE_ENV === "production",
             maxAge: 10 * 60, // 10 minutes
         });
-
-        
+    
         //Send email
         try {
         await sendOTPEmail(
@@ -95,6 +115,6 @@ export async function POST(request: NextRequest) {
 
     } catch (error) {
         console.log("Error registration: ", error)
-        return NextResponse.json({error: "Error registering"}, {status: 401})
+        return NextResponse.json({error: "Error registering", success: false}, {status: 401})
     }
 }

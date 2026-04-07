@@ -8,41 +8,38 @@ import {InputOTP,InputOTPGroup,InputOTPSeparator,InputOTPSlot} from "@/component
 import { useForm, FormProvider, Controller, SubmitHandler } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { otpSchema, OTPFormSchema } from "@/types/auth.schema";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import apiClient from "@/lib/api-client";
-import {AxiosError} from "axios"
+import { useAuthStore } from "@/store/useAuthStore";
+import { OTPResponse } from "@/types/auth";
 
 export function InputOTPForm() {
+  const {verifyOtp, resendOtp, user} = useAuthStore();
+  const email = user?.email;
   const [countdown, setCountdown] = useState(60)
   const canResend = countdown === 0;
-  const userId = useSearchParams().get("userId");
-  const email = useSearchParams().get("email");
   const router = useRouter();
 
   const otpForm = useForm<OTPFormSchema>({
     resolver: zodResolver(otpSchema),
     defaultValues: {pin : ""}
   })
-  const {handleSubmit, setError,formState: {errors}} = otpForm;
+  const {
+    handleSubmit, 
+    setError,
+    formState: {errors}
+  } = otpForm;
+
   const onSubmit: SubmitHandler<OTPFormSchema> = async(data) => {
-    console.log("Data: ", data)
-    try {
-      // Use the injected userId in your verification call
-      await apiClient.post("/auth/verify-otp", {
-        userId, 
-        code: data.pin
-      });
-      router.push("/dashboard");
-    } catch (error: unknown) {
-      if (error instanceof AxiosError) {
-        const response = error.response?.data;
-        console.log("Verification error response: ", response);
-        setError("pin", { message: response?.error || "Verification failed" });
-      } else {
-        setError("pin", { message: "Something went wrong. Try again." });
+    const response = await verifyOtp({pin: data.pin}) as OTPResponse;
+     //Successful
+       if(response.success && response.businessesSlug) {
+        router.push(`/${response.businessesSlug}/dashboard`);
+        return;
       }
-    }
+      if(response.error && !response.success) {
+        setError("pin", {message: response.error})
+      }
   }
 
   // Countdown timer for resend button
@@ -57,23 +54,32 @@ export function InputOTPForm() {
   
   const handleResendOtpCode = async() => {
     if (!canResend) return;
-    try {
-    const response  = await apiClient.post("/auth/resend-otp");
-    console.log("Resend OTP response: ", response);
-    // 3. Restart the 60s clock
-    setCountdown(60); 
-    // alert("New code sent!");
-
-  } catch (error: unknown) {
-    if (error instanceof AxiosError) {
-      const response = error.response?.data;
-      setError("pin", { message: response?.error || "Failed to resend. Try again." });
-      console.log(response?.error || "Failed to resend. Try again.");
-    } else {
-      console.log("Something went wrong. Try again.");
-      setError("pin", { message: "Something went wrong. Try again." });
-    }
-  }
+    const response = await resendOtp();
+      console.log("Resend OTP response: ", response);
+      setCountdown(60); 
+       if(response.success && response.message) {
+        console.log("success message: ", response.message)
+        return;
+      }
+      //Error
+      if(response.error && !response.success) {
+        setError("pin", {message: response.error})
+      }
+  //   try {
+  //   const response  = await apiClient.post("/auth/resend-otp");
+  //   console.log("Resend OTP response: ", response);
+  //   // 3. Restart the 60s clock
+  //   // alert("New code sent!");
+  // } catch (error: unknown) {
+  //   if (error instanceof AxiosError) {
+  //     const response = error.response?.data;
+  //     setError("pin", { message: response?.error || "Failed to resend. Try again." });
+  //     console.log(response?.error || "Failed to resend. Try again.");
+  //   } else {
+  //     console.log("Something went wrong. Try again.");
+  //     setError("pin", { message: "Something went wrong. Try again." });
+  //   }
+  // }
   }
 
   return (

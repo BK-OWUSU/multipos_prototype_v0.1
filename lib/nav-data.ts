@@ -4,7 +4,8 @@ import { NavGroup } from "@/types/types";
 import hasAccess from "./accessPermissionSecurity";
 
 import {
-   ChartNetwork,ShoppingBasket,Settings,HelpCircle,Users,FileUser,PackageSearch
+   ChartNetwork,ShoppingBasket,Settings,HelpCircle,Users,FileUser,PackageSearch,
+   LayoutDashboard,HandCoins,ChartColumnStacked,BookUser,Banknote
   } from "lucide-react";
 
 export const getNavData = (slug: string): NavGroup[] => [
@@ -13,11 +14,11 @@ export const getNavData = (slug: string): NavGroup[] => [
     url: "#",
     accessKey: "reports",
     items: [
-      { title: "Dashboard", url: `/${slug}/dashboard`, accessKey: "dashboard" },
-      { title: "Sales Summary", url: `/${slug}/sale_summary`, accessKey: "sale_summary" },
-      { title: "Sale By Category", url: `/${slug}/sale_category`, accessKey: "sale_category" },
-      { title: "Sale By Employee", url: `/${slug}/sale_employee`, accessKey: "sale_employee" },
-      { title: "Sale By Payment", url: `/${slug}/sale_payment-type`, accessKey: "sale_payment-type" },
+      { title: "Dashboard", url: `/${slug}/dashboard`, accessKey: "dashboard", icon: LayoutDashboard },
+      { title: "Sales Summary", url: `/${slug}/sale_summary`, accessKey: "sale_summary", icon: Banknote },
+      { title: "Sale By Category", url: `/${slug}/sale_category`, accessKey: "sale_category", icon: ChartColumnStacked },
+      { title: "Sale By Employee", url: `/${slug}/sale_employee`, accessKey: "sale_employee", icon: BookUser },
+      { title: "Sale By Payment", url: `/${slug}/sale_payment-type`, accessKey: "sale_payment-type", icon: HandCoins },
     ],
     icon: ChartNetwork
   },
