@@ -6,6 +6,7 @@ import { JwtPayload} from "@/types/auth";
 import { cookies } from "next/headers";
 const POS_COOKIE_NAME = "pos_token";
 const VERIFY_COOKIE_NAME = "verify_token";
+const PASSWORD_RESET_COOKIE_NAME = "password_reset";
 // For hashing passwords, 
 export async function hashPassword(password: string): Promise<string> {
     return bcrypt.hash(password, 12);
@@ -62,7 +63,7 @@ export async function getSession(): Promise<JwtPayload | string | null> {
 }
 
 //FOR EMAIL VERIFICATION TOKEN
-export function generateEmailVerificationToken(payload:{userId: string, email: string}): string {
+export function generateEmailVerificationToken(payload:{userId: string, email: string, purpose?: string, businessId?: string }): string {
     const JWT_SECRET = process.env.JWT_SECRET!
     if (!JWT_SECRET) {
         throw new Error("JWT_SECRETE is not defined");
@@ -70,17 +71,17 @@ export function generateEmailVerificationToken(payload:{userId: string, email: s
     return jwt.sign(payload, JWT_SECRET, {expiresIn: "10m"}) //Expires in 10 minutes
 }
 
-export function verifyEmailVerificationToken(token: string): { userId: string; email: string } | null {
+export function verifyEmailVerificationToken(token: string): { userId: string; email: string, purpose?: string, businessId?: string } | null {
   try {
     const JWT_SECRET = process.env.JWT_SECRET!;
     if (!JWT_SECRET) {
       throw new Error("JWT_SECRET is not defined");
     }
-    return jwt.verify(token, JWT_SECRET) as { userId: string; email: string };
+    return jwt.verify(token, JWT_SECRET) as { userId: string; email: string, purpose?: string};
   } catch (error) {
     console.log("Verify token error:", error);
     return null;
   }
 }
 
-export { POS_COOKIE_NAME, VERIFY_COOKIE_NAME };
+export { POS_COOKIE_NAME, VERIFY_COOKIE_NAME,PASSWORD_RESET_COOKIE_NAME };

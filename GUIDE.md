@@ -322,168 +322,102 @@ enum DiscountType {
 
 
 
-//OTP//
--------
-import { OTPResponse } from "@/types/auth";
-import { prisma } from "./dbHelper";
 
-// Generate a random 6 digit OTP
-export function generateOTP(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-}
+///middl
+import { NextRequest, NextResponse } from "next/server";
+import { verifyPOSTokenEdge } from "./lib/auths";
+import { JwtPayload } from "./types/auth";
 
-// Save OTP to database
-export async function saveOTP(userId: string, code: string): Promise<void> {
-    // Delete any existing unused OTPs for this user
-    await prisma.oTPVerification.deleteMany({
-        where: {userId, isUsed: false}
-    })
-    // Create new OTP (expires in 10 minutes)
-    await prisma.oTPVerification.create({
-        data: {
-            userId,
-            code,
-            expiresAt: new Date(Date.now() + 10 * 60 * 1000) //10 minutes
-        }
-    })
-}
-
-//Verify OTP
-export async function verifyOTP(userId: string, code: string): Promise<OTPResponse> {
-    const otp = await prisma.oTPVerification.findFirst({
-        where: {
-            userId,
-            code,
-            isUsed: false
-        }
-    });
-    //If otp not found
-    if (!otp) {
-        return { valid: false, message: "Invalid OTP" }
+const POS_COOKIE_NAME = "pos_token";
+const PASSWORD_RESET_COOKIE_NAME = "password_reset";
+export async function proxy(request: NextRequest ) {
+    const { pathname } = request.nextUrl;
+  // 1. SKIP STATIC FILES & ASSETS
+    if (
+      pathname.startsWith('/_next') || 
+      pathname.includes('.') ||
+      pathname.startsWith('/api')
+    ) {
+      return NextResponse.next();
     }
-    // OTP expired
-    if (otp.expiresAt < new Date()) {
-    return { valid: false, message: "OTP has expired. Please request a new one" }
+
+    const token = request.cookies.get(POS_COOKIE_NAME)?.value;
+    const reset_pass_token = request.cookies.get(PASSWORD_RESET_COOKIE_NAME)?.value;
+    let session = null;
+
+    if (token) {
+      session = (await verifyPOSTokenEdge(token)) as JwtPayload;
     }
-    // Mark OTP as used
-    await prisma.oTPVerification.update({
-        where: { id: otp.id },
-        data: { isUsed: true }
-    })
-    
-    return { valid: true, message: "OTP verified successfully" }
-}
+
+    // If user is logged in but needs to change password
+    if (session?.needsPasswordChange) {
+        const resetPath = `/${session.businessSlug}/reset-password`;
+      if (pathname !== resetPath) {
+        return NextResponse.redirect(new URL(resetPath, request.url));
+      }
+      return NextResponse.next();
+    }
+
+    // 2. CHECK PUBLIC PATHS
+    const publicPaths = ["/login", "/signup", "/verify-email", "/"];
+    const isPublicPath = publicPaths.includes(pathname);
+
+    /// Regex for /[businessSlug]/[route]
+    const isTenantPath = /^\/[^/]+\/[^/]+/.test(pathname);
+    //Slug and RouteKey
+    const urlSlug = pathname.split("/")[1];
+    const routeKey = pathname.split("/")[2];
+
+    console.log(`Path: ${pathname} | Public: ${isPublicPath} | Protected: ${isTenantPath}`);
 
 
-
-USEFORM (SIGN UP)
-"use client"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import {Card,CardContent,CardHeader,CardTitle} from "@/components/ui/card"
-import {Field,FieldDescription,FieldGroup,FieldContent} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { SignUpFormSchema, signupSchema } from "@/types/auth.schema"
-import { Checkbox } from "@/components/ui/checkbox"
-import {SubmitHandler, useForm } from "react-hook-form"
-import {zodResolver} from "@hookform/resolvers/zod"
-
-export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
-  const {
-    register, 
-    handleSubmit,
-    setError,
-    setValue,
-    formState: {errors, isSubmitting}
-    } = useForm<SignUpFormSchema>({
-      resolver: zodResolver(signupSchema as never)
-    });
- 
-  //Onsubmit function to handle submit
-  const onSubmit: SubmitHandler<SignUpFormSchema> = async(data) => {
-    await new Promise((resolve)=> setTimeout(resolve, 2000))
-    console.log(data)
+  // 3. UNAUTHORIZED ACCESS
+  if (isTenantPath && !session) {
+    // SPECIAL CASE: Allow access to reset-password if they have a verifyToken
+    if (routeKey === "reset-password" && reset_pass_token) {
+        return NextResponse.next();
+    }
+    return NextResponse.redirect(new URL("/login", request.url));
   }
-  return (
-    <Card {...props}>
-      <CardHeader className="text-center">  
-        <CardTitle>Create Your Free MultiPOS Account</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <FieldGroup>
-            <Field>
-              <Input id="businessName" type="text" placeholder="Enter Business name" required
-              {...register("businessName")}
-              />
-              {errors.businessName && <FieldDescription className="text-red-500">{errors.businessName?.message}</FieldDescription>}
-            </Field> 
-            <Field>
-              <Input id="firstName" type="text" placeholder="Enter firstname" required
-              {...register("firstName")}  
-              />
-               {errors.firstName && <FieldDescription className="text-red-500">{errors.firstName?.message}</FieldDescription>} 
-            </Field>
-            <Field>
-              <Input id="lastName" type="text" placeholder="Enter lastname" required
-               {...register("lastName")} 
-              />
-               {errors.lastName && <FieldDescription className="text-red-500">{errors.lastName?.message}</FieldDescription>}
-            </Field>
-            <Field>
-              <Input id="email" type="email" placeholder="Enter your email" required
-                {...register("email")}
-              />
-               {errors.email && <FieldDescription className="text-red-500">{errors.email?.message}</FieldDescription>}
-              <FieldDescription>
-                {/* We&apos;ll use this to contact you. We will not share your email
-                with anyone else. */}
-              </FieldDescription>
-            </Field>
-            <Field>
-              <Input id="password" placeholder="Enter password" type="password" required
-               {...register("password")} 
-              />
-               {errors.password 
-               ? 
-               <FieldDescription className="text-red-500">{errors.password?.message}</FieldDescription>
-               :
-              <FieldDescription>Must be at least 8 characters long.</FieldDescription>
-               }
-            </Field>
-            <Field>
-              {/* <FieldLabel htmlFor="confirm-password">Confirm Password</FieldLabel> */}
-              <Input id="confirm-password" placeholder="Confirm password" type="password" required
-              {...register("confirmPassword")}
-              />
-               {errors.confirmPassword && <FieldDescription className="text-red-500">{errors.confirmPassword?.message}</FieldDescription>}
-              </Field>
-                  <FieldGroup className="mx-auto">
-                    <Field orientation="horizontal">
-                      <Checkbox id="terms-checkbox-desc" name="terms-checkbox-desc"
-                        className="border-black size-4.5"
-                        onCheckedChange={(checked) => setValue("termsAgreement", checked as boolean)}
-                      />
-                      <FieldContent>
-                        <FieldDescription>
-                          I agree to MultiPos <a href="">Terms of Use</a> and have read and acknowledged <a href="">Privacy Policy</a> 
-                        </FieldDescription>
-                      </FieldContent>
-                    </Field>
-                      {errors.termsAgreement && <FieldDescription className="text-red-500">{errors.termsAgreement?.message}</FieldDescription>}
-                  </FieldGroup>
-              <FieldGroup>
-              <Field>
-                <Button type="submit" disabled = {isSubmitting} className="p-5">{isSubmitting ? "Loading..." : "Create Account"}</Button>
-                {errors.root && <p className="text-red-500">{errors.root?.message}</p>}
-                <FieldDescription className="px-6 text-center flex justify-between">
-                   <span>Already have an account?</span> <Link href="/login">Sign in</Link>
-                </FieldDescription>
-              </Field>
-            </FieldGroup> 
-          </FieldGroup>
-        </form>
-      </CardContent>
-    </Card>
-  )
+
+  // 4. Logged in user trying to access public pages
+  if (session && isPublicPath) {
+    return NextResponse.redirect(
+      new URL(`/${session.businessSlug}/dashboard`, request.url)
+    );
+  }
+
+ 
+  // 5. MULTI-TENANT PROTECTION (VERY IMPORTANT)
+  if (session && isTenantPath) {
+    // User trying to access another tenant
+    if (urlSlug !== session.businessSlug) {
+      return NextResponse.redirect(
+        new URL(`/${session.businessSlug}/dashboard`, request.url)
+      );
+    }
+  }
+
+  //Full Access to Business Owner
+  if (session?.access.includes("*")) {
+    return NextResponse.next();
+  }
+
+  //Checking if user has Access to the requested route
+  if(routeKey && session?.access.includes(routeKey)) {
+    return NextResponse.redirect(
+      new URL(`/${session.businessSlug}/dashboard`, request.url)
+    );
+  }
+
+  return NextResponse.next();
 }
+
+export const config = {
+  matcher: [
+    "/login",
+    "/signup",
+    "/verify-otp",
+    "/:slug/:path*",
+  ],
+};

@@ -58,3 +58,13 @@ export const createEmployeeSchema = z.object({
   shopId: z.string().optional()
 });
 export type CreateEmployeeSchema = z.infer<typeof createEmployeeSchema>;
+
+//PASSWORD CHANGE
+export const passwordSchema = z.object({
+  newPassword: z.string().min(8, "Password must be at least 8 characters long"),
+  confirmPassword: z.string()
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+export type PasswordSchema = z.infer<typeof passwordSchema>

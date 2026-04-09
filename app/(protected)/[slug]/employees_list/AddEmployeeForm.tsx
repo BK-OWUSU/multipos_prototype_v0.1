@@ -16,6 +16,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useEmployeeStore } from "@/store/employeeStore";
+import { AppResponse } from "@/types/auth";
+import CustomButton from "@/components/reusables/CustomButton";
 
 interface AddEmployeeFormProps {
   roles?: { id: string; name: string }[];
@@ -23,12 +26,8 @@ interface AddEmployeeFormProps {
   onSuccess?: ()=> void
 }
 
-export default function AddEmployeeForm({ 
-  roles = [], 
-  shops = [],
-  onSuccess 
-}: AddEmployeeFormProps) {
-  const [loading, setLoading] = useState(false);
+export default function AddEmployeeForm({ roles = [], shops = [],onSuccess}: AddEmployeeFormProps) {
+  const {addEmployee} = useEmployeeStore();
 
   const methods = useForm<CreateEmployeeSchema>({
     resolver: zodResolver(createEmployeeSchema),
@@ -41,13 +40,28 @@ export default function AddEmployeeForm({
       shopId: undefined, // Using undefined instead of empty string
     },
   });
+   const {formState: {isSubmitting}} = methods;
 
   const onSubmit = async (data: CreateEmployeeSchema) => {
     console.log(data)
-    if (onSuccess) onSuccess();
-    toast.success("Employee Added!", {
-          description: `${data.firstName} has been invited to join the business.`,
-        });
+    // Convert "floating" string back to undefined/null if that's what Prisma expects
+  const payload = {
+    ...data,
+    shopId: data.shopId === "floating" ? undefined : data.shopId,
+  };
+
+  try {
+    const response = await addEmployee(payload) as AppResponse;
+    if (response.success && response.message) {
+      toast.success(response.message);
+      if (onSuccess) onSuccess();
+    } else {
+      toast.error(response.error || "Failed to add employee");
+    }
+  } catch (error) {
+      toast.error("An unexpected error occurred");
+  }
+    
   };
 
   return (
@@ -123,9 +137,12 @@ export default function AddEmployeeForm({
           </Field>
         </div>
 
-        <Button type="submit" disabled={loading} className="w-full">
-          {loading ? "Adding..." : "Add Employee"}
-        </Button>
+        <CustomButton
+        text="Add Employee"
+        type="submit"
+        customVariant="primary"
+        isLoading = {isSubmitting}
+        />
       </form>
     </FormProvider>
   );

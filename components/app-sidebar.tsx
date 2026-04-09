@@ -92,7 +92,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <SidebarMenu>
                     {item.items.map((child: NavItem) => (
                       <SidebarMenuItem key={child.title}>
-                        <SidebarMenuButton asChild isActive={child.url === pathname}>
+                        <SidebarMenuButton  asChild isActive={child.url === pathname}>
                           {child.isExternal ? (
                             <a href={child.url} target="_blank" rel="noopener noreferrer">
                               {child.icon &&  <child.icon size={20} />}

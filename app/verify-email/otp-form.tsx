@@ -32,11 +32,18 @@ export function InputOTPForm() {
 
   const onSubmit: SubmitHandler<OTPFormSchema> = async(data) => {
     const response = await verifyOtp({pin: data.pin}) as OTPResponse;
-     //Successful
+     // if User needs to reset-password
+       if(response.success == false && response.requiresPasswordChange) {
+        router.push(response.redirectTo ? response.redirectTo : "/login");
+        return;
+      }     
+      
+      //Successful
        if(response.success && response.businessesSlug) {
         router.push(`/${response.businessesSlug}/dashboard`);
         return;
       }
+      
       if(response.error && !response.success) {
         setError("pin", {message: response.error})
       }
@@ -65,21 +72,6 @@ export function InputOTPForm() {
       if(response.error && !response.success) {
         setError("pin", {message: response.error})
       }
-  //   try {
-  //   const response  = await apiClient.post("/auth/resend-otp");
-  //   console.log("Resend OTP response: ", response);
-  //   // 3. Restart the 60s clock
-  //   // alert("New code sent!");
-  // } catch (error: unknown) {
-  //   if (error instanceof AxiosError) {
-  //     const response = error.response?.data;
-  //     setError("pin", { message: response?.error || "Failed to resend. Try again." });
-  //     console.log(response?.error || "Failed to resend. Try again.");
-  //   } else {
-  //     console.log("Something went wrong. Try again.");
-  //     setError("pin", { message: "Something went wrong. Try again." });
-  //   }
-  // }
   }
 
   return (

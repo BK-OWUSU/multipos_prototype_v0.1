@@ -12,21 +12,40 @@ import AddEmployeeForm from "./AddEmployeeForm";
 import { Plus, Users2, PersonStanding, Import, UserCheck, ShieldAlert } from "lucide-react"
 import { Card, CardHeader, CardDescription, CardContent } from "@/components/ui/card";
 import CustomButton from "@/components/reusables/CustomButton";
+import { useRoleStore } from "@/store/rolesStore";
+import { useEmployeeStore } from "@/store/employeeStore";
+import { employeeColumns } from "@/components/tablesColumnDef/employeeColumns";
 
 export default function EmployeeList() {
   const router = useRouter();
   const { slug } = useParams();
-  const { currentSlug, user } = useAuthStore()
-  const [testData] = useState<User[]>(() => [...data])
+  const {roles, fetchRoles} = useRoleStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  //Stores
+  const { currentSlug, user } = useAuthStore()
+  const {employees, loading, fetchEmployees} = useEmployeeStore();
+  //Fetching Roles
+  useEffect(() => {
+    // Check if data needs to be fetched
+    if (roles.length === 0) fetchRoles();
+    fetchEmployees();
+  }, [fetchRoles, roles.length, fetchEmployees]);
 
-  // 1. Centralized Stats Data
-  const stats = useMemo(() => [
-    { label: "Total Staff", value: testData.length, icon: Users2, color: "text-blue-800" },
-    { label: "Active", value: 18, icon: UserCheck, color: "text-green-600" },
-    { label: "On Leave", value: 2, icon: PersonStanding, color: "text-orange-600" },
-    { label: "Admins", value: 3, icon: ShieldAlert, color: "text-purple-600" },
-  ], [testData]);
+// 2. Stats calculated from REAL database data
+const stats = useMemo(() => {
+  const empList = employees || []; // Fallback to empty array
+  const active = empList.filter(e => e.isActive).length;
+  const admins = empList.filter(e => e.role?.name.toLowerCase().includes("admin")).length;
+
+  return [
+    { label: "Total Staff", value: empList.length, icon: Users2, color: "text-blue-800" },
+    { label: "Active", value: active, icon: UserCheck, color: "text-green-600" },
+    { label: "On Leave", value: 0, icon: PersonStanding, color: "text-orange-600" },
+    { label: "Admins", value: admins, icon: ShieldAlert, color: "text-purple-600" },
+  ];
+}, [employees]);
+console.log(employees)
 
   useEffect(() => {
     if (!hasAccess(user, "dashboard")) {
@@ -68,8 +87,11 @@ export default function EmployeeList() {
               }
             >
               <AddEmployeeForm
-                onSuccess={() => setIsModalOpen(false)}
-                // roles={roles}  <-- Pass your roles from server/props here
+                onSuccess={() => {
+                  setIsModalOpen(false);
+                  fetchEmployees(); // Refresh list immediately
+                }}
+                roles={roles}  //<-- Pass your roles from server/props here
                 // shops={shops}  <-- Pass your shops from server/props here
               />
             </GenericModal>
@@ -108,11 +130,12 @@ export default function EmployeeList() {
       {/* Table Section */}
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
         <TableMain 
-          columns={testColumn} 
-          data={testData} 
-          searchKey="name"
+          columns={employeeColumns} 
+          data={employees? employees : []} 
+          searchKey="firstName"
           columnVisibilityFilter={true}
           placeholder="Search by name..." 
+          loading= {loading}
         />
       </div>
     </div>

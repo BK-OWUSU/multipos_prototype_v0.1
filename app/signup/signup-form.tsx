@@ -7,10 +7,11 @@ import { SignUpFormSchema, signupSchema } from "@/types/auth.schema"
 import { Checkbox } from "@/components/ui/checkbox"
 import {SubmitHandler, useForm, FormProvider } from "react-hook-form"
 import {zodResolver} from "@hookform/resolvers/zod";
-import { FormInput } from "../reusables/FormInput"
+import { FormInput } from "@/components/reusables/FormInput" 
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/store/useAuthStore"
 import { SignUpResponse } from "@/types/auth"
+import CustomButton from "@/components/reusables/CustomButton"
 
 export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
   const router = useRouter();
@@ -71,7 +72,12 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
                 </FieldGroup>
               <FieldGroup>
               <Field>
-                <Button type="submit" disabled = {isSubmitting} className="p-5">{isSubmitting ? "Loading..." : "Create Account"}</Button>
+                <CustomButton 
+                            type="submit" 
+                            text="Create Account" 
+                            isLoading={isSubmitting} 
+                            className="w-full"
+                          />
                 {errors.root && <p className="text-red-500">{errors.root?.message}</p>}
                 <FieldDescription className="px-6 text-center flex justify-between">
                    <span>Already have an account?</span> <Link href="/login">Sign in</Link>

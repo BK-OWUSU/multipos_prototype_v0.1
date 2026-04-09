@@ -46,6 +46,26 @@ export async function POST(request: NextRequest) {
       where: { id: userId },
       data: { isVerified: true }
     })
+
+    // Checking if password needs to be changed before finalizing the session
+    if (user.needsPasswordChange) {
+      const response = NextResponse.json(
+        {
+          error: "Email verified. Please change your password to continue.",
+          success: false,
+          requiresPasswordChange: true, 
+          redirectTo: `/${user.business.slug}/reset-password`,
+        },
+        { status: 403 }
+      );
+
+      // We still clear the verification cookie
+      response.cookies.set(VERIFY_COOKIE_NAME, "", {
+        httpOnly: true,
+        expires: new Date(0),
+      });
+      return response;
+    }
     // Session token object
      const token_object = {
                 userId: user.id,
@@ -55,7 +75,8 @@ export async function POST(request: NextRequest) {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 email: user.email,
-                access: user.role.access
+                access: user.role.access,
+                needsPasswordChange: user.needsPasswordChange
           } as JwtPayload;
     // Generate token and log user in
     const token = generatePOSToken(token_object)

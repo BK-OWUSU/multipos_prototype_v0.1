@@ -1,7 +1,7 @@
 import {create} from "zustand"
 import apiClient from "@/lib/api-client"
 import { LoginResponse, OTPResponse, SignUpResponse, User } from "@/types/auth"
-import { LoginSchema, OTPFormSchema, SignUpFormSchema } from "@/types/auth.schema";
+import { LoginSchema, OTPFormSchema, PasswordSchema, SignUpFormSchema } from "@/types/auth.schema";
 import { AxiosError } from "axios";
 
 type AuthStore = {
@@ -14,15 +14,17 @@ type AuthStore = {
     fetchUser: () => Promise<void>;
     verifyOtp: (data: OTPFormSchema)=> Promise<OTPResponse>;
     resendOtp: ()=> Promise<OTPResponse>;
+    resetPassword: (data: PasswordSchema )=> Promise<SignUpResponse>; //This is similar to signUp response Data structure
 }
 
 export const useAuthStore = create<AuthStore>((set, get)=>({
     user: null,
-    loading: true,
+    loading: false,
     currentSlug: null,
 
     fetchUser: async() => {
         try {
+            set({loading: true})
             const response = await apiClient.get("/auth/me");
             set({
                 user: response.data.user as User,
@@ -56,6 +58,7 @@ export const useAuthStore = create<AuthStore>((set, get)=>({
                         isVerified: response?.isVerified,
                         redirectTo: response?.redirectTo,
                         error: response?.error,
+                        requiresPasswordChange: response?.requiresPasswordChange,
                         status: error.response?.status || 500
                     } as LoginResponse;
             }
@@ -112,15 +115,17 @@ export const useAuthStore = create<AuthStore>((set, get)=>({
                 success: response.data?.success,
                 message: response.data?.message,
                 businessesSlug: response.data?.businessesSlug,
+                requiresPasswordChange: response.data?.requiresPasswordChange,
                 status: response.status,
             } as OTPResponse;
         } catch (error) {
              if(error instanceof AxiosError) {
                 const response = error.response?.data as OTPResponse;   
-                console.log("Login error: ", error);
+                console.log("Verify OTP error: ", error);
                 return {
                     success: response?.success || false,
                     error: response?.error,
+                    requiresPasswordChange: response?.requiresPasswordChange,
                     status: error.response?.status || 500
                 } as OTPResponse;
              }
@@ -134,7 +139,7 @@ export const useAuthStore = create<AuthStore>((set, get)=>({
 
     resendOtp: async () => {
         try {
-            const response =  await apiClient.post("/auth/resend-otp");
+            const response =  await apiClient.post("/auth/resend-otp") ;
             return {
                 success: response.data?.success,
                 message: response.data?.message,
@@ -143,10 +148,12 @@ export const useAuthStore = create<AuthStore>((set, get)=>({
         } catch (error) {
              if(error instanceof AxiosError) {
                 const response = error.response?.data as OTPResponse;   
-                console.log("Login error: ", error);
+                console.log("Resend OPT error: ", error);
                 return {
                     success: response?.success || false,
                     error: response?.error,
+                    requiresPasswordChange: response?.requiresPasswordChange,
+                    redirectTo: response?.redirectTo,
                     status: error.response?.status || 500
                 } as OTPResponse;
              }
@@ -157,4 +164,32 @@ export const useAuthStore = create<AuthStore>((set, get)=>({
             } as OTPResponse
         }
     },
+
+ resetPassword: async(data) => {
+        try {
+            const response = await apiClient.post("/auth/reset-password", data) ;
+            return {
+                success: response.data?.success,
+                redirectTo: response.data?.redirectTo,
+                status: response?.status,
+                message: response.data?.message
+            } as SignUpResponse;
+        } catch (error: unknown) {
+            if(error instanceof AxiosError) {
+                const response = error.response?.data as SignUpResponse;   
+                console.log("Password reset error: ", error);
+                return {
+                        success: response?.success || false,
+                        error: response?.error,
+                        status: error.response?.status || 500
+                    } as SignUpResponse;
+            }
+            return {
+            success: false,
+            error: "Network error. Please try again.",
+            status: 500
+        } as SignUpResponse;
+        }
+    },    
+    
 }));

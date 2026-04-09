@@ -59,26 +59,27 @@ model OTPVerification {
 
 // ── USER ───────────────────────────────────────────
 model User {
-  id         String     @id @default(cuid())
-  firstName  String
-  lastName   String
-  email      String    
-  password   String
-  phone      String?
-  businessId String
-  roleId     String
-  shopId     String?
-  isActive   Boolean    @default(true)
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  isVerified Boolean    @default(false)
-  business   Business   @relation(fields: [businessId], references: [id])
-  role       Role       @relation(fields: [roleId], references: [id])
-  shop       Shop?      @relation(fields: [shopId], references: [id])
-  sales      Sale[]
-  stockLogs  StockLog[]
-  timeCards  TimeCard[]
-  auditLogs  AuditLog[]
+  id                  String     @id @default(cuid())
+  firstName           String
+  lastName            String
+  email               String    
+  password            String
+  phone               String?
+  businessId          String
+  roleId              String
+  shopId              String?
+  isActive            Boolean    @default(true)
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+  isVerified          Boolean    @default(false)
+  needsPasswordChange Boolean    @default(false)
+  business            Business   @relation(fields: [businessId], references: [id])
+  role                Role       @relation(fields: [roleId], references: [id])
+  shop                Shop?      @relation(fields: [shopId], references: [id])
+  sales               Sale[]
+  stockLogs           StockLog[]
+  timeCards           TimeCard[]
+  auditLogs           AuditLog[]
 
   @@unique([email, businessId])
   @@index([businessId])

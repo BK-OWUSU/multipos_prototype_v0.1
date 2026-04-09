@@ -1,0 +1,49 @@
+import { prisma } from "@/lib/dbHelper";
+import { POS_COOKIE_NAME, verifyPOSToken } from "@/lib/auths";
+import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
+
+export async function DELETE(
+  request: NextRequest, 
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const cookieStore = await cookies();
+    const token = cookieStore.get(POS_COOKIE_NAME)?.value;
+    const decoded = verifyPOSToken(token || "");
+
+    if (!decoded) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // 1. Fetch role to check if it's a system role or has users
+    const role = await prisma.role.findUnique({
+      where: { id, businessId: decoded.businessId },
+      include: { _count: { select: { users: true } } }
+    });
+
+    if (!role) {
+      return NextResponse.json({ error: "Role not found" }, { status: 404 });
+    }
+
+    // 2. Prevent deletion of system roles
+    if (role.isSystem) {
+      return NextResponse.json({ error: "System roles cannot be deleted" }, { status: 400 });
+    }
+
+    // 3. Prevent deletion if users are assigned (Referential Integrity)
+    if (role._count.users > 0) {
+      return NextResponse.json({ 
+        error: `Cannot delete role. ${role._count.users} employee(s) are currently assigned to it.` 
+      }, { status: 400 });
+    }
+
+    await prisma.role.delete({
+      where: { id }
+    });
+
+    return NextResponse.json({ success: true, message: "Role deleted successfully" });
+  } catch (error) {
+    console.log("Delete Role Error: ",error)
+    return NextResponse.json({ error: "Delete failed" }, { status: 500 });
+  }
+}

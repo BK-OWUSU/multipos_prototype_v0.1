@@ -32,13 +32,3 @@ export interface AlertWithDiagProps {
     confirmFunction?: ()=> void;
 }
 
-// export type SignUpFormData = {
-//     businessName: string;
-//     firstName: string;
-//     lastName: string;
-//     email: string;
-//     password: string;
-//     confirmPassword: string;
-//     termsAgreement?: boolean;
-// }
-

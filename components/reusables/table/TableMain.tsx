@@ -23,8 +23,9 @@ interface TableProps<TData, TValue> {
     searchKey?: string;          
     placeholder?: string;
     columnVisibilityFilter?: boolean;
+    loading?: boolean;
 }
-export default function TableMain<TData, TValue>({columns, data, searchKey, placeholder, columnVisibilityFilter}:TableProps<TData, TValue>) {
+export default function TableMain<TData, TValue>({columns, data, searchKey, placeholder, columnVisibilityFilter, loading}:TableProps<TData, TValue>) {
     const [globalFilter, setGlobalFilter] = useState("");
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -105,8 +106,7 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
                         return (
                             <TableHead
                             key={header.id}
-                            // relative is required so the resizer can stick to the right edge
-                            className={`relative text-white first:rounded-tl-md font-semibold last:rounded-tr-md group ${isSelect ? "p-0" : "px-4"}`}
+                            className={`relative text-white first:rounded-tl-md font-semibold last:rounded-tr-md group ${isSelect ? "p-2" : "px-4"}`}
                             style={{ width: header.getSize()}}
                             >
                             {header.isPlaceholder ? null : (
@@ -153,7 +153,17 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
                 </TableHeader>
 
                 <TableBody>
-                    {table.getRowModel().rows?.length ? (
+                  {loading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i} className="animate-pulse">
+                        {finalColumns.map((_, j) => (
+                            <TableCell key={j} className="py-4">
+                            <div className="h-4 bg-gray-200 rounded w-full"></div>
+                            </TableCell>
+                        ))}
+                        </TableRow>
+                    ))
+                  ): table.getRowModel().rows?.length ? (
                     table.getRowModel().rows.map((row) => (
                         <TableRow
                         key={row.id}
@@ -166,7 +176,7 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
                             <TableCell 
                             key={cell.id} 
                             // REMOVED flex/justify/items from here
-                            className={`py-3 border-r ${isSelect ? "p-0" : "px-4"}`}
+                            className={`py-3 border-r ${isSelect ? "p-1" : "px-4"}`}
                             >
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                             </TableCell>
@@ -190,7 +200,7 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
             {/* Table Content End */}
 
             {/* Pagination Controls */}
-            {/* <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-4 border-t border-slate-800"> */}
+           
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
             {/* Left: Metadata */}
                 <div className="flex text-sm text-muted-foreground gap-2 justify-center items-center">

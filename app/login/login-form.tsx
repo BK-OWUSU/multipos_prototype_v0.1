@@ -23,16 +23,27 @@ export function LoginForm({className,...props}: React.ComponentProps<"form">) {
   const {handleSubmit, setError, formState:{isSubmitting, errors}} = forms
   const onSubmit: SubmitHandler<LoginSchema> = async(data) => {
       const response = await login(data) as LoginResponse;
+      console.log("Response Here")
+      console.log(response)
       //handle unverified user
       if (response.isVerified === false && response.redirectTo) {
         router.push(response.redirectTo);
         return;
+      } 
+      
+      //handle first time users who to need reset their password
+      if (response.requiresPasswordChange && response.redirectTo) {
+        router.push(response.redirectTo);
+        return;
       }
+
+
       //Successful login with single business → redirect to dashboard
       if(response.success && response.redirectTo) {
         router.push(`/${response.redirectTo}/dashboard`);
         return;
       }
+      
       //Multiple businesses → redirect to business selection page
       if(response.success && response.multipleBusinesses) {
         return;
@@ -64,7 +75,7 @@ export function LoginForm({className,...props}: React.ComponentProps<"form">) {
             icon={<LogIn className="w-4 h-4" />}
           />
         </Field>
-        {errors.root && <p className="text-red-500">{errors.root.message}</p>}
+        {errors.root && <p className="text-red-500 text-center">{errors.root.message}</p>}
         <FieldSeparator>Need an Account</FieldSeparator>
         <Field>
           <FieldDescription className="text-center">

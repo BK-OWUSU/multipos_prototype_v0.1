@@ -1,5 +1,7 @@
-import { POS_COOKIE_NAME, generateEmailVerificationToken, generatePOSToken, VERIFY_COOKIE_NAME, verifyPassword } from "@/lib/auths";
+import { POS_COOKIE_NAME, generateEmailVerificationToken, generatePOSToken, VERIFY_COOKIE_NAME, verifyPassword, PASSWORD_RESET_COOKIE_NAME } from "@/lib/auths";
 import { prisma } from "@/lib/dbHelper";
+import { sendOTPEmail } from "@/lib/email";
+import { generateOTP, saveOTP } from "@/lib/otp";
 import { JwtPayload } from "@/types/auth";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -13,11 +15,12 @@ export async function POST(request: NextRequest) {
     }
     //Find ALL users with this email (multi-tenant support)
         const users = await prisma.user.findMany({
-            where: { email },
+            where: { email 
+            },
             include: {
                 business: true,
                 role: true
-            }
+            },
         })
         //Check if a user exist
         console.log("Users found: ", users.length)
@@ -26,14 +29,37 @@ export async function POST(request: NextRequest) {
         }
         //Check password against first user (they should all match anyway)
         const validUsers = []
+        const deactivatedUsers = [];
+
         for (const user of users) {
             const isValidPassword = await verifyPassword(password, user.password);
-            if (isValidPassword) validUsers.push(user); //If a user password matches the are added to the array of valid users
+            if (isValidPassword) {
+                if (user.isActive) {
+                    validUsers.push(user);
+                } else {
+                    deactivatedUsers.push(user);
+                }
+            }
         }
-        //Check if a user is found
-        if(validUsers.length === 0) {
-            return NextResponse.json({error:"Invalid email or password", success: false}, {status: 401})
+
+        // 2. Handle cases where no active users were found
+        if (validUsers.length === 0) {
+            // If the password was correct but the accounts are all deactivated
+            if (deactivatedUsers.length > 0) {
+                return NextResponse.json({ 
+                    success: false, 
+                    error: "Your account has been deactivated. Please contact your administrator." 
+                }, { status: 403 });
+            }
+            // Otherwise, it was just a wrong password
+            return NextResponse.json({ error: "Invalid email or password", success: false }, { status: 401 });
         }
+
+
+        // //Check if a user is found
+        // if(validUsers.length === 0) {
+        //     return NextResponse.json({error:"Invalid email or password", success: false}, {status: 401})
+        // }
 
         //If only ONE business → login directly
         if (validUsers.length === 1) {
@@ -43,8 +69,25 @@ export async function POST(request: NextRequest) {
                 const verify_token = generateEmailVerificationToken({userId: user.id, email: user.email});
                 const response = NextResponse.json(
                     {error: "Please verify your email first", isVerified: false, redirectTo: "/verify-email", success: false},
-                    { status: 403 }
+                    {status: 403}
                 );
+                //Generate and save OTP Code
+                const otpCode = await prisma.$transaction(async(tx)=> {
+                    const code =  generateOTP();
+                    await saveOTP(user.id, code, tx);
+                    return code;
+                })
+                
+                //Sending OTP code to email
+                        try {
+                        await sendOTPEmail(
+                            user.email,
+                            user.firstName,
+                            otpCode
+                        );
+                        } catch (err) {
+                        console.error("Email sending failed:", err);
+                        }
                 // Set verification token cookie
                 response.cookies.set(VERIFY_COOKIE_NAME, verify_token, {
                     httpOnly: true,
@@ -54,7 +97,31 @@ export async function POST(request: NextRequest) {
                 });
                 return response;
             }
+            
+            // Check if password needs to be changed for first time login users apart from OWNER
+            if (user.needsPasswordChange) {
+                console.log("Okay we go here now");
+                const reset_password = generateEmailVerificationToken({
+                    userId: user.id,
+                    email: user.email,
+                    purpose: "password_reset",
+                    businessId: user.businessId
+                });
+                const response = NextResponse.json({
+                error: "Please verify your email first", success: false, requiresPasswordChange: true,redirectTo: `/${user.business.slug}/reset-password`},
+                {status: 403}
+                );
+                 // Set verification token cookie
+                response.cookies.set(PASSWORD_RESET_COOKIE_NAME, reset_password, {
+                    httpOnly: true,
+                    sameSite: "lax",
+                    secure: process.env.NODE_ENV === "production",
+                    maxAge: 15 * 60, // 15 minutes
+                });
+                return response;
+            }    
 
+        //If user passes all checks    
             const token_object = {
                 userId: user.id,
                 businessId: user.businessId,
@@ -63,7 +130,8 @@ export async function POST(request: NextRequest) {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 email: user.email,
-                access: user.role.access
+                access: user.role.access,
+                needsPasswordChange: user.needsPasswordChange
             } as JwtPayload;
             
             const token = generatePOSToken(token_object);
