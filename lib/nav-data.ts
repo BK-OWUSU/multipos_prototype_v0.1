@@ -4,15 +4,19 @@ import { NavGroup } from "@/types/types";
 import hasAccess from "./accessPermissionSecurity";
 
 import {
-   ChartNetwork,ShoppingBasket,Settings,HelpCircle,Users,FileUser,PackageSearch,
-   LayoutDashboard,HandCoins,ChartColumnStacked,BookUser,Banknote
-  } from "lucide-react";
+  ChartNetwork, ShoppingBasket, Settings, HelpCircle, Users, FileUser, PackageSearch,
+  LayoutDashboard, HandCoins, ChartColumnStacked, BookUser, Banknote,
+  Monitor, ArrowRightLeft, FileText, List, Layers, Percent,
+  UserRoundCog, Clock, Hourglass, Contact2, Trophy, ShieldCheck,
+  Store, MessageSquare, Globe
+} from "lucide-react";
 
 export const getNavData = (slug: string): NavGroup[] => [
   {
     title: "Reports",
     url: "#",
     accessKey: "reports",
+    icon: ChartNetwork,
     items: [
       { title: "Dashboard", url: `/${slug}/dashboard`, accessKey: "dashboard", icon: LayoutDashboard },
       { title: "Sales Summary", url: `/${slug}/sale_summary`, accessKey: "sale_summary", icon: Banknote },
@@ -20,70 +24,69 @@ export const getNavData = (slug: string): NavGroup[] => [
       { title: "Sale By Employee", url: `/${slug}/sale_employee`, accessKey: "sale_employee", icon: BookUser },
       { title: "Sale By Payment", url: `/${slug}/sale_payment-type`, accessKey: "sale_payment-type", icon: HandCoins },
     ],
-    icon: ChartNetwork
   },
   {
     title: "POS",
     url: "#",
     accessKey: "pos",
+    icon: ShoppingBasket,
     items: [
-      { title: "Sales Terminal", url: `/${slug}/sales-terminal`, accessKey: "sales-terminal" },
-      { title: "Transactions", url: `/${slug}/transactions`, accessKey: "transactions" },
-      { title: "Invoices", url: `/${slug}/invoices`, accessKey: "invoices" },
+      { title: "Sales Terminal", url: `/${slug}/sales-terminal`, accessKey: "sales-terminal", icon: Monitor },
+      { title: "Transactions", url: `/${slug}/transactions`, accessKey: "transactions", icon: ArrowRightLeft },
+      { title: "Invoices", url: `/${slug}/invoices`, accessKey: "invoices", icon: FileText },
     ],
-    icon: ShoppingBasket
   },
   {
     title: "Product",
     url: "#",
     accessKey: "product",
+    icon: PackageSearch,
     items: [
-      { title: "Product List", url: `/${slug}/product_list`, accessKey: "product_list" },
-      { title: "Categories", url: `/${slug}/categories`, accessKey: "categories" },
-      { title: "Discount", url: `/${slug}/discount`, accessKey: "discount" },
+      { title: "Product List", url: `/${slug}/product_list`, accessKey: "product_list", icon: List },
+      { title: "Categories", url: `/${slug}/categories`, accessKey: "categories", icon: Layers },
+      { title: "Discount", url: `/${slug}/discount`, accessKey: "discount", icon: Percent },
     ],
-    icon: PackageSearch
   },
   {
     title: "Employee",
     url: "#",
     accessKey: "employee",
+    icon: Users,
     items: [
-      { title: "Employee List", url: `/${slug}/employees_list`, accessKey: "employees_list" },
-      { title: "Time Cards", url: `/${slug}/time_cards`, accessKey: "time_cards" },
-      { title: "Total Hours Worked", url: `/${slug}/total_hours_worked`, accessKey: "total_hours_worked" },
+      { title: "Employee List", url: `/${slug}/employees_list`, accessKey: "employees_list", icon: UserRoundCog },
+      { title: "Time Cards", url: `/${slug}/time_cards`, accessKey: "time_cards", icon: Clock },
+      { title: "Total Hours Worked", url: `/${slug}/total_hours_worked`, accessKey: "total_hours_worked", icon: Hourglass },
     ],
-    icon: Users
   },
   {
     title: "Customers",
     url: "#",
     accessKey: "customers",
+    icon: FileUser,
     items: [
-      { title: "Customer Base", url: `/${slug}/customers_base`, accessKey: "customers_base" },
-      { title: "Loyalty", url: `/${slug}/loyalty`, accessKey: "loyalty" },
+      { title: "Customer Base", url: `/${slug}/customers_base`, accessKey: "customers_base", icon: Contact2 },
+      { title: "Loyalty", url: `/${slug}/loyalty`, accessKey: "loyalty", icon: Trophy },
     ],
-    icon: FileUser
   },
   {
     title: "Settings",
     url: "#",
     accessKey: "settings",
+    icon: Settings,
     items: [
-      { title: "Access Controls", url: `/${slug}/access_controls`, accessKey: "access_controls" },
-      { title: "Shops", url: `/${slug}/shops`, accessKey: "shops" },
+      { title: "Access Controls", url: `/${slug}/access_controls`, accessKey: "access_controls", icon: ShieldCheck },
+      { title: "Shops", url: `/${slug}/shops`, accessKey: "shops", icon: Store },
     ],
-    icon: Settings
   },
   {
     title: "Help",
     url: "#",
     accessKey: "help",
+    icon: HelpCircle,
     items: [
-      { title: "Community", url: "#", isExternal: true, accessKey: "community" },
-      { title: "Chat", url: "#", isExternal: true, accessKey: "chat" },
+      { title: "Community", url: "#", isExternal: true, accessKey: "community", icon: Globe },
+      { title: "Chat", url: "#", isExternal: true, accessKey: "chat", icon: MessageSquare },
     ],
-    icon: HelpCircle
   },
 ];
 

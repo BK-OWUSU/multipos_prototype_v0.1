@@ -116,6 +116,7 @@ model Shop {
   business   Business  @relation(fields: [businessId], references: [id])
   users      User[]
   sales      Sale[]
+  timeCards TimeCard[]
 
   @@index([businessId])
   @@map("shops")
@@ -127,6 +128,7 @@ model TimeCard {
   id         String    @id @default(cuid())
   userId     String
   businessId String
+  shopId     String?
   clockIn    DateTime
   clockOut   DateTime?
   totalHours Decimal?  @db.Decimal(5,2)
@@ -134,7 +136,7 @@ model TimeCard {
   createdAt  DateTime  @default(now())
 
   user       User      @relation(fields: [userId], references: [id])
-
+  shop       Shop?       @relation(fields: [shopId], references: [id])
   @@index([businessId])
   @@map("time_cards")
 }
@@ -228,6 +230,11 @@ model Customer {
   email            String?
   phone            String?
   address          String?
+
+  firstVisit       DateTime?
+  LastVisit        DateTime?
+  TotalVisit       Int       @default(0)
+
   isCreditCustomer Boolean  @default(false)
   creditLimit      Decimal  @db.Decimal(10, 2) @default(0)
   businessId       String
@@ -254,7 +261,6 @@ model Loyalty {
   updatedAt   DateTime @updatedAt
 
   customer    Customer @relation(fields: [customerId], references: [id])
-
   @@index([businessId])
   @@map("loyalty")
 }

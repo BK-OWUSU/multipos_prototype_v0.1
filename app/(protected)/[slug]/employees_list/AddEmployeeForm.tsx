@@ -3,18 +3,10 @@
 import { useForm, FormProvider, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CreateEmployeeSchema, createEmployeeSchema } from "@/types/auth.schema";
-import { useState } from "react";
 import { FormInput } from "@/components/reusables/FormInput";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Plus } from "lucide-react"
+import {Select,SelectContent,SelectGroup,SelectItem,SelectTrigger,SelectValue,} from "@/components/ui/select";
 import { toast } from "sonner";
 import { useEmployeeStore } from "@/store/employeeStore";
 import { AppResponse } from "@/types/auth";
@@ -141,6 +133,7 @@ export default function AddEmployeeForm({ roles = [], shops = [],onSuccess}: Add
         text="Add Employee"
         type="submit"
         customVariant="primary"
+        icon={<Plus className="mr-2 h-4 w-4" />}
         isLoading = {isSubmitting}
         />
       </form>

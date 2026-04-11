@@ -1,22 +1,34 @@
 "use client"
 "use no memo"
-import {DropdownMenu,DropdownMenuContent,DropdownMenuLabel,
-        DropdownMenuSeparator,
-        DropdownMenuCheckboxItem,DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import React from "react";
+import {DropdownMenu,DropdownMenuContent,DropdownMenuLabel,DropdownMenuSeparator,DropdownMenuCheckboxItem,DropdownMenuTrigger,DropdownMenuItem} from "@/components/ui/dropdown-menu"
 import {Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "../../ui/table";
-import {flexRender, getCoreRowModel,getSortedRowModel,getFilteredRowModel,
-    getPaginationRowModel,useReactTable,
-    type SortingState,
-    type ColumnFiltersState, 
-    type ColumnDef 
-} from "@tanstack/react-table"
+import {flexRender, getCoreRowModel,getSortedRowModel,getFilteredRowModel,getPaginationRowModel,useReactTable,type SortingState,type ColumnFiltersState, type ColumnDef} from "@tanstack/react-table"
 import { Input } from "../../ui/input";
 import { Button } from "../../ui/button";
 import { useState } from "react";
-import {ArrowDownUp,ArrowDownAZ,ArrowUpZA,ChevronDown,ChevronsLeft,ChevronsRight} from "lucide-react"
-import { getSelectionColumn } from "./tableSelectionCheckbox";
+import {ArrowDownUp,ArrowDownAZ,ArrowUpZA,ChevronDown,ChevronsLeft,ChevronsRight,ListFilter} from "lucide-react"
+import {getSelectionColumn} from "./tableSelectionCheckbox";
+//Export feature "imports"
+import * as XLSX from "xlsx";
+import jsPDF from 'jspdf';
+import autoTable, {RowInput} from "jspdf-autotable";
+import { toast } from "sonner";
+import { formatDateTime, humanize } from "@/lib/utils";
+import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue} from "@/components/ui/select"
+import {Popover,PopoverContent,PopoverTrigger} from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { CalendarIcon } from "lucide-react"
+import { format } from "date-fns"
+import { cn } from "@/lib/utils"
 
+declare module "@tanstack/react-table" {
+  interface ColumnMeta<TData, TValue> {
+    filterVariant?: "select" | "text" | "date";
+    trueLabel?: string;
+    falseLabel?: string;
+  }
+}
 interface TableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
     data: TData[];
@@ -30,11 +42,11 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [columnVisibility, setColumnVisibility] = useState({});
-    const [rowSelection, setRowSelection] = useState({});
-    
+    const [rowSelection, setRowSelection] = useState({});  
+    const finalColumns = [getSelectionColumn<TData>(),...columns];
+    const [showColumnFilters, setShowColumnFilters] = useState(false);
 
-    const finalColumns = [getSelectionColumn<TData>(),...columns]
-
+    //React table from tanstack table
     const table = useReactTable({
         data,
         columns: finalColumns,
@@ -59,6 +71,83 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
         globalFilterFn: "includesString"
     });
 
+    //Export function
+    const handleExport = (format: 'pdf' | 'excel' | 'csv') => {
+    // 1. Get only visible columns, excluding tech columns like 'select' and 'actions'
+    const visibleColumns = table.getVisibleLeafColumns()
+        .filter(col => col.id !== "select" && col.id !== "actions");
+
+  // 2. Map the SELECTED rows to the VISIBLE columns
+    type ExportableValue = string | number | boolean;
+    type ExportRow = Record<string, ExportableValue>;
+    const exportData = table.getFilteredSelectedRowModel().rows.map(row => {
+    const rowData: ExportRow = {};
+    
+    visibleColumns.forEach(col => {
+      // Use the Header string or the ID as the key for the file
+      const headerTitle = typeof col.columnDef.header === 'string' 
+        ? col.columnDef.header 
+        : humanize(col.id);
+      // Get the value TanStack has already calculated for this cell
+      const value = row.getValue(col.id);
+
+    if (col.id === "firstName") {
+        // Handle the Full Name concatenation for Employees
+        const employee = row.original as { firstName?: string; lastName?: string };
+        rowData["First Name"] = employee.firstName ?? "";
+        rowData["Last Name"] = employee.lastName ?? "";
+
+      } else if (typeof value === 'string' && !isNaN(Date.parse(value)) && value.includes('T')) {
+        const dateValue = value ? new Date(value as unknown as string) : new Date();
+        rowData[headerTitle] = formatDateTime(dateValue);
+
+      } else if (typeof value === 'boolean') {
+        rowData[headerTitle] = value ? "Yes" : "No";
+      } else if (typeof value === 'object' && value !== null) {
+        // If it's a nested object (like role.name), try to find a 'name' or 'label' property
+        const namedValue = value as { name?: string; label?: string };
+        rowData[headerTitle] = namedValue.name || namedValue.label || JSON.stringify(value);
+      } else {
+        rowData[headerTitle] = value?.toString() ?? "";
+      }
+    });
+    return rowData;
+  });
+
+  if (exportData.length === 0) {
+    // alert("No rows selected for export.");
+    toast.error("No rows selected for export.")
+    return;
+  }
+
+  const fileName = `Export_${new Date().getTime()}`;
+
+  // 3. File Generation Logic
+  if (format === 'excel' || format === 'csv') {
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+    XLSX.writeFile(workbook, `${fileName}.${format === 'excel' ? 'xlsx' : 'csv'}`);
+  } 
+  
+  else if (format === 'pdf') {
+    const doc = new jsPDF('landscape');
+    const headers = [Object.keys(exportData[0])];
+    const body: RowInput[] = exportData.map((row) => Object.values(row) as RowInput);
+
+    autoTable(doc, {
+        head: headers,
+        body: body,
+        theme: 'grid',
+        headStyles: { fillColor: [23, 37, 84] }, // Matches your bg-blue-950
+        styles: { fontSize: 8 }
+        });
+        doc.save(`${fileName}.pdf`);
+    }
+};
+
+
+
     return (
     <div className="space-y-4 p-4">
         <div className="flex items-center justify-between">
@@ -70,36 +159,75 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
                     className="max-w-sm"
                 />)
         }
-        {columnVisibilityFilter &&
-        (<div>
+            <div className="flex gap-2">
+            {/* Lets say a coulumn Filter button Toggle Button (funnedl filter icon) here */}
+            <Button 
+                variant={showColumnFilters ? "default" : "outline"} 
+                size="sm"
+                onClick={() => setShowColumnFilters(!showColumnFilters)}
+                className="flex items-center gap-2"
+            >
+            <ListFilter className="h-4 w-4" />
+            {showColumnFilters ? "Hide Filters" : "Filters"}
+            </Button>
+            {/* EXPORT DROPDOWN */}
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="ml-auto">
-                        Columns <ChevronDown className="ml-2 h-4 w-4" />
+                        Export <ChevronDown className="ml-2 h-4 w-4" />
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                    <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+                    <DropdownMenuLabel>Choose Format</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    {table.getAllColumns().map((column) => (
-                        <DropdownMenuCheckboxItem
-                            key={column.id}
-                            checked={column.getIsVisible()}
-                            onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                        >
-                            {column.id}
-                        </DropdownMenuCheckboxItem>
-                    ))}
+                    <DropdownMenuItem onClick={() => handleExport('excel')}>Excel (.xlsx)</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport('csv')}>CSV (.csv)</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport('pdf')}>PDF (.pdf)</DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
-        </div>)
-        }
+
+            {columnVisibilityFilter &&
+            (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="ml-auto">
+                            Columns <ChevronDown className="ml-2 h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-fit">
+                        <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {table.getAllColumns()
+                            .filter((column) => column.getCanHide())
+                            .map((column) => {
+                                // 1. Get the raw header or ID
+                                const header = column.columnDef.header;
+                                const rawId = column.id;
+                                const cleanLabel = typeof header === "string" 
+                                ? header 
+                                : humanize(rawId)
+                                return (
+                                <DropdownMenuCheckboxItem
+                                    key={column.id}
+                                    className="capitalize "
+                                    checked={column.getIsVisible()}
+                                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                                >
+                                    {cleanLabel}
+                                </DropdownMenuCheckboxItem>
+                                );
+                            })}
+                    </DropdownMenuContent>
+                </DropdownMenu>)
+            }
+            </div>
         </div>
         {/* Table Content */}
-            <div className="overflow-x-auto overflow-y-auto max-h-96">
-             <Table>
-                <TableHeader className="bg-blue-950 z-20 sticky top-1">
+            <div className="overflow-auto max-h-80 relative">
+             <Table className="w-full">
+                <TableHeader className="bg-blue-950 sticky top-0 z-20">
                     {table.getHeaderGroups().map((headerGroup) => (
+                    <React.Fragment key={headerGroup.id}>    
                     <TableRow key={headerGroup.id} className="hover:bg-transparent">
                         {headerGroup.headers.map((header) => {
                         const isSelect = header.id === "select";
@@ -149,6 +277,113 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
                         );
                         })}
                     </TableRow>
+
+                   {/* DYNAMIC FILTER ROW */}
+                    {showColumnFilters && (
+                    <TableRow className=" hover:bg-transparent border-none">
+                        {headerGroup.headers.map((header) => {
+                        const isSelect = header.id === "select";
+                        const isActions = header.id === "actions";
+                        const column = header.column;
+                        
+                        // Cast to any to allow for boolean, string, or date comparisons
+                        type FilterValue = string | boolean | undefined;
+                        const filterValue = column.getFilterValue() as FilterValue;
+
+                        const isSelectVariant = column.columnDef.meta?.filterVariant === "select";
+
+                        const firstValue = table.getCoreRowModel().flatRows[0]?.getValue(column.id);
+                        const isDate =
+                            firstValue instanceof Date ||
+                            (typeof firstValue === "string" &&
+                            !isNaN(Date.parse(firstValue)) &&
+                            firstValue.includes("T"));
+
+                        return (
+                            <TableHead key={`filter-${header.id}`} className="px-2 pb-2">
+                            {!isSelect && !isActions && column.getCanFilter() ? (
+                                isSelectVariant ? (
+                                <Select
+                                    value={
+                                    filterValue === true ? "true" : 
+                                    filterValue === false ? "false" : 
+                                    "all"
+                                    }
+                                    onValueChange={(val) => {
+                                    let newValue: boolean | undefined;
+                                    if (val === "true") newValue = true;
+                                    else if (val === "false") newValue = false;
+                                    else newValue = undefined;
+                                    column.setFilterValue(newValue);
+                                    }}
+                                >
+                                    <SelectTrigger className="h-8 w-full border-white/20 bg-blue-900/50 text-xs text-white focus:ring-1 focus:ring-blue-400">
+                                    <SelectValue placeholder="All" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                    <SelectItem value="all">All</SelectItem>
+                                    <SelectItem value="true">{column.columnDef.meta?.trueLabel || "Yes"}</SelectItem>
+                                    <SelectItem value="false">{column.columnDef.meta?.falseLabel || "No"}</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                ) : isDate ? (
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                        variant="outline"
+                                        className={cn(
+                                            "h-8 w-full justify-start text-left font-normal text-[10px] bg-white/10 text-white border-white/20 hover:bg-white/20 hover:text-white",
+                                            !filterValue && "text-gray-400"
+                                        )}
+                                        >
+                                        <CalendarIcon className="mr-2 h-3 w-3" />
+                                        {/* 1. Check if it's a string specifically */}
+                                        {typeof filterValue === "string" ? (
+                                            format(new Date(filterValue), "PPP")
+                                        ) : (
+                                            <span>Pick date</span>
+                                        )}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                        mode="single"
+                                        selected={typeof filterValue === "string" ? new Date(filterValue) : undefined}
+                                        onSelect={(date) => 
+                                            column.setFilterValue(date ? date.toISOString() : undefined)
+                                        }
+                                        initialFocus
+                                        />
+                                        {/* 3. Logic for clearing remains the same */}
+                                        {filterValue !== undefined && (
+                                        <div className="border-t p-2">
+                                            <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="w-full text-xs"
+                                            onClick={() => column.setFilterValue(undefined)}
+                                            >
+                                            Clear Filter
+                                            </Button>
+                                        </div>
+                                        )}
+                                    </PopoverContent>
+                                </Popover>
+                                ) : (
+                                <Input
+                                    placeholder="Search..."
+                                    value={(filterValue as string) ?? ""}
+                                    onChange={(e) => column.setFilterValue(e.target.value)}
+                                    className="h-8 text-xs bg-white/10 text-white placeholder:text-gray-400 border-white/20 focus-visible:ring-blue-400"
+                                />
+                                )
+                            ) : null}
+                            </TableHead>
+                        );
+                        })}
+                    </TableRow>
+                    )}
+                </React.Fragment>
                     ))}
                 </TableHeader>
 

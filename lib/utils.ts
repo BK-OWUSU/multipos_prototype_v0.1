@@ -23,13 +23,16 @@ export function formatDate(date: Date | string, locale: string = "en-US"): strin
 }
 
 export function formatDateTime(date: Date, locale: string = "en-US"): string {
+  if (isNaN(date.getTime())) return "N/A";
+
   return new Intl.DateTimeFormat(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(date)
+    hour12: true
+  }).format(date);
 }
 
 export function formatTime(date: Date, locale: string = "en-US"): string {
@@ -50,6 +53,14 @@ export function formatPercentage(value: number, locale: string = "en-US"): strin
 export function formatNumber(value: number, locale: string = "en-US"): string {
   return new Intl.NumberFormat(locale).format(value)
 }
+
+export const humanize = (text: string) => {
+  return text
+    .replace(/([A-Z])/g, ' $1') // Add space before caps
+    .replace(/[_-]/g, ' ')      // Replace _ or - with spaces
+    .replace(/^\w/, (c) => c.toUpperCase()) // Capitalize first letter
+    .trim();
+};
 
 export function generateRandomPassword(): string {
   return crypto.randomBytes(4).toString("hex");

@@ -2,30 +2,29 @@
 import { useEffect } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import LogoutButton from "@/components/LogoutButton"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
+import {Breadcrumb,BreadcrumbItem,BreadcrumbLink,BreadcrumbList,BreadcrumbPage,BreadcrumbSeparator,} from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
+import {SidebarInset,SidebarProvider,SidebarTrigger} from "@/components/ui/sidebar"
 import { useAuthStore } from "@/store/useAuthStore"
 import { useRouter, usePathname } from "next/navigation"
 import { Toaster } from "sonner"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { LogOut } from "lucide-react"
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, currentSlug, fetchUser, loading } = useAuthStore();
   const router = useRouter();
 
+  // // Determine toast position dynamically
+  // const getToastPosition = () => {
+  //   if (pathname.endsWith("/reset-password")) return "bottom-center";
+  //   if (pathname.includes("/sales")) return "top-center"; // Example for specific modules
+  //   return "top-right"; // Default
+  // };
+
   // Extract slug and determine if this is a system route
+  
   const slug = pathname.split("/")[1];
   const isResetPasswordPage = pathname.endsWith("/reset-password");
 
@@ -75,37 +74,37 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   // 5. STANDARD DASHBOARD LAYOUT
   return (
-    <div>
-      <SidebarProvider>
-        <AppSidebar />
-        <SidebarInset>
-          <header className="bg-background sticky top-0 z-50 flex h-16 justify-between shrink-0 items-center gap-2 border-b px-4">
-            <div className="flex gap-5 items-center">
-              <div className="flex items-center">
-                <SidebarTrigger className="-ml-1" />
-                <Separator orientation="vertical" className="mr-2 h-4" />
-                <Breadcrumb>
-                  <BreadcrumbList>
-                    <BreadcrumbItem className="hidden md:block">
-                      <BreadcrumbLink href={`/${slug}/dashboard`}>multiPOS</BreadcrumbLink>
-                    </BreadcrumbItem>
-                    <BreadcrumbSeparator className="hidden md:block" />
-                    <BreadcrumbItem>
-                      <BreadcrumbPage>{pageTitle}</BreadcrumbPage>
-                    </BreadcrumbItem>
-                  </BreadcrumbList>
-                </Breadcrumb>
-              </div>
-            </div>
-            <LogoutButton />
-          </header>
-
-          <main className="flex flex-1 flex-col gap-4 p-4">
-            {children}
+     <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="flex p-2 h-16 shrink-0 items-center gap-2 transition-[width,height] justify-between ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator
+              orientation="vertical"
+              className="mr-2 data-[orientation=vertical]:h-4"
+            />
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem className="hidden md:block">
+                 <BreadcrumbLink href={`/${slug}/dashboard`}>multiPOS</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden md:block" />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>{pageTitle}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+           <LogoutButton />
+        </header>
+         <main className="flex flex-1 flex-col gap-4 p-4">
+            <TooltipProvider>
+               {children}
+              </TooltipProvider>
             <Toaster position="top-right" richColors />
           </main>
-        </SidebarInset>
-      </SidebarProvider>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

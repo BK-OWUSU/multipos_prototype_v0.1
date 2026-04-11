@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { useEmployeeStore } from "@/store/employeeStore"
 import { toast } from "sonner"
+import AlertWithDialogue from "../reusables/AlertWithDialogue"
 
 // --- Sub-component stays the same ---
 const ActionCell = ({ employee }: { employee: Employee }) => {
@@ -50,12 +51,24 @@ const ActionCell = ({ employee }: { employee: Employee }) => {
             <span className="flex items-center text-green-600"><UserCheck className="mr-2 h-4 w-4" /> Activate</span>
           )}
         </DropdownMenuItem>
-        <DropdownMenuItem 
-          onClick={() => confirm(`Delete ${employee.firstName}?`) && deleteEmployee(employee.id)}
-          className="text-destructive"
-        >
-          <Trash2 className="mr-2 h-4 w-4" /> Delete
-        </DropdownMenuItem>
+        <AlertWithDialogue
+                  button = {
+                    <DropdownMenuItem
+                        className="text-destructive"
+                        onSelect={(e) => e.preventDefault()}
+                    >
+                       <Trash2 className="mr-2 h-4 w-4" /> Delete
+                    </DropdownMenuItem>
+                  }
+                  buttonText="Logout"
+                  customVariant="primary"
+                  btnClassName="p-4"
+                  confirmText="Yes"
+                  cancelText="Cancel"
+                  title="Delete Staff"
+                  message={`Are you sure you want to delete ${employee.firstName}?`}
+                  confirmFunction={()=> deleteEmployee(employee.id)}
+                />
       </DropdownMenuContent>
     </DropdownMenu>
   )
@@ -72,7 +85,7 @@ export const employeeColumns: ColumnDef<Employee>[] = [
     header: () => (<span className='flex items-center'><Mail className="mr-2" size={16}/>Email</span>)
   },
   {
-    accessorKey: "phone", // ADDED PHONE
+    accessorKey: "phone", 
     header: () => (<span className='flex items-center'><Phone className="mr-2" size={16}/>Phone</span>),
     cell: ({ row }) => row.original.phone || "N/A"
   },
@@ -97,6 +110,12 @@ export const employeeColumns: ColumnDef<Employee>[] = [
   {
     accessorKey: "isVerified", // ADDED VERIFICATION STATUS
     header: "Verified",
+    filterFn: "equals",
+    meta: {
+      filterVariant: "select", 
+      trueLabel: "Verified",   
+      falseLabel: "Unverified" 
+    },
     cell: ({ row }) => (
       <div className="flex justify-center">
         {row.original.isVerified ? (
@@ -110,6 +129,12 @@ export const employeeColumns: ColumnDef<Employee>[] = [
   {
     accessorKey: "isActive",
     header: "Status",
+    filterFn: "equals",
+    meta: {
+      filterVariant: "select",
+       trueLabel: "Active",   
+       falseLabel: "Inactive" 
+    },
     cell: ({ row }) => {
       const active = row.original.isActive
       return (
@@ -131,6 +156,12 @@ export const employeeColumns: ColumnDef<Employee>[] = [
       <KeyRound className="mr-2" size={16}/> Security
     </span>
   ),
+  filterFn: "equals",
+  meta: {
+      filterVariant: "select",
+      trueLabel: "Temp Pass",
+      falseLabel: "Secure"
+    },
   cell: ({ row }) => {
     const needsChange = row.original.needsPasswordChange;
     return (

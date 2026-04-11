@@ -1,15 +1,12 @@
 "use client"
 import { useAuthStore } from "@/store/useAuthStore";
-import data from "@/store/data.json"
 import { useState, useEffect, useMemo } from "react";
-import { User } from "@/components/tablesColumnDef/testColumn";
 import TableMain from "@/components/reusables/table/TableMain";
-import { testColumn } from "@/components/tablesColumnDef/testColumn";
 import { useParams, useRouter } from "next/navigation";
 import hasAccess from "@/lib/accessPermissionSecurity";
 import { GenericModal } from "@/components/reusables/GenericModal";
 import AddEmployeeForm from "./AddEmployeeForm";
-import { Plus, Users2, PersonStanding, Import, UserCheck, ShieldAlert } from "lucide-react"
+import { Plus, Users2, PersonStanding, UserCheck, ShieldAlert } from "lucide-react"
 import { Card, CardHeader, CardDescription, CardContent } from "@/components/ui/card";
 import CustomButton from "@/components/reusables/CustomButton";
 import { useRoleStore } from "@/store/rolesStore";
@@ -96,11 +93,6 @@ console.log(employees)
               />
             </GenericModal>
 
-            <CustomButton
-              customVariant="primary"
-              text="Import"  
-              icon={<Import className="mr-2 h-4 w-4" />}
-              />
             <CustomButton 
               customVariant="primary"
               text="Export" 

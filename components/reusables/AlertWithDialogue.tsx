@@ -11,8 +11,26 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { AlertWithDiagProps } from "@/types/types"
+
 import CustomButton from "./CustomButton"
+import React, { ReactNode } from "react"
+
+//Alert interface
+export interface AlertWithDiagProps {
+    buttonText: string
+    buttonVariant?: "default" | "outline" | "destructive" | "ghost" | "link" | "secondary"
+    customVariant?: "primary" | "secondary" | "primary-outline" | "secondary-outline"
+    title?: string
+    message?: string
+    cancelText?: string 
+    confirmText: string,
+    btnClassName ?: string,
+    button?: ReactNode,
+    icon?: React.ReactNode,
+    cancelFunction?: ()=> void;
+    confirmFunction?: ()=> void;
+}
+
 
 export default function AlertWithDialogue({
     buttonText,
@@ -24,13 +42,15 @@ export default function AlertWithDialogue({
     confirmFunction, 
     buttonVariant,
     customVariant,
-    className,
+    btnClassName,
+    button,
+    icon
 }: AlertWithDiagProps) {
   return (
     <div>
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                <CustomButton className={className} customVariant={customVariant} text={buttonText}  variant={buttonVariant ?? "default"}/>
+                {button ? button : <CustomButton icon={icon} className={btnClassName} customVariant={customVariant} text={buttonText}  variant={buttonVariant ?? "default"}/>}
             </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>

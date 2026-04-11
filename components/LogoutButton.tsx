@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation"
 import AlertWithDialogue from "./reusables/AlertWithDialogue"
 import { useAuthStore } from "@/store/useAuthStore"
+import { LogOut } from "lucide-react"
 
 
 export default function LogoutButton() {
@@ -21,9 +22,10 @@ export default function LogoutButton() {
     <AlertWithDialogue
       buttonText="Logout"
       customVariant="primary"
-      className="p-4"
+      icon={<LogOut className="w-4 h-4" />}
+      btnClassName="p-4 mr-4"
       confirmText="Yes"
-      cancelText="No"
+      cancelText="Cancel"
       title="Logout"
       message="Are you sure you want to logout?"
       confirmFunction={handleLogout}

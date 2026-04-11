@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 
         // 1. Generate temp password
         const tempPassword = generateRandomPassword();
-        const hashTemPassword = await hashPassword(tempPassword);
+        const hashTempPassword = await hashPassword(tempPassword);
         //using transaction to save use details
         const results = await prisma.$transaction(async(transact)=> {
             //Creating user
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
                     phone: validatedData.phone,
                     roleId: validatedData.roleId,
                     shopId: validatedData.shopId || null,
-                    password: hashTemPassword,
+                    password: hashTempPassword,
                     businessId: businessId,
                     isVerified: false, 
                     needsPasswordChange: true,
@@ -83,6 +83,8 @@ export async function POST(request: NextRequest) {
         }); // End of transaction
 
         const {newEmployee, business} = results;
+        console.log(
+            `Name:  ${newEmployee.firstName} || Email:  ${newEmployee.email} || Password: ${tempPassword}`)
         // 2. Send email
         try {
             await sendTempPasswordEmail(

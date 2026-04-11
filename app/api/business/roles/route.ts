@@ -16,7 +16,12 @@ export async function GET() {
     console.log("From Roles ", decoded)
 
     const roles = await prisma.role.findMany({
-      where: { businessId: decoded.businessId },
+      where: { 
+        businessId: decoded.businessId,
+        NOT: {
+          isSystem: true
+        } 
+      },
       include: {
         _count: {
           select: { users: true }
