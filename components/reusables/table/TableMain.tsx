@@ -160,7 +160,7 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
                 />)
         }
             <div className="flex gap-2">
-            {/* Lets say a coulumn Filter button Toggle Button (funnedl filter icon) here */}
+            {/* Lets say a column Filter button Toggle Button (funnel filter icon) here */}
             <Button 
                 variant={showColumnFilters ? "default" : "outline"} 
                 size="sm"
@@ -222,19 +222,19 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
             }
             </div>
         </div>
-        {/* Table Content */}
+         {/* Table Content */}
             <div className="overflow-auto max-h-80 relative">
              <Table className="w-full">
-                <TableHeader className="bg-blue-950 sticky top-0 z-20">
+                <TableHeader className="sticky top-0 z-20">
                     {table.getHeaderGroups().map((headerGroup) => (
                     <React.Fragment key={headerGroup.id}>    
-                    <TableRow key={headerGroup.id} className="hover:bg-transparent">
+                    <TableRow key={headerGroup.id} className="bg-blue-950 hover:bg-blue-900">
                         {headerGroup.headers.map((header) => {
                         const isSelect = header.id === "select";
                         return (
                             <TableHead
                             key={header.id}
-                            className={`relative text-white first:rounded-tl-md font-semibold last:rounded-tr-md group ${isSelect ? "p-2" : "px-4"}`}
+                            className={`border relative text-white first:rounded-tl-md font-semibold last:rounded-tr-md group ${isSelect ? "p-2" : "px-4"}`}
                             style={{ width: header.getSize()}}
                             >
                             {header.isPlaceholder ? null : (
@@ -280,7 +280,7 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
 
                    {/* DYNAMIC FILTER ROW */}
                     {showColumnFilters && (
-                    <TableRow className=" hover:bg-transparent border-none">
+                    <TableRow className="hover:bg-transparent border-none">
                         {headerGroup.headers.map((header) => {
                         const isSelect = header.id === "select";
                         const isActions = header.id === "actions";
@@ -300,7 +300,7 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
                             firstValue.includes("T"));
 
                         return (
-                            <TableHead key={`filter-${header.id}`} className="px-2 pb-2">
+                            <TableHead key={`filter-${header.id}`} className="p-2 border">
                             {!isSelect && !isActions && column.getCanFilter() ? (
                                 isSelectVariant ? (
                                 <Select
@@ -315,9 +315,8 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
                                     else if (val === "false") newValue = false;
                                     else newValue = undefined;
                                     column.setFilterValue(newValue);
-                                    }}
-                                >
-                                    <SelectTrigger className="h-8 w-full border-white/20 bg-blue-900/50 text-xs text-white focus:ring-1 focus:ring-blue-400">
+                                    }}>
+                                    <SelectTrigger className="h-8 w-full border text-xs focus:ring-1 focus:ring-blue-900">
                                     <SelectValue placeholder="All" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -327,54 +326,18 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
                                     </SelectContent>
                                 </Select>
                                 ) : isDate ? (
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                        variant="outline"
-                                        className={cn(
-                                            "h-8 w-full justify-start text-left font-normal text-[10px] bg-white/10 text-white border-white/20 hover:bg-white/20 hover:text-white",
-                                            !filterValue && "text-gray-400"
-                                        )}
-                                        >
-                                        <CalendarIcon className="mr-2 h-3 w-3" />
-                                        {/* 1. Check if it's a string specifically */}
-                                        {typeof filterValue === "string" ? (
-                                            format(new Date(filterValue), "PPP")
-                                        ) : (
-                                            <span>Pick date</span>
-                                        )}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                        <Calendar
-                                        mode="single"
-                                        selected={typeof filterValue === "string" ? new Date(filterValue) : undefined}
-                                        onSelect={(date) => 
-                                            column.setFilterValue(date ? date.toISOString() : undefined)
-                                        }
-                                        initialFocus
-                                        />
-                                        {/* 3. Logic for clearing remains the same */}
-                                        {filterValue !== undefined && (
-                                        <div className="border-t p-2">
-                                            <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="w-full text-xs"
-                                            onClick={() => column.setFilterValue(undefined)}
-                                            >
-                                            Clear Filter
-                                            </Button>
-                                        </div>
-                                        )}
-                                    </PopoverContent>
-                                </Popover>
+                                <Input
+                                    type="date"
+                                    value={(filterValue as string) ?? ""}
+                                    onChange={(e) => column.setFilterValue(e.target.value)}
+                                    className="h-8 text-[10px] bg-white/10 border p-1"
+                                />
                                 ) : (
                                 <Input
                                     placeholder="Search..."
                                     value={(filterValue as string) ?? ""}
                                     onChange={(e) => column.setFilterValue(e.target.value)}
-                                    className="h-8 text-xs bg-white/10 text-white placeholder:text-gray-400 border-white/20 focus-visible:ring-blue-400"
+                                    className="h-8 text-xs border bg-white/10  placeholder:text-gray-400 focus-visible:ring-blue-400"
                                 />
                                 )
                             ) : null}
@@ -403,15 +366,15 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
                         <TableRow
                         key={row.id}
                         // Added hover effect for better row tracking
-                        className="hover:bg-blue-50  transition-colors "
+                        className="hover:bg-blue-50 border  transition-colors "
                         >
-                            {row.getVisibleCells().map((cell) => {
+                        {row.getVisibleCells().map((cell) => {
                         const isSelect = cell.column.id === "select";
                         return (
                             <TableCell 
                             key={cell.id} 
                             // REMOVED flex/justify/items from here
-                            className={`py-3 border-r ${isSelect ? "p-1" : "px-4"}`}
+                            className={`py-3 border ${isSelect ? "p-1" : "px-4"}`}
                             >
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                             </TableCell>

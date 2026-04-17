@@ -20,6 +20,7 @@ model Business {
   email             String
   phone             String?
   address           String?
+  logoUrl          String?
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
   isEmailVerified   Boolean    @default(false)
@@ -35,6 +36,7 @@ model Business {
   roles             Role[]
   discounts         Discount[]
   auditLogs         AuditLog[]
+  brands            Brand[]
 
   @@index([slug])
   @@index([isOnboarded])
@@ -63,6 +65,7 @@ model User {
   firstName           String
   lastName            String
   email               String    
+  profileImage        String?
   password            String
   phone               String?
   businessId          String
@@ -179,28 +182,54 @@ model Discount {
 // ── PRODUCT ────────────────────────────────────────
 model Product {
   id            String     @id @default(cuid())
+  imageUrl      String?
+  fileKey       String?    //For deleting/replacing via UploadThing
+  sku           String?    @unique
   name          String
+  description   String?    @db.Text
+  
   price         Decimal    @db.Decimal(10, 2)
   costPrice     Decimal    @db.Decimal(10, 2)
+  
   stock         Int        @default(0)
   lowStockAlert Int        @default(5)
   isActive      Boolean    @default(true)
+  
   businessId    String
   categoryId    String?
+  brandId       String?    // Link to the Brand table
   discountId    String?
+  
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
+  // Relations
   business      Business   @relation(fields: [businessId], references: [id])
   category      Category?  @relation(fields: [categoryId], references: [id])
+  brand         Brand?     @relation(fields: [brandId], references: [id])
   discount      Discount?  @relation(fields: [discountId], references: [id])
   saleItems     SaleItem[]
   stockLogs     StockLog[]
 
   @@index([businessId, name])     
   @@index([businessId, categoryId]) 
+  @@index([businessId, brandId]) // Index for faster brand-based reporting
   @@index([businessId])
   @@map("products")
+}
+// ── BRAND ──────────────────────────────────────────
+model Brand {
+  id         String   @id @default(cuid())
+  name       String
+  businessId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  business   Business  @relation(fields: [businessId], references: [id])
+  products   Product[]
+
+  @@index([businessId])
+  @@map("brands")
 }
 
 // ── STOCK LOG ──────────────────────────────────────

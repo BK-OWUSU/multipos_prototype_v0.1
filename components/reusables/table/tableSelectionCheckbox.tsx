@@ -1,19 +1,15 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { Checkbox } from "@/components/ui/checkbox"
 
-/**
- * Returns a reusable selection column for TanStack Table.
- * We use a function here so it remains type-safe with TData.
- */
 export function getSelectionColumn<TData>(): ColumnDef<TData> {
   return {
     id: "select",
-    size: 40,
-    minSize: 40,
-    maxSize: 40,
+    size: 10,
+    minSize: 10,
+    maxSize: 10,
     header: ({ table }) => (
 // Added h-full and flex-col justify-center to force vertical centering
-      <div className="flex h-full w-full items-center justify-center">
+      <div className="pr-2 flex h-full w-full items-center justify-center">
         <Checkbox
           checked={
             table.getIsAllPageRowsSelected() ||

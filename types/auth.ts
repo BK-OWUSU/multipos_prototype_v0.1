@@ -98,6 +98,7 @@ export type OTPResponse = {
     requiresPasswordChange?: boolean;
 }
 
+
 export type LoginResponse = {
     success?: boolean;
     redirectTo?: string;

@@ -2,7 +2,7 @@
 
 import { useForm, FormProvider, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CreateEmployeeSchema, createEmployeeSchema } from "@/types/auth.schema";
+import { CreateEmployeeSchema, createEmployeeSchema } from "@/schema/auth.schema";
 import { FormInput } from "@/components/reusables/FormInput";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Plus } from "lucide-react"
@@ -52,6 +52,7 @@ export default function AddEmployeeForm({ roles = [], shops = [],onSuccess}: Add
     }
   } catch (error) {
       toast.error("An unexpected error occurred");
+      console.log("Error from employee form: ",error)
   }
     
   };

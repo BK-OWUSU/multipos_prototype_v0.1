@@ -7,7 +7,7 @@ import {Field,FieldDescription,FieldLabel} from "@/components/ui/field";
 import {InputOTP,InputOTPGroup,InputOTPSeparator,InputOTPSlot} from "@/components/ui/input-otp";
 import { useForm, FormProvider, Controller, SubmitHandler } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod";
-import { otpSchema, OTPFormSchema } from "@/types/auth.schema";
+import { otpSchema, OTPFormSchema } from "@/schema/auth.schema";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/useAuthStore";

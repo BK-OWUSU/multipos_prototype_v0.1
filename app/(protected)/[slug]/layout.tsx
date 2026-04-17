@@ -9,7 +9,7 @@ import { useAuthStore } from "@/store/useAuthStore"
 import { useRouter, usePathname } from "next/navigation"
 import { Toaster } from "sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { LogOut } from "lucide-react"
+
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

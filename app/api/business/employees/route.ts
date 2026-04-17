@@ -2,7 +2,7 @@ import { hashPassword, POS_COOKIE_NAME, verifyPOSToken } from "@/lib/auths";
 import { prisma } from "@/lib/dbHelper";
 import { sendTempPasswordEmail } from "@/lib/email";
 import { generateRandomPassword } from "@/lib/utils";
-import { createEmployeeSchema } from "@/types/auth.schema";
+import { createEmployeeSchema } from "@/schema/auth.schema";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 

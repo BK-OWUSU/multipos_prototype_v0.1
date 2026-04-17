@@ -42,7 +42,6 @@ const stats = useMemo(() => {
     { label: "Admins", value: admins, icon: ShieldAlert, color: "text-purple-600" },
   ];
 }, [employees]);
-console.log(employees)
 
   useEffect(() => {
     if (!hasAccess(user, "dashboard")) {
@@ -59,7 +58,7 @@ console.log(employees)
   return (
     <div className="h-fit min-h-screen bg-gray-5 rounded-2xl flex flex-col gap-4 p-4">
       {/* Header Section */}
-      <div className="space-y-4 ">
+      <div className="space-y-4">
         <h1 className="text-base text-blue-950 md:text-2xl font-semibold flex items-center gap-2 uppercase tracking-tight">
           Staff <PersonStanding className="h-7 w-7 border-2 border-blue-950 p-1 rounded-full" />
         </h1>
@@ -92,12 +91,6 @@ console.log(employees)
                 // shops={shops}  <-- Pass your shops from server/props here
               />
             </GenericModal>
-
-            <CustomButton 
-              customVariant="primary"
-              text="Export" 
-              icon={<Plus className="mr-2 h-4 w-4" />}
-            />
           </div>
         </header>
       </div>

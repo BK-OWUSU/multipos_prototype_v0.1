@@ -67,4 +67,27 @@ export const passwordSchema = z.object({
   message: "Passwords do not match",
   path: ["confirmPassword"],
 });
-export type PasswordSchema = z.infer<typeof passwordSchema>
+export type PasswordSchema = z.infer<typeof passwordSchema>;
+
+//BRAND SCHEMA
+export const createBrandSchema = z.object({
+  name: z.string().min(1, "Brand name is required"),
+});
+export type CreateBrandSchema = z.infer<typeof createBrandSchema>;
+
+//CATEGORY SCHEMA
+export const createCategorySchema = z.object({
+  name: z.string().min(1, "Category name is required"),
+});
+export type CreateCategorySchema = z.infer<typeof createCategorySchema>;
+
+//DISCOUNT SCHEMA
+export const createDiscountSchema = z.object({
+  name: z.string().min(1, "Discount name is required"),
+  type: z.enum(["PERCENTAGE", "FIXED"]),
+  value: z.coerce.number().min(0, "Value cannot be negative"),
+  isActive: z.boolean().default(true),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
+export type CreateDiscountSchema = z.infer<typeof createDiscountSchema>;

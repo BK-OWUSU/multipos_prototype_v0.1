@@ -3,7 +3,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import {Card,CardContent,CardHeader,CardTitle} from "@/components/ui/card"
 import {Field,FieldDescription,FieldGroup,FieldContent} from "@/components/ui/field"
-import { SignUpFormSchema, signupSchema } from "@/types/auth.schema"
+import { SignUpFormSchema, signupSchema } from "@/schema/auth.schema"
 import { Checkbox } from "@/components/ui/checkbox"
 import {SubmitHandler, useForm, FormProvider } from "react-hook-form"
 import {zodResolver} from "@hookform/resolvers/zod";

@@ -45,7 +45,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   ];
 
   return (
-    <Sidebar collapsible="icon" className="dark bg-blue-950" {...props}>
+    <Sidebar collapsible="icon" className=" bg-blue-950" {...props}>
       <SidebarHeader className="bg-blue-950 text-white border-b border-blue-900/50">
         <TeamSwitcher teams={teamsData} />
       </SidebarHeader>
