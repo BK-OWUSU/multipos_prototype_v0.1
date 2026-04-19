@@ -98,9 +98,7 @@ export async function POST(request: NextRequest) {
     maxAge: 0
   })
 
-
   return response;
-
 
   } catch (error: unknown) {
     console.error("CHANGE_PASSWORD_ERROR:", error);

@@ -2,12 +2,12 @@
 
 import { Control, Path, PathValue, UseFormSetValue, useWatch } from "react-hook-form";
 import { UploadButton } from "@/utils/uploadthing";
-import { X, Image as ImageIcon, Loader2 } from "lucide-react"; // Added Loader for UX
+import { X, Image as ImageIcon, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { OurFileRouter } from "@/app/api/uploadthing/core";
 import { FieldValues } from "react-hook-form";
-import { useRef, useState } from "react";
+import { useState } from "react"; 
 import { deleteUTFile } from "@/lib/actions/uploadthing";
 
 interface ImageSectionProps<T extends FieldValues> {
@@ -17,7 +17,6 @@ interface ImageSectionProps<T extends FieldValues> {
   endpoint: keyof OurFileRouter;
   label?: string;
   onImageRemove?: (url: string) => void;
-  //Callback to send the key back to the parent form
   onImageUpload?: (key: string) => void; 
 }
 
@@ -34,19 +33,18 @@ export function ImageSection<T extends FieldValues>({
   const imageUrl = useWatch({ control, name });
   const [isDeleting, setIsDeleting] = useState(false);
   
-  // This ref is the right approach for temporary storage during the session
-  const uploadedFileKeyRef = useRef<string | null>(null);
+  // CHANGED: Swapped useRef for useState
+  const [uploadedFileKey, setUploadedFileKey] = useState<string | null>(null);
 
   const handleRemove = async () => {
     const currentURL = imageUrl as string;
-    const fileKey = uploadedFileKeyRef.current;
-
-    // We only attempt server-side deletion if we have a key from this session
-    if (fileKey) {
+    
+    // Use the state value instead of .current
+    if (uploadedFileKey) {
       setIsDeleting(true);
       try {
         if (onImageRemove) onImageRemove(currentURL);
-        const response = await deleteUTFile(fileKey);
+        const response = await deleteUTFile(uploadedFileKey);
         
         if (response.success) {
           toast.success("Image removed from server");
@@ -54,16 +52,16 @@ export function ImageSection<T extends FieldValues>({
           toast.error(response.error || "Failed to remove image");
         }
       } catch (error) {
-        console.log(error)
+        console.error(error);
         toast.error("An error occurred while deleting");
       } finally {
         setIsDeleting(false);
       }
     }
 
-    // Always clear the form state and the ref locally
+    // Always clear local and form state
     setValue(name, "" as PathValue<T, Path<T>>);
-    uploadedFileKeyRef.current = null;
+    setUploadedFileKey(null); // Clear state
   };
 
   return (
@@ -82,7 +80,7 @@ export function ImageSection<T extends FieldValues>({
             type="button"
             disabled={isDeleting}
             onClick={handleRemove}
-            className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-bold disabled:opacity-100"
+            className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-bold disabled:opacity-100 cursor-pointer"
           >
             {isDeleting ? (
               <Loader2 className="h-6 w-6 animate-spin" />
@@ -104,9 +102,10 @@ export function ImageSection<T extends FieldValues>({
             onClientUploadComplete={(res) => {
               if (res?.[0]) {
                 setValue(name, res[0].ufsUrl as PathValue<T, Path<T>>);
-                // Store the key so we can delete it if they click remove
-                uploadedFileKeyRef.current = res[0].key;
-                //Pass the key to the parent form for its cleanup logic
+                
+                // CHANGED: Update state instead of ref
+                setUploadedFileKey(res[0].key);
+                
                 if (onImageUpload) onImageUpload(res[0].key);
                 toast.success("Uploaded successfully!");
               }
@@ -114,11 +113,13 @@ export function ImageSection<T extends FieldValues>({
             onUploadError={(error: Error) => {
               toast.error(`Upload Failed: ${error.message}`);
             }}
-            appearance={{
+            // ... appearance props
+             appearance={{
               button: "bg-primary hover:bg-primary/90 px-6 py-2 text-sm transition-all shadow-sm disabled:bg-gray-400",
               container: "w-full",
               allowedContent: "text-xs text-gray-400 mt-2"
             }}
+
           />
         </div>
       )}

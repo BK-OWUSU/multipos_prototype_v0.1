@@ -58,46 +58,68 @@ export const useEmployeeStore = create<AuthStore>((set, get)=>({
         }
     },
 
-    toggleEmployeeStatus: async (employeeId: string, currentStatus: boolean) => {
-        try {
-            const response = await apiClient.patch(`/business/employees/${employeeId}`, {
-                isActive: !currentStatus 
-            });
+   toggleEmployeeStatus: async (employeeId: string, currentStatus: boolean) => {
+    // 1. Create the promise
+        const actionPromise = apiClient.patch(`/business/employees/${employeeId}`, {
+            isActive: !currentStatus
+        });
 
+        // 2. Wrap it in toast.promise
+        toast.promise(actionPromise, {
+            loading: `Updating employee status...`,
+            success: (response) => {
+            // Logic inside here runs only if the request succeeds
             if (response.data.success) {
-                // Update local state map
                 set((state) => ({
-                    employees: state.employees 
-                        ? state.employees.map((emp) => emp.id === employeeId ? { ...emp, isActive: !currentStatus } : emp)
-                        : null,
+                employees: state.employees
+                    ? state.employees.map((emp) =>
+                        emp.id === employeeId ? { ...emp, isActive: !currentStatus } : emp
+                    )
+                    : null,
                 }));
-                toast.success(`Employee ${!currentStatus ? 'activated' : 'deactivated'}`);
+                return `Employee ${!currentStatus ? "activated" : "deactivated"} successfully!`;
+            } else {
+                // If the server returns 200 but success is false
+                throw new Error(response.data.error || "Failed to update");
             }
-        } catch (error: unknown) {
-            toast.error("Failed to update employee status");
-            console.log(error)
-        }
+            },
+            error: (err) => {
+            // Handles network errors or the thrown error above
+            console.error(err);
+            return err.message || "Failed to update employee status";
+            },
+        });
     },
-
     deleteEmployee: async (employeeId: string) => {
-        try {
-            const response = await apiClient.delete(`/business/employees/${employeeId}`);
+        // 1. Prepare the promise
+        const deletePromise = apiClient.delete(`/business/employees/${employeeId}`);
 
-            if (response.data.success) {
-                set((state) => ({
-                    employees: state.employees 
-                        ? state.employees.filter((emp) => emp.id !== employeeId)
-                        : null,
-                }));
-                toast.success("Employee removed successfully");
-            }
-        } catch (error: unknown) {
-             if (error instanceof AxiosError) {
-                const message = error.response?.data?.error || "Cannot delete employee with transaction history";       
-                toast.error(message);
-            }
-            const message = "Cannot delete employee with transaction history";
-            toast.error(message);
-        }
+        // 2. Wrap in toast.promise
+        toast.promise(deletePromise, {
+            loading: "Removing employee from system...",
+            success: (response) => {
+                if (response.data.success) {
+                    // Update local state by filtering out the deleted employee
+                    set((state) => ({
+                        employees: state.employees 
+                            ? state.employees.filter((emp) => emp.id !== employeeId)
+                            : null,
+                    }));
+                    return "Employee removed successfully";
+                } else {
+                    // Handle cases where the server returns 200 but success: false
+                    throw new Error(response.data.error || "Failed to remove employee");
+                }
+            },
+            error: (error: unknown) => {
+                // Check for the AxiosError or specific business logic errors
+                // e.g., "Cannot delete employee with transaction history"
+                if (error instanceof AxiosError) {
+                    const serverError = error.response?.data?.error;
+                    return serverError || "Cannot delete employee with transaction history";
+                } 
+                return "Failed to remove employee"
+            },
+        });
     },
 }));

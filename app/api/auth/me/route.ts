@@ -22,6 +22,7 @@ export async function GET() {
         if (!dbUser) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });
         }
+        
         const user = mapUserToResponse(dbUser);
         return NextResponse.json({success: true, user }, { status: 200 });
     } catch (error) {

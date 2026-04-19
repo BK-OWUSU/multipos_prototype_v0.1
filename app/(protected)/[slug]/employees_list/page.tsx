@@ -12,6 +12,7 @@ import CustomButton from "@/components/reusables/CustomButton";
 import { useRoleStore } from "@/store/rolesStore";
 import { useEmployeeStore } from "@/store/employeeStore";
 import { employeeColumns } from "@/components/tablesColumnDef/employeeColumns";
+import { AppResponse } from "@/types/auth";
 
 export default function EmployeeList() {
   const router = useRouter();
@@ -51,6 +52,15 @@ const stats = useMemo(() => {
 
   if (slug !== currentSlug) {
     router.push(`/${user?.business.slug}/dashboard`);
+  }
+
+  const handleMultipleDelete = async(ids: string[]): Promise<AppResponse> => {
+    console.log("Passed IDS: ")
+    console.log(ids)
+    return {
+      success: true,
+      message: `Delete ${ids.length} records`
+    }as AppResponse;
   }
   
   if (!user || !hasAccess(user, "dashboard")) return <div className="p-10 text-center">Unauthorized</div>;
@@ -121,6 +131,8 @@ const stats = useMemo(() => {
           columnVisibilityFilter={true}
           placeholder="Search by name..." 
           loading= {loading}
+          onActionSuccess={()=> fetchEmployees()}
+          handleMultipleDelete={handleMultipleDelete}
         />
       </div>
     </div>

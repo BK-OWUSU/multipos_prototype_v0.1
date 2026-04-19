@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/dbHelper";
-import { POS_COOKIE_NAME, verifyPOSToken } from "@/lib/auths";
-import { cookies } from "next/headers";
+import { getSession } from "@/lib/auths";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -15,15 +14,14 @@ const updateDiscountSchema = z.object({
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
+        const session = await getSession();
         const { id } = await params;
-        const cookieStore = await cookies();
-        const token = cookieStore.get(POS_COOKIE_NAME)?.value;
-        const decoded = verifyPOSToken(token || "");
-
-        if (!decoded) return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
+        if (!session || typeof session === "string") {
+            return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
+        }
 
         const discount = await prisma.discount.findFirst({
-            where: { id, businessId: decoded.businessId },
+            where: { id, businessId: session.businessId },
             select: {
                 id: true,
                 name: true,
@@ -50,14 +48,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
+        const session = await getSession();
         const { id } = await params;
-        const cookieStore = await cookies();
-        const token = cookieStore.get(POS_COOKIE_NAME)?.value;
-        const decoded = verifyPOSToken(token || "");
 
-        if (!decoded) return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
 
-        const { userId, businessId } = decoded;
+        if (!session || typeof session === "string") {
+            return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
+        }
+
+        const { userId, businessId } = session;
         const body = await request.json();
         const validatedData = updateDiscountSchema.parse(body);
 
@@ -115,13 +114,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
-        const cookieStore = await cookies();
-        const token = cookieStore.get(POS_COOKIE_NAME)?.value;
-        const decoded = verifyPOSToken(token || "");
+        const session = await getSession()
 
-        if (!decoded) return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
+        if (!session || typeof session === "string") {
+            return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
+        }
 
-        const { userId, businessId } = decoded;
+        const { userId, businessId } = session;
 
         const currentDiscount = await prisma.discount.findFirst({
             where: { id, businessId },

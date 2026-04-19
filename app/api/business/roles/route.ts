@@ -1,23 +1,19 @@
 import { prisma } from "@/lib/dbHelper";
-import { POS_COOKIE_NAME, verifyPOSToken } from "@/lib/auths";
-import { cookies } from "next/headers";
+import { getSession} from "@/lib/auths";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get(POS_COOKIE_NAME)?.value;
-    const decoded = verifyPOSToken(token || "");
+     //Get Current user session
+      const session = await getSession();
 
-    if (!decoded) {
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
     }
-
-    console.log("From Roles ", decoded)
-
+    const {businessId} = session
     const roles = await prisma.role.findMany({
       where: { 
-        businessId: decoded.businessId,
+        businessId: businessId,
         NOT: {
           isSystem: true
         } 
@@ -39,20 +35,22 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get(POS_COOKIE_NAME)?.value;
-    const decoded = verifyPOSToken(token || "");
+    //Get Current user session
+      const session = await getSession();
     
-    
-    if (!decoded) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session || typeof session === "string") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const { name, permissions, access } = await request.json();
+
+    const { businessId } = session;
 
     const newRole = await prisma.role.create({
       data: {
         name,
-        permissions, // Array of strings from your Prisma model
-        access,      // Array of strings from your Prisma model
-        businessId: decoded.businessId,
+        permissions, // Array of strings from  Prisma model
+        access,      // Array of strings from  Prisma model
+        businessId: businessId,
         isSystem: false // User-created roles are never system roles
       }
     });

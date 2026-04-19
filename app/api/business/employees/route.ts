@@ -1,27 +1,20 @@
-import { hashPassword, POS_COOKIE_NAME, verifyPOSToken } from "@/lib/auths";
+import { getSession, hashPassword } from "@/lib/auths";
 import { prisma } from "@/lib/dbHelper";
 import { sendTempPasswordEmail } from "@/lib/email";
 import { generateRandomPassword } from "@/lib/utils";
 import { createEmployeeSchema } from "@/schema/auth.schema";
-import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
 
 
 export async function POST(request: NextRequest) {
     try {
-        // 1. Get and verify the session cookie
-        const cookieStore = await cookies();
-        const token = cookieStore.get(POS_COOKIE_NAME)?.value;
-        if (!token) {
-            return NextResponse.json({ error: "Unauthorized session", success: false }, { status: 401 });
-        } 
-        // Decode the token
-        const decoded = verifyPOSToken(token);
-        if (!decoded) {
+        //Getting current user session
+        const session = await getSession();
+        if (!session || typeof session === "string") {
             return NextResponse.json({ error: "Invalid or expired session", success: false }, { status: 401 });
         }
-        const { userId, businessId } = decoded;
+        const { userId, businessId } = session;
         const body = await request.json();
         const validatedData = createEmployeeSchema.parse(body);
 
@@ -114,27 +107,23 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
     try {
-        // 1. Verify the session
-        const cookieStore = await cookies();
-        const token = cookieStore.get(POS_COOKIE_NAME)?.value;
-
-        if (!token) {
-            return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
+        // 1. Get current user session
+        const session = await getSession();
+        if (!session || typeof session === "string") {
+            return NextResponse.json({ error: "Unauthorized session", success: false }, { status: 401 });
         }
-
-        const decoded = verifyPOSToken(token);
-        if (!decoded) {
+        if (!session) {
             return NextResponse.json({ error: "Invalid session", success: false }, { status: 401 });
         }
 
-        const { businessId } = decoded;
+        const { businessId, userId } = session;
 
         // 2. Fetch employees with relations
         const employees = await prisma.user.findMany({
             where: {
                 businessId: businessId,
                 NOT: {
-                    id: decoded.userId
+                    id: userId
                 }
             },
             select: {

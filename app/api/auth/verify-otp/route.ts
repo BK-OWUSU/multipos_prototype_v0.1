@@ -10,6 +10,7 @@ export async function POST(request: NextRequest) {
   const cookieStore = await cookies();
   const verify_token = cookieStore.get(VERIFY_COOKIE_NAME)?.value;
   const { code } = await request.json();
+  
   try {
     if (!verify_token) {
       return NextResponse.json({ error: "Unauthorized or expired verification session",success: false },{ status: 401 })

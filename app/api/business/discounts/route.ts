@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/dbHelper";
-import { POS_COOKIE_NAME, verifyPOSToken } from "@/lib/auths";
-import { cookies } from "next/headers";
+import { getSession } from "@/lib/auths";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -15,16 +14,13 @@ const createDiscountSchema = z.object({
 
 export async function POST(request: NextRequest) {
     try {
-        const cookieStore = await cookies();
-        const token = cookieStore.get(POS_COOKIE_NAME)?.value;
-        if (!token) {
+        // Get current user session
+        const session = await getSession();
+
+        if (!session || typeof session === "string") {
             return NextResponse.json({ error: "Unauthorized session", success: false }, { status: 401 });
         }
-        const decoded = verifyPOSToken(token);
-        if (!decoded) {
-            return NextResponse.json({ error: "Invalid or expired session", success: false }, { status: 401 });
-        }
-        const { userId, businessId } = decoded;
+        const { userId, businessId } = session;
         const body = await request.json();
         const validatedData = createDiscountSchema.parse(body);
 
@@ -84,20 +80,13 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
     try {
-        const cookieStore = await cookies();
-        const token = cookieStore.get(POS_COOKIE_NAME)?.value;
+        const  session = await getSession();
 
-        if (!token) {
-            return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
+        if (!session || typeof session === "string") {
+            return NextResponse.json({ error: "Unauthorized session", success: false }, { status: 401 });
         }
 
-        const decoded = verifyPOSToken(token);
-        if (!decoded) {
-            return NextResponse.json({ error: "Invalid session", success: false }, { status: 401 });
-        }
-
-        const { businessId } = decoded;
-
+        const { businessId } = session;
         const discounts = await prisma.discount.findMany({
             where: {
                 businessId: businessId,
@@ -115,17 +104,10 @@ export async function GET(request: NextRequest) {
             },
             orderBy: { createdAt: 'desc' }
         });
-
-        return NextResponse.json({
-            success: true,
-            discounts
-        }, { status: 200 });
+        return NextResponse.json({success: true, discounts}, { status: 200 });
 
     } catch (error) {
         console.error("GET_DISCOUNTS_ERROR:", error);
-        return NextResponse.json({
-            error: "Failed to fetch discounts",
-            success: false
-        }, { status: 500 });
+        return NextResponse.json({error: "Failed to fetch discounts",success: false}, { status: 500 });
     }
 }

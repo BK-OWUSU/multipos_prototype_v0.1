@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/dbHelper";
-import { POS_COOKIE_NAME, verifyPOSToken } from "@/lib/auths";
-import { cookies } from "next/headers";
+import { getSession} from "@/lib/auths";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -10,15 +9,15 @@ const updateCategorySchema = z.object({
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
+        const session = await getSession();
         const { id } = await params;
-        const cookieStore = await cookies();
-        const token = cookieStore.get(POS_COOKIE_NAME)?.value;
-        const decoded = verifyPOSToken(token || "");
 
-        if (!decoded) return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
+        if (!session || typeof session === "string") {
+            return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
+        }
 
         const category = await prisma.category.findFirst({
-            where: { id, businessId: decoded.businessId },
+            where: { id, businessId: session.businessId },
             select: {
                 id: true,
                 name: true,
@@ -39,14 +38,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const { id } = await params;
-        const cookieStore = await cookies();
-        const token = cookieStore.get(POS_COOKIE_NAME)?.value;
-        const decoded = verifyPOSToken(token || "");
+         const session = await getSession();
+         const { id } = await params;
+      
+        if (!session || typeof session === "string") {
+            return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
+        }
 
-        if (!decoded) return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
-
-        const { userId, businessId } = decoded;
+        const { userId, businessId } = session;
         const body = await request.json();
         const validatedData = updateCategorySchema.parse(body);
 
@@ -98,14 +97,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
+        const session = await getSession();
         const { id } = await params;
-        const cookieStore = await cookies();
-        const token = cookieStore.get(POS_COOKIE_NAME)?.value;
-        const decoded = verifyPOSToken(token || "");
 
-        if (!decoded) return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
+        if (!session || typeof session === "string") {
+            return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
+        }
 
-        const { userId, businessId } = decoded;
+        const { userId, businessId } = session;
 
         const currentCategory = await prisma.category.findFirst({
             where: { id, businessId },
@@ -132,10 +131,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
             });
         });
 
-        return NextResponse.json(
-            { success: true, message: `Category deleted successfully` },
-            { status: 200 }
-        );
+        return NextResponse.json({ success: true, message: `Category deleted successfully` },{ status: 200 });
     } catch (error: unknown) {
         console.error("Category delete error:", error);
         if (error instanceof Error && 'code' in error && error.code === 'P2003') {

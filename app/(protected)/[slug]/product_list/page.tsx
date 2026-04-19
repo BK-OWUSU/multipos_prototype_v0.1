@@ -10,6 +10,7 @@ import { useBrandStore } from "@/store/brandStore";
 import { useProductStore } from "@/store/productsStore";
 import { productsColumnDef } from "@/components/tablesColumnDef/productsColumnDef";
 import TableMain from "@/components/reusables/table/TableMain";
+import { deleteProductsAction, toggleProductsStatusAction } from "@/lib/actions/productsActions";
 
 export default function ProductList() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,8 +27,6 @@ export default function ProductList() {
     fetchProducts();
   }, [fetchCategories, fetchBrands, fetchProducts]);
 
-  console.log("Categories : ",categories, categories?.length)
-  console.log("Brands : ",brands, brands?.length)
 
   return (
     <div className="p-4 space-y-6">
@@ -75,7 +74,11 @@ export default function ProductList() {
           columnVisibilityFilter = {true}
           searchKey="name"
           placeholder="search product name..."
-          loading={loading} />
+          loading={loading}
+          handleMultipleDelete={deleteProductsAction}
+          handleMultipleToggleStatus={toggleProductsStatusAction}
+          onActionSuccess={()=> fetchProducts()}
+          />
         <p className="text-center text-gray-400 py-10">Product Table will appear here...</p>
       </div>
     </div>

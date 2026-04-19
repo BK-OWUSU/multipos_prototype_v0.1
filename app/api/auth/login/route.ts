@@ -100,7 +100,6 @@ export async function POST(request: NextRequest) {
             
             // Check if password needs to be changed for first time login users apart from OWNER
             if (user.needsPasswordChange) {
-                console.log("Okay we go here now");
                 const reset_password = generateEmailVerificationToken({
                     userId: user.id,
                     email: user.email,

@@ -1,23 +1,17 @@
 import { prisma } from "@/lib/dbHelper";
-import { POS_COOKIE_NAME, verifyPOSToken } from "@/lib/auths";
+import { getSession } from "@/lib/auths";
 import { productSchema } from "@/schema/inventory.schema";
-import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
     try {
         // 1. Get and verify the session cookie
-        const cookieStore = await cookies();
-        const token = cookieStore.get(POS_COOKIE_NAME)?.value;
-        if (!token) {
+        const session = await getSession();
+        if (!session || typeof session === "string") {
             return NextResponse.json({ error: "Unauthorized session", success: false }, { status: 401 });
         }
-        // Decode the token
-        const decoded = verifyPOSToken(token);
-        if (!decoded) {
-            return NextResponse.json({ error: "Invalid or expired session", success: false }, { status: 401 });
-        }
-        const { userId, businessId } = decoded;
+
+        const { userId, businessId } = session;
         const body = await request.json();
         const validatedData = productSchema.parse(body);
 
@@ -103,19 +97,13 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
     try {
         // 1. Verify the session
-        const cookieStore = await cookies();
-        const token = cookieStore.get(POS_COOKIE_NAME)?.value;
+        const session = await getSession();
 
-        if (!token) {
+        if (!session || typeof session === "string") {
             return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
         }
 
-        const decoded = verifyPOSToken(token);
-        if (!decoded) {
-            return NextResponse.json({ error: "Invalid session", success: false }, { status: 401 });
-        }
-
-        const { businessId } = decoded;
+        const { businessId } = session;
 
         // 2. Fetch products with relations
         const products = await prisma.product.findMany({
@@ -167,9 +155,6 @@ export async function GET(request: NextRequest) {
 
     } catch (error) {
         console.error("GET_PRODUCTS_ERROR:", error);
-        return NextResponse.json({
-            error: "Failed to fetch products",
-            success: false
-        }, { status: 500 });
+        return NextResponse.json({error: "Failed to fetch products",success: false}, { status: 500 });
     }
 }

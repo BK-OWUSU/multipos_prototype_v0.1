@@ -8,7 +8,7 @@ export function getSelectionColumn<TData>(): ColumnDef<TData> {
     minSize: 10,
     maxSize: 10,
     header: ({ table }) => (
-// Added h-full and flex-col justify-center to force vertical centering
+    // Added h-full and flex-col justify-center to force vertical centering
       <div className="pr-2 flex h-full w-full items-center justify-center">
         <Checkbox
           checked={

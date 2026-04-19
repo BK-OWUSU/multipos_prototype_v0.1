@@ -7,7 +7,7 @@ import {flexRender, getCoreRowModel,getSortedRowModel,getFilteredRowModel,getPag
 import { Input } from "../../ui/input";
 import { Button } from "../../ui/button";
 import { useState } from "react";
-import {ArrowDownUp,ArrowDownAZ,ArrowUpZA,ChevronDown,ChevronsLeft,ChevronsRight,ListFilter} from "lucide-react"
+import {Trash2,Ellipsis,ArrowDownUp,ArrowDownAZ,ArrowUpZA,ChevronDown,ChevronsLeft,ChevronsRight,ListFilter,RefreshCw} from "lucide-react"
 import {getSelectionColumn} from "./tableSelectionCheckbox";
 //Export feature "imports"
 import * as XLSX from "xlsx";
@@ -16,11 +16,9 @@ import autoTable, {RowInput} from "jspdf-autotable";
 import { toast } from "sonner";
 import { formatDateTime, humanize } from "@/lib/utils";
 import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue} from "@/components/ui/select"
-import {Popover,PopoverContent,PopoverTrigger} from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-import { CalendarIcon } from "lucide-react"
-import { format } from "date-fns"
-import { cn } from "@/lib/utils"
+import AlertWithDialogue from "../AlertWithDialogue";
+import { AppResponse } from "@/types/auth";
+
 
 declare module "@tanstack/react-table" {
   interface ColumnMeta<TData, TValue> {
@@ -36,8 +34,11 @@ interface TableProps<TData, TValue> {
     placeholder?: string;
     columnVisibilityFilter?: boolean;
     loading?: boolean;
+    handleMultipleDelete?: (ids: string[])=> Promise<AppResponse>;
+    handleMultipleToggleStatus?: (ids: string[]) => Promise<AppResponse>;
+    onActionSuccess?: () => void;
 }
-export default function TableMain<TData, TValue>({columns, data, searchKey, placeholder, columnVisibilityFilter, loading}:TableProps<TData, TValue>) {
+export default function TableMain<TData, TValue>({columns, data, searchKey, placeholder, columnVisibilityFilter, loading,handleMultipleDelete,handleMultipleToggleStatus, onActionSuccess}:TableProps<TData, TValue>) {
     const [globalFilter, setGlobalFilter] = useState("");
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -150,7 +151,7 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
 
     return (
     <div className="space-y-4 p-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center  justify-between">
         {searchKey && (        
                 <Input
                     placeholder={placeholder}
@@ -159,13 +160,13 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
                     className="max-w-sm"
                 />)
         }
-            <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             {/* Lets say a column Filter button Toggle Button (funnel filter icon) here */}
             <Button 
                 variant={showColumnFilters ? "default" : "outline"} 
                 size="sm"
                 onClick={() => setShowColumnFilters(!showColumnFilters)}
-                className="flex items-center gap-2"
+                className="flex items-center p-4 gap-2"
             >
             <ListFilter className="h-4 w-4" />
             {showColumnFilters ? "Hide Filters" : "Filters"}
@@ -220,6 +221,90 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
                     </DropdownMenuContent>
                 </DropdownMenu>)
             }
+            {/* Selection Action all Button */}
+            <div className="relative">
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                <Button 
+                    disabled={table.getFilteredSelectedRowModel().rows.length === 0} 
+                    variant="outline" 
+                    className="ml-auto relative">
+                    <Ellipsis className="h-4 w-4" />
+                    {/* Red Circle Badge */}
+                    {table.getFilteredSelectedRowModel().rows.length > 0 && (
+                    <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-[12px] font-bold text-white shadow-sm animate-in zoom-in">
+                        {table.getFilteredSelectedRowModel().rows.length}
+                    </span>
+                    )}
+                </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Bulk Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                    onClick={async () => {
+                        const ids = table.getSelectedRowModel().rows.map((row) => (row.original as { id: string }).id);                        
+                        if (handleMultipleToggleStatus) {
+                        toast.promise(handleMultipleToggleStatus(ids), {
+                            loading: "Updating status...",
+                            success: (res) => {
+                            if (res.success) {
+                                table.resetRowSelection();
+                                if (onActionSuccess) onActionSuccess();
+                                return res.message;
+                            }
+                            throw new Error(res.error);
+                            },
+                            error: (err) => err.message,
+                        });
+                        }
+                    }}
+                >
+                <RefreshCw className="mr-2 h-4 w-4" /> Toggle Status
+                </DropdownMenuItem>
+                <AlertWithDialogue
+                                  button = {
+                                    <DropdownMenuItem
+                                        className="text-destructive"
+                                        onSelect={(e) => e.preventDefault()}
+                                    >
+                                       <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                    </DropdownMenuItem>
+                                  }
+                                  buttonText="Logout"
+                                  customVariant="primary"
+                                  btnClassName="p-4"
+                                  confirmText="Yes"
+                                  cancelText="Cancel"
+                                  title="Delete Records"
+                                  message={`Are you sure you want to delete selected ${table.getFilteredSelectedRowModel().rows.length} records?`}
+                                  confirmFunction={ async()=> {
+                                    const selectedRows = table.getSelectedRowModel().rows;
+                                    const ids  = selectedRows.map((row)=> (row.original as {id: string}).id);
+                                    if (handleMultipleDelete && ids.length > 0) {
+                                        // 1. Wrap the action in toast.promise for instant feedback
+                                        toast.promise(handleMultipleDelete(ids), {
+                                        loading: `Deleting ${ids.length} selected records...`,
+                                        success: (response) => {
+                                            if (response.success) {
+                                            // 2. Refresh UI and clear selection
+                                            table.resetRowSelection();
+                                            if (onActionSuccess) onActionSuccess();
+                                            return response.message || "Records deleted successfully";
+                                            } else {
+                                            // If the server returned success: false (e.g. businessId mismatch)
+                                            throw new Error(response.error || "Failed to delete");
+                                            }
+                                        },
+                                        error: (err) => err.message || "An unexpected error occurred",
+                                        });
+                                    }
+                                  }}
+                                />
+                </DropdownMenuContent>
+            </DropdownMenu>
+            </div>
+            {/* Selection Action all Button */}
             </div>
         </div>
          {/* Table Content */}
@@ -420,9 +505,6 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
                     </span>{" "}
                     results
                 </div>
-                <span className="font-medium text-blue-950 ">
-                    {" || "}{table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s) selected.
-                </span>
             </div>
 
             {/* Right: Controls */}

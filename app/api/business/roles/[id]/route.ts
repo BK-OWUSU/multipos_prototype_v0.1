@@ -1,23 +1,19 @@
 import { prisma } from "@/lib/dbHelper";
-import { POS_COOKIE_NAME, verifyPOSToken } from "@/lib/auths";
-import { cookies } from "next/headers";
+import { getSession } from "@/lib/auths";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function DELETE(
-  request: NextRequest, 
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const cookieStore = await cookies();
-    const token = cookieStore.get(POS_COOKIE_NAME)?.value;
-    const decoded = verifyPOSToken(token || "");
+    const session = await getSession();
 
-    if (!decoded) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session || typeof session === "string") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     // 1. Fetch role to check if it's a system role or has users
     const role = await prisma.role.findUnique({
-      where: { id, businessId: decoded.businessId },
+      where: { id, businessId: session.businessId },
       include: { _count: { select: { users: true } } }
     });
 

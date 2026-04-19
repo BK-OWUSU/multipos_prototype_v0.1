@@ -40,7 +40,7 @@ export function verifyPOSToken(token: string): JwtPayload | null {
 }
 
 //for middleware token verification, jose is needed 
-export async function verifyPOSTokenEdge(token: string): Promise<JwtPayload | string | null> {
+export async function verifyPOSTokenEdge(token: string): Promise<JwtPayload | null> {
     try {
         const JWT_SECRET = process.env.JWT_SECRET!
          if (!JWT_SECRET) {
@@ -55,11 +55,11 @@ export async function verifyPOSTokenEdge(token: string): Promise<JwtPayload | st
     }
 }
 // Utility function to get session in API routes
-export async function getSession(): Promise<JwtPayload | string | null> {
+export async function getSession(): Promise<JwtPayload | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(POS_COOKIE_NAME)?.value;
   if (!token) return null;
-  return verifyPOSToken(token);
+  return verifyPOSToken(token) as JwtPayload;
 }
 
 //FOR EMAIL VERIFICATION TOKEN

@@ -1,21 +1,20 @@
 import { prisma } from "@/lib/dbHelper";
-import { POS_COOKIE_NAME, verifyPOSToken } from "@/lib/auths";
+import { getSession } from "@/lib/auths";
 import { productSchema } from "@/schema/inventory.schema";
-import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { deleteUTFile } from "@/lib/actions/uploadthing";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
-        const cookieStore = await cookies();
-        const token = cookieStore.get(POS_COOKIE_NAME)?.value;
-        const decoded = verifyPOSToken(token || "");
+        const session = await getSession();
 
-        if (!decoded) return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
+        if (!session) {
+            return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
+        }
 
         const product = await prisma.product.findFirst({
-            where: { id, businessId: decoded.businessId },
+            where: { id, businessId: session.businessId },
             select: {
                 id: true,
                 name: true,
@@ -67,13 +66,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
-        const cookieStore = await cookies();
-        const token = cookieStore.get(POS_COOKIE_NAME)?.value;
-        const decoded = verifyPOSToken(token || "");
+        const session = await getSession();
 
-        if (!decoded) return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
+        if (!session || typeof session === "string") {
+            return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
+        } 
 
-        const { userId, businessId } = decoded;
+        const { userId, businessId } = session;
         const body = await request.json();
         
         // Use partial() so we only validate what's sent
@@ -165,13 +164,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
-        const cookieStore = await cookies();
-        const token = cookieStore.get(POS_COOKIE_NAME)?.value;
-        const decoded = verifyPOSToken(token || "");
+        const session = await getSession();
+        if (!session || typeof session === "string"){
+            return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
+        } 
 
-        if (!decoded) return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
-
-        const { userId, businessId } = decoded;
+        const { userId, businessId } = session;
 
         // Get current product to log stock removal
         const currentProduct = await prisma.product.findFirst({
@@ -215,10 +213,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
             });
         });
 
-        return NextResponse.json(
-            { success: true, message: `Product deleted successfully` },
-            { status: 200 }
-        );
+        return NextResponse.json({ success: true, message: `Product deleted successfully` },{ status: 200 });
     } catch (error: unknown) {
         console.error("Product delete error:", error);
         // Check for foreign key constraint

@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/dbHelper";
-import { POS_COOKIE_NAME, verifyPOSToken } from "@/lib/auths";
-import { cookies } from "next/headers";
+import { getSession } from "@/lib/auths";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -10,16 +9,12 @@ const createCategorySchema = z.object({
 
 export async function POST(request: NextRequest) {
     try {
-        const cookieStore = await cookies();
-        const token = cookieStore.get(POS_COOKIE_NAME)?.value;
-        if (!token) {
+        const session = await getSession();
+
+        if (!session || typeof session === "string") {
             return NextResponse.json({ error: "Unauthorized session", success: false }, { status: 401 });
         }
-        const decoded = verifyPOSToken(token);
-        if (!decoded) {
-            return NextResponse.json({ error: "Invalid or expired session", success: false }, { status: 401 });
-        }
-        const { userId, businessId } = decoded;
+        const { userId, businessId } = session;
         const body = await request.json();
         const validatedData = createCategorySchema.parse(body);
 
@@ -32,9 +27,7 @@ export async function POST(request: NextRequest) {
         });
         if (existingCategory) {
             return NextResponse.json(
-                { error: "A category with this name already exists in your business.", success: false },
-                { status: 400 }
-            );
+                { error: "A category with this name already exists in your business.", success: false },{ status: 400 });
         }
 
         const result = await prisma.$transaction(async (tx) => {
@@ -74,19 +67,13 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
     try {
-        const cookieStore = await cookies();
-        const token = cookieStore.get(POS_COOKIE_NAME)?.value;
+        const session = await getSession();
 
-        if (!token) {
+        if (!session || typeof session === "string") {
             return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
         }
 
-        const decoded = verifyPOSToken(token);
-        if (!decoded) {
-            return NextResponse.json({ error: "Invalid session", success: false }, { status: 401 });
-        }
-
-        const { businessId } = decoded;
+        const { businessId } = session;
 
         const categories = await prisma.category.findMany({
             where: {

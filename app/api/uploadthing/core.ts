@@ -1,16 +1,14 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
-import { verifyPOSTokenEdge, POS_COOKIE_NAME } from "@/lib/auths";
+import {  getSession } from "@/lib/auths";
 import { NextRequest } from "next/server";
 import { JwtPayload } from "@/types/auth";
 
-const auth = async (req: NextRequest ) => {
-    const token = req.cookies.get(POS_COOKIE_NAME)?.value;
-    if (!token) return null;
-    console.log("Token for UPT: ", token)
-    const session = await verifyPOSTokenEdge(token);
+const auth = async (request: NextRequest ) => {
+    //Get Current user session
+    const session = await getSession();
     if (!session || typeof session === "string") return null;
-    console.log("Session for UPT: ", token)
+    console.log("Session for UPT: ", session)
     
     return {
         userId: session.userId,
