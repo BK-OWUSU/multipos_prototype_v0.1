@@ -31,6 +31,7 @@ export const useAuthStore = create<AuthStore>((set, get)=>({
                 currentSlug: response.data.user.business.slug || null, 
                 loading: false
             });
+         
         } catch (error) {
             console.log("Error fetching user: ", error);
             set({user: null, loading: false})

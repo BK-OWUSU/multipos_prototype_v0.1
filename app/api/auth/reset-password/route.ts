@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/dbHelper";
-import { POS_COOKIE_NAME, verifyPOSToken, hashPassword, PASSWORD_RESET_COOKIE_NAME, verifyEmailVerificationToken } from "@/lib/auths";
+import { POS_COOKIE_NAME, hashPassword, PASSWORD_RESET_COOKIE_NAME, verifyEmailVerificationToken } from "@/lib/auths";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 

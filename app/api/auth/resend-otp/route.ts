@@ -47,8 +47,9 @@ export async function POST(request: NextRequest) {
       await saveOTP(user.id, otp, transact)
       return {code: otp, userID: user.id, userEmail: user.email}
     })
-
+    
     const {code, userID, userEmail} = results;
+    console.log(code)
 
     //Generating token for email verification
     const verifyToken = generateEmailVerificationToken({userId: userID, email: userEmail});

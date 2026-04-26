@@ -13,14 +13,14 @@ import { useRoleStore } from "@/store/rolesStore";
 import { useEmployeeStore } from "@/store/employeeStore";
 import { employeeColumns } from "@/components/tablesColumnDef/employeeColumns";
 import { AppResponse } from "@/types/auth";
+import { toggleMultipleUser } from "@/lib/actions/employeesActions";
 
 export default function EmployeeList() {
   const router = useRouter();
   const { slug } = useParams();
-  const {roles, fetchRoles} = useRoleStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
   //Stores
+  const {roles, fetchRoles} = useRoleStore();
   const { currentSlug, user } = useAuthStore()
   const {employees, loading, fetchEmployees} = useEmployeeStore();
   //Fetching Roles
@@ -126,12 +126,13 @@ const stats = useMemo(() => {
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
         <TableMain 
           columns={employeeColumns} 
-          data={employees? employees : []} 
+          data={employees || []} 
           searchKey="firstName"
           columnVisibilityFilter={true}
           placeholder="Search by name..." 
           loading= {loading}
           onActionSuccess={()=> fetchEmployees()}
+          handleMultipleToggleStatus={toggleMultipleUser}
           handleMultipleDelete={handleMultipleDelete}
         />
       </div>

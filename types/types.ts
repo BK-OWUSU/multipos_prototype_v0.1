@@ -13,7 +13,7 @@ export interface NavGroup {
   title: string;
   url: string;
   accessKey: string;
-  items: NavItem[];
+  items?: NavItem[];
   isExternal?: boolean;
   icon?: LucideIcon;
 }

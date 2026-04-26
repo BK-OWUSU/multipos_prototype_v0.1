@@ -1,6 +1,7 @@
 import { generateEmailVerificationToken, hashPassword, VERIFY_COOKIE_NAME } from "@/lib/auths";
 import { prisma } from "@/lib/dbHelper";
 import { sendOTPEmail } from "@/lib/email";
+import { AccountType } from "@/lib/generated/prisma/enums";
 import { generateOTP, saveOTP } from "@/lib/otp";
 import { generateUniqueSlug } from "@/lib/slugGenerator";
 import { NextRequest, NextResponse } from "next/server";
@@ -14,14 +15,11 @@ export async function POST(request: NextRequest) {
 
         //  //Check if user already exists
         // const existingUser = await prisma.user.findFirst({
-        // where: { email },
+        //     where: { email , accountType: AccountType.OWNER},
         // });
-
         // if (existingUser) {
-        // return NextResponse.json(
-        //     { error: "User already exists" },
-        //     { status: 400 }
-        // );}
+        //     return NextResponse.json({ error: "User already exists" },{ status: 400 });
+        // }
 
         const slug = await generateUniqueSlug(businessName); 
         const hashedPassword = await hashPassword(password);
@@ -48,8 +46,8 @@ export async function POST(request: NextRequest) {
             await transact.role.create({
                 data: {
                     name: "ADMIN",
-                    permissions: ["manage_users", "manage_sales"],
-                    access: ["dashboard", "employees"],
+                    permissions: ["*", "*"],
+                    access: ["pos", "sales_terminal","transactions","invoices"],
                     businessId: business.id
                 }
             });
@@ -70,6 +68,7 @@ export async function POST(request: NextRequest) {
                     firstName,
                     lastName,
                     email,
+                    accountType: AccountType.OWNER,
                     password: hashedPassword,
                     businessId: business.id,
                     roleId: ownerRole.id,

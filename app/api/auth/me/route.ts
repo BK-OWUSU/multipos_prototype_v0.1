@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
     try {
+        console.log("EIIIII")
         const session = await getSession();
         if (!session || typeof session === "string") {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -18,6 +19,8 @@ export async function GET() {
                 business: true
             }
         });
+
+        console.log(dbUser)
 
         if (!dbUser) {
             return NextResponse.json({ error: "User not found" }, { status: 404 });

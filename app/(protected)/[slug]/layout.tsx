@@ -8,7 +8,6 @@ import {SidebarInset,SidebarProvider,SidebarTrigger} from "@/components/ui/sideb
 import { useAuthStore } from "@/store/useAuthStore"
 import { useRouter, usePathname } from "next/navigation"
 import { Toaster } from "sonner"
-import { TooltipProvider } from "@/components/ui/tooltip"
 
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
@@ -44,7 +43,14 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   // 2. TENANT PROTECTION: Ensure user belongs to this slug
   useEffect(() => {
     if (!loading && user && slug && currentSlug !== slug && !isResetPasswordPage) {
-      router.push(`/${currentSlug}/dashboard`);
+      if (user.role.access.includes("dashboard")){
+        console.log(user.role.access)
+        router.push(`/${currentSlug}/dashboard`);
+      }else {
+        console.log(user.role.access)
+        const access = user.role.access;
+        router.push(`/${currentSlug}/${access[0]}`)
+      }
     }
   }, [user, loading, slug, currentSlug, router, isResetPasswordPage]);
 
@@ -77,7 +83,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
      <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex p-2 h-16 shrink-0 items-center gap-2 transition-[width,height] justify-between ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+        <header className="flex bg-gray-50 p-2 h-16 shrink-0 items-center gap-2 transition-[width,height] justify-between ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator
@@ -99,9 +105,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
            <LogoutButton />
         </header>
          <main className="flex flex-1 flex-col gap-4 p-4">
-            <TooltipProvider>
                {children}
-              </TooltipProvider>
             <Toaster position="top-right" richColors />
           </main>
       </SidebarInset>

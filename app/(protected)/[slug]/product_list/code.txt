@@ -1,0 +1,202 @@
+"use client";
+
+import { useForm, FormProvider, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { productSchema, ProductFormValues } from "@/schema/inventory.schema";
+import { FormInput } from "@/components/reusables/FormInput";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Package, Save } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
+import { ImageSection } from "@/components/reusables/ImageSection";
+import { useEffect, useState } from "react";
+import CustomButton from "@/components/reusables/CustomButton";
+import { useProductStore } from "@/store/productsStore";
+import { AppResponse } from "@/types/auth";
+import { Product } from "@/types/inventory";
+
+interface ProductFormProps {
+  initialData?: any; // Pass the product object here when editing
+  categories?: { id: string; name: string }[];
+  brands?: { id: string; name: string }[];
+  onSuccess?: () => void;
+  onCancel?: () => void;
+}
+
+export default function ProductForm({ 
+  initialData, 
+  categories = [], 
+  brands = [], 
+  onSuccess, 
+  onCancel 
+}: ProductFormProps) {
+  // Determine mode
+  const isEditing = !!initialData;
+  const { createProduct, updateProduct } = useProductStore();
+
+  const methods = useForm<ProductFormValues>({
+    resolver: zodResolver(productSchema),
+    defaultValues: initialData || {
+      name: "",
+      description: "",
+      sku: "",
+      price: 0,
+      costPrice: 0,
+      stock: 0,
+      lowStockAlert: 5,
+      categoryId: "none",
+      brandId: "none",
+      imageUrl: "",
+      isActive: true,
+    },
+  });
+
+  const { formState: { isSubmitting }, control, handleSubmit, setValue, reset } = methods;
+  const [uploadedFileKey, setUploadedFileKey] = useState<string | null>(null);
+  const [isSuccessfullySubmitted, setIsSuccessfullySubmitted] = useState(false);
+
+  // Sync initialData if it changes (e.g., when clicking different edit buttons)
+  useEffect(() => {
+    if (initialData) {
+      reset(initialData);
+    }
+  }, [initialData, reset]);
+
+  const onSubmit = async (data: ProductFormValues) => {
+    try {
+      setIsSuccessfullySubmitted(true);
+      let response: AppResponse;
+
+      if (isEditing) {
+        response = await updateProduct(initialData.id, data) as AppResponse;
+      } else {
+        response = await createProduct(data) as AppResponse;
+      }
+
+      if (response.success) {
+        toast.success(response.message || `Product ${isEditing ? 'updated' : 'added'} successfully!`);
+        setUploadedFileKey(null);
+        if (onSuccess) onSuccess();
+        if (!isEditing) reset();
+      } else {
+        setIsSuccessfullySubmitted(false);
+        toast.error(response.error || "Operation failed");
+      }
+    } catch (error) {
+      setIsSuccessfullySubmitted(false);
+      toast.error("An unexpected error occurred");
+    }
+  };
+
+  return (
+    <FormProvider {...methods}>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <ImageSection 
+          control={control} 
+          setValue={setValue} 
+          name="imageUrl" 
+          endpoint="imageUploader" 
+          label="Product Image"
+          onImageUpload={(key)=>{
+            setUploadedFileKey(key)
+            setValue("fileKey", key)
+          }}
+          onImageRemove={()=> {
+            setUploadedFileKey(null)
+            setValue("fileKey","")
+          }}
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormInput name="name" label="Product Name" placeholder="e.g. Nike Air Max" />
+          <FormInput name="sku" label="SKU / Barcode" placeholder="Scan or type..." />
+        </div>
+
+        <FormInput textArea name="description" label="Description" placeholder="Brief details about the product" />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormInput name="price" label="Selling Price" type="number" />
+          <FormInput name="costPrice" label="Cost Price" type="number" />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormInput name="stock" label="Initial Stock" type="number" disabled={isEditing} />
+          <FormInput name="lowStockAlert" label="Low Stock Alert Level" type="number" />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field>
+            <FieldLabel>Category</FieldLabel>
+            <Controller
+              control={control}
+              name="categoryId"
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value ?? "none"}>
+                  <SelectTrigger><SelectValue placeholder="Select Category" /></SelectTrigger>
+                  <SelectContent position="popper">
+                    <SelectItem value="none">None / Uncategorized</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </Field>
+
+          <Field>
+            <FieldLabel>Brand</FieldLabel>
+            <Controller
+              control={control}
+              name="brandId"
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value ?? "none"}>
+                  <SelectTrigger><SelectValue placeholder="Select Brand" /></SelectTrigger>
+                  <SelectContent position="popper">
+                    <SelectItem value="none">No Brand</SelectItem>
+                    {brands.map((brand) => (
+                      <SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </Field>
+        </div>
+
+        <div className="flex items-center justify-between p-2 border rounded-md px-4 bg-white shadow-sm">
+          <div className="space-y-0.5">
+            <FieldLabel className="text-sm">Product Status</FieldLabel>
+            <p className="text-xs text-gray-500">Visible to customers in the POS</p>
+          </div>
+          <Controller
+            control={control}
+            name="isActive"
+            render={({ field }) => (
+              <Switch checked={field.value} onCheckedChange={field.onChange} />
+            )}
+          />
+        </div>
+
+        <div className="pt-4 flex items-center gap-3">
+          <CustomButton
+            text="Cancel"
+            type="button"
+            onClick={onCancel}
+            className="flex-1"
+            customVariant="secondary"
+          />
+          <CustomButton
+            text={isEditing ? "Update Product" : "Save Product"}
+            type="submit"
+            className="flex-1"
+            customVariant="primary"
+            icon={isEditing ? <Save className="mr-2 h-4 w-4" /> : <Package className="mr-2 h-4 w-4" />}
+            isLoading={isSubmitting}
+          />
+        </div>
+      </form>
+    </FormProvider>
+  );
+}

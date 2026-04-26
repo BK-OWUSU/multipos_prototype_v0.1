@@ -3,15 +3,15 @@ import apiClient from "@/lib/api-client"
 import { AxiosError } from "axios";
 import { AppResponse } from "@/types/auth";
 import { Brand } from "@/types/inventory";
-import { CreateBrandSchema } from "@/schema/auth.schema";
+import { BrandFormValues } from "@/schema/inventory.schema";
 import { toast } from "sonner";
 
 type BrandStore = {
     brands: Brand[] | null;
     loading: boolean;
     fetchBrands: () => Promise<void>;
-    addBrand: (data: CreateBrandSchema) => Promise<AppResponse>;
-    updateBrand: (id: string, data: CreateBrandSchema) => Promise<AppResponse>;
+    addBrand: (data: BrandFormValues) => Promise<AppResponse>;
+    updateBrand: (id: string, data: BrandFormValues) => Promise<AppResponse>;
     deleteBrand: (id: string) => Promise<void>;
 }
 
@@ -32,7 +32,7 @@ export const useBrandStore = create<BrandStore>((set, get)=>({
         }
     },
 
-    addBrand: async (data: CreateBrandSchema) => {
+    addBrand: async (data: BrandFormValues) => {
         set({ loading: true });
         try {
             const response = await apiClient.post("/business/brands", data);
@@ -59,7 +59,7 @@ export const useBrandStore = create<BrandStore>((set, get)=>({
         }
     },
 
-    updateBrand: async (id: string, data: CreateBrandSchema) => {
+    updateBrand: async (id: string, data: BrandFormValues) => {
         set({ loading: true });
         try {
             const response = await apiClient.patch(`/business/brands/${id}`, data);

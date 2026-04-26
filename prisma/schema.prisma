@@ -20,13 +20,14 @@ model Business {
   email             String
   phone             String?
   address           String?
-  logoUrl          String?
+  logoUrl           String?
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
   isEmailVerified   Boolean    @default(false)
   onboardingStep    Int        @default(1)  // tracks which step they are on
   isOnboarded       Boolean    @default(false)
-
+  workHrsStartTime  DateTime?
+  workHrsCloseTime  DateTime?
   users             User[]
   shops             Shop[]
   products          Product[]
@@ -64,8 +65,12 @@ model User {
   id                  String     @id @default(cuid())
   firstName           String
   lastName            String
-  email               String    
-  profileImage        String?
+  email               String
+  accountType         AccountType @default(EMPLOYEE)
+
+  imageUrl            String?
+  fileKey             String?      
+
   password            String
   phone               String?
   businessId          String
@@ -76,6 +81,10 @@ model User {
   updatedAt           DateTime   @updatedAt
   isVerified          Boolean    @default(false)
   needsPasswordChange Boolean    @default(false)
+ 
+  isDeleted   Boolean    @default(false)
+  deletedAt   DateTime?
+  
   business            Business   @relation(fields: [businessId], references: [id])
   role                Role       @relation(fields: [roleId], references: [id])
   shop                Shop?      @relation(fields: [shopId], references: [id])
@@ -96,6 +105,8 @@ model Role {
   permissions String[]
   access      String[]  
   businessId  String
+  isDeleted   Boolean    @default(false)
+  deletedAt   DateTime?
   createdAt   DateTime @default(now())
   business    Business @relation(fields: [businessId], references: [id])
   users       User[]
@@ -115,6 +126,8 @@ model Shop {
   businessId String
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
+  isDeleted   Boolean    @default(false)
+  deletedAt   DateTime?
 
   business   Business  @relation(fields: [businessId], references: [id])
   users      User[]
@@ -146,10 +159,17 @@ model TimeCard {
 
 // ── CATEGORY ───────────────────────────────────────
 model Category {
-  id         String    @id @default(cuid())
-  name       String
-  businessId String
-  createdAt  DateTime  @default(now())
+  id          String    @id @default(cuid())
+  name        String
+  businessId  String
+  description String?
+  createdAt   DateTime  @default(now())
+  isActive    Boolean    @default(true)
+  isDeleted   Boolean    @default(false)
+  deletedAt   DateTime?
+
+  imageUrl            String?
+  fileKey             String? 
 
   business   Business  @relation(fields: [businessId], references: [id])
   products   Product[]
@@ -170,6 +190,9 @@ model Discount {
   businessId String
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
+
+  isDeleted  Boolean    @default(false)
+  deletedAt  DateTime?
 
   business   Business     @relation(fields: [businessId], references: [id])
   products   Product[]
@@ -194,6 +217,8 @@ model Product {
   stock         Int        @default(0)
   lowStockAlert Int        @default(5)
   isActive      Boolean    @default(true)
+  isDeleted     Boolean    @default(false)
+  deletedAt     DateTime?
   
   businessId    String
   categoryId    String?
@@ -219,19 +244,26 @@ model Product {
 }
 // ── BRAND ──────────────────────────────────────────
 model Brand {
-  id         String   @id @default(cuid())
-  name       String
-  businessId String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  isActive    Boolean  @default(true)
+  isDeleted   Boolean    @default(false)
+  deletedAt   DateTime? 
 
-  business   Business  @relation(fields: [businessId], references: [id])
-  products   Product[]
+  imageUrl    String?
+  fileKey     String? 
+
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id])
+  products    Product[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([businessId])
   @@map("brands")
 }
-
 // ── STOCK LOG ──────────────────────────────────────
 model StockLog {
   id         String   @id @default(cuid())
@@ -269,6 +301,8 @@ model Customer {
   businessId       String
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+  isDeleted        Boolean    @default(false)
+  deletedAt        DateTime?
 
   business         Business  @relation(fields: [businessId], references: [id])
   sales            Sale[]
@@ -375,10 +409,15 @@ model AuditLog {
 }
 
 // ── ENUMS ──────────────────────────────────────────
+enum AccountType {
+  OWNER
+  EMPLOYEE
+}
+
 enum PaymentType {
   CASH
   MOBILE_MONEY
-  CREDIT
+  BOTH
 }
 
 enum SaleStatus {

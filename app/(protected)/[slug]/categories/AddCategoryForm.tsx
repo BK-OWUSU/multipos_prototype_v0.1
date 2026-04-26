@@ -1,0 +1,158 @@
+"use client";
+
+import { useForm, FormProvider, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { categorySchema, CategoryFormValues } from "@/schema/inventory.schema";
+import { FormInput } from "@/components/reusables/FormInput";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Layers } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
+import { ImageSection } from "@/components/reusables/ImageSection";
+import { useEffect, useState } from "react";
+import CustomButton from "@/components/reusables/CustomButton";
+import { useCategoryStore } from "@/store/categoryStore"; // Adjust based on your store name
+import { AppResponse } from "@/types/auth";
+
+interface AddCategoryFormProps {
+  onSuccess?: () => void;
+  onCancel?: () => void;
+}
+
+export default function AddCategoryForm({ onSuccess, onCancel }: AddCategoryFormProps) {
+  const { createCategory } = useCategoryStore(); 
+  const [uploadedFileKey, setUploadedFileKey] = useState<string | null>(null);
+  const [isSuccessfullySubmitted, setIsSuccessfullySubmitted] = useState(false);
+
+  const methods = useForm<CategoryFormValues>({
+    resolver: zodResolver(categorySchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      isActive: true,
+      imageUrl: "", 
+      fileKey: "",
+    },
+  });
+
+  const { formState: { isSubmitting }, control, handleSubmit, setValue, reset } = methods;
+
+
+  // Cleanup logic for uploaded images if the form is closed without saving
+  useEffect(() => {
+    return () => {
+      if (uploadedFileKey && !isSuccessfullySubmitted) {
+        fetch("/api/uploadthing/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fileKey: uploadedFileKey }),
+          keepalive: true,
+        }).catch(console.error);
+      }
+    };
+  }, [uploadedFileKey, isSuccessfullySubmitted]);
+
+  const onSubmit = async (data: CategoryFormValues) => {
+    try {
+      setIsSuccessfullySubmitted(true);
+      
+      const response = await createCategory(data) as AppResponse;
+
+      if (response.success) {
+        toast.success(response.message || "Category added successfully!");
+        if (onSuccess) onSuccess();
+        reset();
+      } else {
+        setIsSuccessfullySubmitted(false);
+        toast.error(response.error || "Failed to add category");
+      }
+    } catch (error) {
+      setIsSuccessfullySubmitted(false);
+      toast.error("An unexpected error occurred");
+      console.error("Category form error: ", error);
+    }
+  };
+
+  return (
+    <FormProvider {...methods}>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {/* Optional: Add ImageSection if your Category model supports icons/images */}
+        <ImageSection 
+          control={control} 
+          setValue={setValue} 
+          name="imageUrl" 
+          endpoint="imageUploader" 
+          label="Category Icon"
+          onImageUpload={(key) => {
+            setUploadedFileKey(key);
+            setValue("fileKey", key); // Ensure this is in your schema/model
+          }}
+          onImageRemove={() => {
+            setUploadedFileKey(null);
+            setValue("fileKey", "");
+          }}
+        />
+
+        <FormInput 
+          name="name" 
+          label="Category Name" 
+          placeholder="e.g. Electronics" 
+        />
+
+        <FormInput 
+          name="description"
+          type="textarea"
+          label="Description" 
+          placeholder="Brief details about this category" 
+        />
+
+        {/* The isActive Switch - Styled exactly like Product form */}
+        <div className="flex items-center justify-between p-2 border rounded-md px-4 bg-white shadow-sm">
+          <div className="space-y-0.5">
+            <FieldLabel className="text-sm">Category Status</FieldLabel>
+            <p className="text-xs text-gray-500">Active categories are visible in the POS</p>
+          </div>
+          <Controller
+            control={control}
+            name="isActive"
+            render={({ field }) => (
+              <Switch 
+                checked={field.value} 
+                onCheckedChange={field.onChange} 
+              />
+            )}
+          />
+        </div>
+
+        {/* Actions Section */}
+        <div className="pt-4 flex items-center gap-3">
+          <CustomButton
+            text="Cancel"
+            type="button"
+            onClick={()=> {
+              if (onCancel)onCancel();
+                if (uploadedFileKey){
+                fetch("/api/uploadthing/delete", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ fileKey: uploadedFileKey }),
+                    keepalive: true,
+                }).catch(console.error);
+             }
+            }}
+            className="flex-1"
+            customVariant="secondary"
+          />
+          <CustomButton
+            text="Save Category"
+            type="submit"
+            className="flex-1"
+            customVariant="primary"
+            icon={<Layers className="mr-2 h-4 w-4" />}
+            isLoading={isSubmitting}
+          />
+        </div>
+      </form>
+    </FormProvider>
+  );
+}

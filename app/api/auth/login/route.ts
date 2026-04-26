@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
                     await saveOTP(user.id, code, tx);
                     return code;
                 })
+                console.log(otpCode)
                 
                 //Sending OTP code to email
                         try {

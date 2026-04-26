@@ -308,9 +308,9 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
             </div>
         </div>
          {/* Table Content */}
-            <div className="overflow-auto max-h-80 relative">
+            <div className="overflow-auto max-h-85 relative">
              <Table className="w-full">
-                <TableHeader className="sticky top-0 z-20">
+                <TableHeader className="sticky top-0 z-1">
                     {table.getHeaderGroups().map((headerGroup) => (
                     <React.Fragment key={headerGroup.id}>    
                     <TableRow key={headerGroup.id} className="bg-blue-950 hover:bg-blue-900">

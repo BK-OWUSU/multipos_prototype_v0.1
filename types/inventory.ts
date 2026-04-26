@@ -29,19 +29,36 @@ export type Product = {
   } | null;
 };
 
-// Brand
+// Category
+export type  Category = {
+  id: string;
+  name: string;
+  businessId: string; 
+  description?: string | null;
+  imageUrl?: string | null;
+  fileKey?: string | null;
+  isActive: boolean;
+  createdAt: string | Date;
+  updatedAt?: string | Date;
+  // Optional: To track product counts in the table
+  _count?: {
+    products: number;
+  };
+}
+
 export type Brand = {
   id: string;
   name: string;
+  businessId: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  fileKey?: string | null;
+  isActive: boolean;
   createdAt: string | Date;
-  updatedAt: string | Date;
-};
-
-// Category
-export type Category = {
-  id: string;
-  name: string;
-  createdAt: string | Date;
+  updatedAt?: string | Date;
+  _count?: {
+    products: number;
+  };
 };
 
 // Discount

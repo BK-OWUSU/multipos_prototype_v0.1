@@ -23,8 +23,6 @@ export function LoginForm({className,...props}: React.ComponentProps<"form">) {
   const {handleSubmit, setError, formState:{isSubmitting, errors}} = forms
   const onSubmit: SubmitHandler<LoginSchema> = async(data) => {
       const response = await login(data) as LoginResponse;
-      console.log("Response Here")
-      console.log(response)
       //handle unverified user
       if (response.isVerified === false && response.redirectTo) {
         router.push(response.redirectTo);

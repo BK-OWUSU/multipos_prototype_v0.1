@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const productSchema = z.object({
+  // id: z.string().optional().nullable(),
   name: z.string().min(2, "Product name is required"),
   description: z.string().optional().nullable(),
   sku: z.string().optional().nullable(),
@@ -24,3 +25,43 @@ export const productSchema = z.object({
 
 
 export type ProductFormValues = z.input<typeof productSchema>;
+export type EditProductFormValues = {
+  id: string,
+product : ProductFormValues,
+}
+
+
+//Category Schema
+export const categorySchema = z.object({
+  name: z.string().min(2, "Category name is required"),
+  description: z.string().optional(), 
+  isActive: z.boolean(),
+  imageUrl: z.string().optional(),
+  fileKey: z.string().optional(), 
+});
+
+export type CategoryFormValues = z.infer<typeof categorySchema>;
+
+
+
+//BRAND SCHEMA
+export const brandSchema = z.object({
+  name: z.string().min(2, "Brand name is required"),
+  description: z.string().optional(), 
+  isActive: z.boolean(),
+  imageUrl: z.string().optional(),
+  fileKey: z.string().optional(), 
+});
+
+export type BrandFormValues = z.infer<typeof brandSchema>;
+
+//DISCOUNT SCHEMA
+export const createDiscountSchema = z.object({
+  name: z.string().min(1, "Discount name is required"),
+  type: z.enum(["PERCENTAGE", "FIXED"]),
+  value: z.coerce.number().min(0, "Value cannot be negative"),
+  isActive: z.boolean().default(true),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
+export type CreateDiscountSchema = z.infer<typeof createDiscountSchema>;

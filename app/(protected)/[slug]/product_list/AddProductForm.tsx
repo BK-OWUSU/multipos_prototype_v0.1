@@ -5,94 +5,114 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { productSchema, ProductFormValues } from "@/schema/inventory.schema";
 import { FormInput } from "@/components/reusables/FormInput";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { Package} from "lucide-react";
+import { Package, Save } from "lucide-react"; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { ImageSection } from "@/components/reusables/ImageSection";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import CustomButton from "@/components/reusables/CustomButton";
 import { useProductStore } from "@/store/productsStore";
 import { AppResponse } from "@/types/auth";
+import { deleteUTFile } from "@/lib/actions/uploadthing";
+import { Product } from "@/types/inventory";
 
-interface AddProductFormProps {
+interface ProductFormProps {
+  initialData?: Product; 
   categories?: { id: string; name: string }[];
   brands?: { id: string; name: string }[];
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export default function AddProductForm({categories = [],brands = [],onSuccess,onCancel}: AddProductFormProps) {
-  const {createProduct} = useProductStore();
+export default function AddProductForm({
+  initialData,
+  categories = [],
+  brands = [],
+  onSuccess,
+  onCancel,
+}: ProductFormProps) {
+  const isEditing = !!initialData;
+  const { createProduct, updateProduct } = useProductStore();
+
+  const [isSuccessfullySubmitted, setIsSuccessfullySubmitted] = useState(false);
+  const fileKeyRef = useRef<string>("");
 
   const methods = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      name: "",
-      description: "",
-      sku: "",
-      price: 0,
-      costPrice: 0,
-      stock: 0,
-      lowStockAlert: 5,
-      categoryId: "none",
-      brandId: "none",
-      imageUrl: "",
-      isActive: true,
+      name: initialData?.name || "",
+      description: initialData?.description || "",
+      sku: initialData?.sku || "",
+      price: initialData?.price || 0,
+      costPrice: initialData?.costPrice || 0,
+      stock: initialData?.stock || 0,
+      lowStockAlert: initialData?.lowStockAlert || 5,
+      categoryId: initialData?.category?.id || "none",
+      brandId: initialData?.brand?.id || "none",
+      imageUrl: initialData?.imageUrl || "",
+      fileKey: initialData?.fileKey || "",
+      isActive: initialData?.isActive ?? true,
     },
   });
-  const { formState: { isSubmitting }, control, handleSubmit, setValue } = methods;
-  const [uploadedFileKey, setUploadedFileKey] = useState<string | null>(null);
-  const [isSuccessfullySubmitted, setIsSuccessfullySubmitted] = useState(false);
 
+  const { formState: { isSubmitting }, control, handleSubmit, setValue, reset } = methods;
+
+  // Sync form values if initialData changes
+  useEffect(() => {
+    if (initialData) {
+      reset({
+        name: initialData.name,
+        description: initialData.description || "",
+        sku: initialData.sku || "",
+        price: initialData.price,
+        costPrice: initialData.costPrice,
+        stock: initialData.stock,
+        lowStockAlert: initialData.lowStockAlert,
+        categoryId: initialData.category?.id || "none",
+        brandId: initialData.brand?.id || "none",
+        imageUrl: initialData.imageUrl || "",
+        fileKey: initialData.fileKey || "",
+        isActive: initialData.isActive,
+      });
+      fileKeyRef.current = initialData.fileKey || "";
+    }
+  }, [initialData, reset]);
+
+  // Cleanup logic: uses fileKeyRef instead of watch
   useEffect(() => {
     return () => {
-      // Because this is a cleanup function, it will use the values 
-      // from the last render before unmounting
-      if (uploadedFileKey && !isSuccessfullySubmitted) {
-        fetch("/api/uploadthing/delete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fileKey: uploadedFileKey }),
-          keepalive: true,
-        }).catch(console.error);
+      if (fileKeyRef.current && !isSuccessfullySubmitted && !isEditing) {
+        deleteUTFile(fileKeyRef.current);
       }
     };
-  }, [uploadedFileKey, isSuccessfullySubmitted]);
+  }, [isSuccessfullySubmitted, isEditing]);
 
   const onSubmit = async (data: ProductFormValues) => {
     try {
-      // 3. Update state instead of ref
       setIsSuccessfullySubmitted(true);
-      
-      console.log("Submitting Product Data:", data);
-      
-      try {
-        const response = await createProduct(data) as AppResponse;
-          if (response.success && response.message) {
-            toast.success(response.message);
-            if (onSuccess) onSuccess();
-          } else {
-            toast.error(response.error || "Failed to add employee");
-          }
-        } catch (error) {
-            toast.error("An unexpected error occurred");
-            console.log("Error from products form: ",error)
-        }
+      let response: AppResponse;
 
-      setUploadedFileKey(null);
-      toast.success("Product added successfully!");
-      if (onSuccess) onSuccess();
-      methods.reset();
+      if (isEditing && initialData) {
+        response = await updateProduct(initialData.id, data) as AppResponse;
+      } else {
+        response = await createProduct(data) as AppResponse;
+      }
+
+      if (response.success) {
+        toast.success(response.message || `Product ${isEditing ? 'updated' : 'added'} successfully!`);
+        if (onSuccess) onSuccess();
+        if (!isEditing) reset();
+      } else {
+        setIsSuccessfullySubmitted(false);
+        toast.error(response.error || "Operation failed");
+      }
     } catch (error) {
       setIsSuccessfullySubmitted(false);
-      toast.error("Failed to add product");
+      toast.error("An unexpected error occurred");
+      console.error("Product Form Error: ", error);
     }
   };
-
-  const handleCancel = () => {
-    if(onCancel) onCancel();
-  }
 
   return (
     <FormProvider {...methods}>
@@ -104,21 +124,22 @@ export default function AddProductForm({categories = [],brands = [],onSuccess,on
           endpoint="imageUploader" 
           label="Product Image"
           onImageUpload={(key)=>{
-            setUploadedFileKey(key)
-            setValue("fileKey", key)
+            setValue("fileKey", key);
+            fileKeyRef.current = key; // Update ref when image is uploaded
           }}
           onImageRemove={()=> {
-            setUploadedFileKey(null)
-            setValue("fileKey","")
+            setValue("fileKey", "");
+            setValue("imageUrl", "");
+            fileKeyRef.current = ""; // Clear ref when image is removed
           }}
-          />
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormInput name="name" label="Product Name" placeholder="e.g. Nike Air Max" />
           <FormInput name="sku" label="SKU / Barcode" placeholder="Scan or type..." />
         </div>
 
-        <FormInput name="description" label="Description" placeholder="Brief details about the product" />
+        <FormInput textArea name="description" label="Description" placeholder="Brief details about the product" />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormInput name="price" label="Selling Price" type="number" />
@@ -126,7 +147,7 @@ export default function AddProductForm({categories = [],brands = [],onSuccess,on
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormInput name="stock" label="Initial Stock" type="number" />
+          <FormInput name="stock" label="Stock Quantity" type="number" disabled={isEditing} />
           <FormInput name="lowStockAlert" label="Low Stock Alert Level" type="number" />
         </div>
 
@@ -184,21 +205,20 @@ export default function AddProductForm({categories = [],brands = [],onSuccess,on
           />
         </div>
 
-        {/* Updated Actions Section */}
         <div className="pt-4 flex items-center gap-3">
           <CustomButton
             text="Cancel"
-            type="button" // Important: keep this as "button" so it doesn't trigger onSubmit
-            onClick={handleCancel}
+            type="button"
+            onClick={onCancel}
             className="flex-1"
             customVariant="secondary"
           />
           <CustomButton
-            text="Save Product"
+            text={isEditing ? "Update Product" : "Save Product"}
             type="submit"
             className="flex-1"
             customVariant="primary"
-            icon={<Package className="mr-2 h-4 w-4" />}
+            icon={isEditing ? <Save className="mr-2 h-4 w-4" /> : <Package className="mr-2 h-4 w-4" />}
             isLoading={isSubmitting}
           />
         </div>

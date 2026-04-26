@@ -23,10 +23,23 @@ import { Button } from "@/components/ui/button"
 import { useProductStore } from "@/store/productsStore"
 import { toast } from "sonner"
 import AlertWithDialogue from "@/components/reusables/AlertWithDialogue"
+import { GenericModal } from "@/components/reusables/GenericModal"
+import CustomButton from "../reusables/CustomButton"
+import { useState } from "react"
+import { useCategoryStore } from "@/store/categoryStore"
+import { useBrandStore } from "@/store/brandStore"
+import AddProductForm from "@/app/(protected)/[slug]/product_list/AddProductForm"
 
 // --- Sub-component for Actions ---
 const ActionCell = ({ product }: { product: Product }) => {
-  const { toggleProductStatus, deleteProduct } = useProductStore()
+  //STORES
+  const { toggleProductStatus, deleteProduct } = useProductStore();
+  const {fetchProducts} = useProductStore();
+  const {fetchCategories, categories} = useCategoryStore();
+  const {fetchBrands, brands} = useBrandStore()
+
+  //USE STATES
+  const [isModalOpen, setIsModalOpen] = useState(false);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -39,9 +52,34 @@ const ActionCell = ({ product }: { product: Product }) => {
         <DropdownMenuItem onClick={() => toast.info("View product details - feature coming soon")}>
           <Eye className="mr-2 h-4 w-4" /> View Details
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => toast.info("Edit product - feature coming soon")}>
-          <Edit className="mr-2 h-4 w-4" /> Edit
-        </DropdownMenuItem>
+         <GenericModal
+                  header="Edit Product"
+                  description="Update product in your inventory"
+                  isOpen={isModalOpen}
+                  onOpenChange={setIsModalOpen}
+                  triggerBtn={
+                    <DropdownMenuItem
+                     onSelect={(e) => {
+                        e.preventDefault(); // Prevent dropdown from closing
+                        setIsModalOpen(true);
+                      }}
+                    >
+                      <Edit className="mr-2 h-4 w-4" /> Edit
+                    </DropdownMenuItem>
+                  }
+                >
+                  <AddProductForm
+                    initialData={product}
+                    categories={categories || []} 
+                    brands={brands || []}
+                    onSuccess={() => {
+                      setIsModalOpen(false);
+                      fetchProducts();
+                    }} 
+                    onCancel={() => setIsModalOpen(false)}
+                  />
+          </GenericModal>
+
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => toggleProductStatus(product.id, product.isActive)}>
           {product.isActive ? (

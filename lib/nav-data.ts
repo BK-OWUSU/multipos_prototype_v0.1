@@ -6,19 +6,21 @@ import hasAccess from "./accessPermissionSecurity";
 import {
   ChartNetwork, ShoppingBasket, Settings, HelpCircle, Users, FileUser, PackageSearch,
   LayoutDashboard, HandCoins, ChartColumnStacked, BookUser, Banknote,
-  Monitor, ArrowRightLeft, FileText, List, Layers, Percent,
+  Monitor, ArrowRightLeft, FileText, List, Layers, Percent, PackagePlus,
   UserRoundCog, Clock, Hourglass, Contact2, Trophy, ShieldCheck,
-  Store, MessageSquare, Globe
+  Store, MessageSquare, Globe,Dices
 } from "lucide-react";
 
 export const getNavData = (slug: string): NavGroup[] => [
+  { title: "Dashboard", url: `/${slug}/dashboard`, accessKey: "dashboard", icon: LayoutDashboard 
+
+},
   {
     title: "Reports",
     url: "#",
     accessKey: "reports",
     icon: ChartNetwork,
     items: [
-      { title: "Dashboard", url: `/${slug}/dashboard`, accessKey: "dashboard", icon: LayoutDashboard },
       { title: "Sales Summary", url: `/${slug}/sale_summary`, accessKey: "sale_summary", icon: Banknote },
       { title: "Sale By Category", url: `/${slug}/sale_category`, accessKey: "sale_category", icon: ChartColumnStacked },
       { title: "Sale By Employee", url: `/${slug}/sale_employee`, accessKey: "sale_employee", icon: BookUser },
@@ -31,7 +33,7 @@ export const getNavData = (slug: string): NavGroup[] => [
     accessKey: "pos",
     icon: ShoppingBasket,
     items: [
-      { title: "Sales Terminal", url: `/${slug}/sales-terminal`, accessKey: "sales-terminal", icon: Monitor },
+      { title: "Sales Terminal", url: `/${slug}/sales_terminal`, accessKey: "sales_terminal", icon: Monitor },
       { title: "Transactions", url: `/${slug}/transactions`, accessKey: "transactions", icon: ArrowRightLeft },
       { title: "Invoices", url: `/${slug}/invoices`, accessKey: "invoices", icon: FileText },
     ],
@@ -43,7 +45,9 @@ export const getNavData = (slug: string): NavGroup[] => [
     icon: PackageSearch,
     items: [
       { title: "Product List", url: `/${slug}/product_list`, accessKey: "product_list", icon: List },
+      { title: "Add Product", url: `/${slug}/add_product`, accessKey: "add_product", icon: PackagePlus },
       { title: "Categories", url: `/${slug}/categories`, accessKey: "categories", icon: Layers },
+      { title: "Brands", url: `/${slug}/brands`, accessKey: "brands", icon: Dices },
       { title: "Discount", url: `/${slug}/discount`, accessKey: "discount", icon: Percent },
     ],
   },
@@ -94,15 +98,19 @@ export const getNavData = (slug: string): NavGroup[] => [
 export function filterNavData(navData: NavGroup[], user: User): NavGroup[] {
   return navData
     .map((group) => {
-      // Filter items inside group
-      const filteredItems = group.items?.filter((item) =>
-        hasAccess(user, item.accessKey)
-      );
+      if (group.items?.length) {
+        // Group with children
+        const filteredItems = group.items.filter((item) =>
+          hasAccess(user, item.accessKey)
+        );
 
-      return {
-        ...group,
-        items: filteredItems,
-      };
+        return filteredItems.length > 0
+          ? { ...group, items: filteredItems }
+          : null;
+      } else {
+        // Top-level item (e.g., Dashboard)
+        return hasAccess(user, group.accessKey) ? { ...group } : null;
+      }
     })
-    .filter((group) => group.items && group.items.length > 0); // remove empty groups
+    .filter((group): group is NavGroup => group !== null);
 }

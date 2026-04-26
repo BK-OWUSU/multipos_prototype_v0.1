@@ -22,87 +22,103 @@ import {
 import { NavGroup } from "@/types/types"
 
 export function NavMain({ items }: { items: NavGroup[] }) {
-  const pathname = usePathname();
+  const pathname = usePathname()
 
-  // 1. Manage state for which group is currently expanded
+  // Manage which group is expanded (only one at a time)
   const [openGroup, setOpenGroup] = React.useState<string | null>(() => {
     const activeGroup = items.find((group) =>
-      group.items?.some((sub) => sub.url === pathname)
-    );
-    return activeGroup ? activeGroup.title : null;
-  });
+      group.items?.some((sub) => sub.url === pathname) || group.url === pathname
+    )
+    return activeGroup ? activeGroup.title : null
+  })
 
-  // 2. Keep sidebar expanded if user navigates via breadcrumbs/URL
+  // Auto-expand the correct group when URL changes (supports direct navigation)
   React.useEffect(() => {
     const activeGroup = items.find((group) =>
-      group.items?.some((sub) => sub.url === pathname)
-    );
+      group.items?.some((sub) => sub.url === pathname) || group.url === pathname
+    )
     if (activeGroup) {
-      setOpenGroup(activeGroup.title);
+      setOpenGroup(activeGroup.title)
     }
-  }, [pathname, items]);
+  }, [pathname, items])
 
   return (
     <SidebarGroup>
       <SidebarMenu>
         {items.map((group) => {
-          const isChildActive = group.items?.some((sub) => sub.url === pathname);
-          const isOpen = openGroup === group.title;
+          const isActive = 
+            group.url === pathname || 
+            group.items?.some((sub) => sub.url === pathname)
+
+          const hasSubItems = group.items && group.items.length > 0
+          const isOpen = openGroup === group.title
 
           return (
             <Collapsible
               key={group.title}
               asChild
-              open={isOpen} // Controlling the state
+              open={isOpen}
               onOpenChange={(open) => {
-                // If opening this group, it becomes the ONLY one open
-                setOpenGroup(open ? group.title : null);
+                setOpenGroup(open ? group.title : null)
               }}
               className="group/collapsible"
             >
               <SidebarMenuItem>
-                <CollapsibleTrigger asChild
-                  className={`mb-2 ${isChildActive ? "font-extrabold animate-pulse" : ""}`}
-                >
+                <CollapsibleTrigger asChild>
                   <SidebarMenuButton 
-                  // tooltip={group.title}
+                    tooltip={group.title}
+                    className={isActive ? "font-extrabold animate-pulse" : ""}
                   >
                     {group.icon && <group.icon className="h-4 w-4" />}
                     <span>{group.title}</span>
-                    <ChevronRightIcon className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+
+                    {/* Show chevron only for groups that have sub-items */}
+                    {hasSubItems && (
+                      <ChevronRightIcon 
+                        className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" 
+                      />
+                    )}
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
-                
-                <CollapsibleContent>
-                  <SidebarMenuSub>
-                    {group.items?.map((subItem) => (
-                      <SidebarMenuSubItem key={subItem.title}>
-                        <SidebarMenuSubButton 
-                          className="text-white"
-                          asChild 
-                          isActive={pathname === subItem.url}
-                        >
-                          {subItem.isExternal ? (
-                            <a href={subItem.url} target="_blank" rel="noopener noreferrer">
-                              {subItem.icon && <subItem.icon className="h-4 w-4 text-white" />}
-                              <span>{subItem.title}</span>
-                            </a>
-                          ) : (
-                            <Link href={subItem.url}>
-                              {subItem.icon && <subItem.icon className="h-4 w-4 text-white" />}
-                              <span>{subItem.title}</span>
-                            </Link>
-                          )}
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    ))}
-                  </SidebarMenuSub>
-                </CollapsibleContent>
+
+                {/* Render submenu ONLY if the group has items */}
+                {hasSubItems && (
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {group.items?.map((subItem) => (
+                        <SidebarMenuSubItem key={subItem.title}>
+                          <SidebarMenuSubButton
+			                      className="text-white" 
+                            asChild 
+                            isActive={pathname === subItem.url}
+                          >
+                            {subItem.isExternal ? (
+                              <a 
+                                href={subItem.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                              >
+                                {subItem.icon && <subItem.icon className="h-4 w-4 text-white!" />}
+                                <span>{subItem.title}</span>
+                              </a>
+                            ) : (
+                              <Link href={subItem.url}
+                              >
+                                {subItem.icon && <subItem.icon className="h-4 w-4 text-white!" />}
+                                <span>{subItem.title}</span>
+                              </Link>
+                            )}
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                )}
               </SidebarMenuItem>
             </Collapsible>
-          );
+          )
         })}
       </SidebarMenu>
     </SidebarGroup>
-  );
+  )
 }

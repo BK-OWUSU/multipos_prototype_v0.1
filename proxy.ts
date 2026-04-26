@@ -25,6 +25,8 @@ export async function proxy(request: NextRequest) {
     const routeKey = pathname.split("/")[2];
     const isTenantPath = /^\/[^/]+\/[^/]+/.test(pathname);
 
+    console.log("Route Key:", routeKey)
+
     // 2. PASSWORD CHANGE ENFORCEMENT
     if (session?.needsPasswordChange) {
         const resetPath = `/${session.businessSlug}/reset-password`;
