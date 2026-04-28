@@ -10,7 +10,7 @@ type BrandStore = {
     brands: Brand[] | null;
     loading: boolean;
     fetchBrands: () => Promise<void>;
-    addBrand: (data: BrandFormValues) => Promise<AppResponse>;
+    createBrand: (data: BrandFormValues) => Promise<AppResponse>;
     updateBrand: (id: string, data: BrandFormValues) => Promise<AppResponse>;
     deleteBrand: (id: string) => Promise<void>;
 }
@@ -32,7 +32,7 @@ export const useBrandStore = create<BrandStore>((set, get)=>({
         }
     },
 
-    addBrand: async (data: BrandFormValues) => {
+    createBrand: async (data: BrandFormValues) => {
         set({ loading: true });
         try {
             const response = await apiClient.post("/business/brands", data);

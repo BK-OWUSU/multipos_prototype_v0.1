@@ -9,7 +9,6 @@ import { hashPassword } from "@/lib/auths";
 import { sendTempPasswordEmail } from "@/lib/email";
 
 
-
 export async function deleteMultipleUserService(ids: string[], userId: string, businessId: string, businessSlug: string) {
   
     try {
@@ -173,10 +172,11 @@ export async function createEmployee(request: NextRequest, userId : string, busi
             return {newEmployee, business};
         }); 
         // End of transaction
-
         const {newEmployee, business} = results;
+
         console.log(
             `Name:  ${newEmployee.firstName} || Email:  ${newEmployee.email} || Password: ${tempPassword}`)
+
         // 2. Send email
         try {
             await sendTempPasswordEmail(

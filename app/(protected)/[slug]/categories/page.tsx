@@ -5,7 +5,7 @@ import { Card, CardHeader, CardDescription, CardContent } from "@/components/ui/
 import { GenericModal } from "@/components/reusables/GenericModal";
 import CustomButton from "@/components/reusables/CustomButton";
 import TableMain from "@/components/reusables/table/TableMain";
-import AddCategoryForm from "./AddCategoryForm";
+import CategoryForm from "./AddCategoryForm";
 import { categoriesColumnDef } from "@/components/tablesColumnDef/categoriesColumnDef";
 import { useCategoryStore } from "@/store/categoryStore";
 
@@ -60,7 +60,7 @@ export default function CategoryPage() {
             />
           }
         >
-          <AddCategoryForm 
+          <CategoryForm 
             onSuccess={() =>{ 
               setIsModalOpen(false)
               fetchCategories();

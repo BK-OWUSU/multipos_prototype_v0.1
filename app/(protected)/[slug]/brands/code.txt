@@ -1,97 +1,82 @@
-"use client";
+app/(protected)/[slug]/brands/AddBrandForm.tsx"use client";
 
 import { useForm, FormProvider, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { brandSchema, BrandFormValues } from "@/schema/inventory.schema";
 import { FormInput } from "@/components/reusables/FormInput";
 import { FieldLabel } from "@/components/ui/field";
-import { Award, Save } from "lucide-react";
+import { Award } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { ImageSection } from "@/components/reusables/ImageSection";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import CustomButton from "@/components/reusables/CustomButton";
 import { useBrandStore } from "@/store/brandStore"; 
 import { AppResponse } from "@/types/auth";
 import { deleteUTFile } from "@/lib/actions/uploadthing";
-import { Brand } from "@/types/inventory"; // Make sure you have this type
 
-interface BrandFormProps {
-  initialData?: Brand;
+interface AddBrandFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export default function BrandForm({
-  initialData,
-  onSuccess,
-  onCancel
-}: BrandFormProps) {
-  const isEditing = !!initialData;
-  const { createBrand, updateBrand } = useBrandStore();
-
+export default function AddBrandForm({ onSuccess, onCancel }: AddBrandFormProps) {
+  // const { createBrand } = useBrandStore(); 
+  const [uploadedFileKey, setUploadedFileKey] = useState<string | null>(null);
   const [isSuccessfullySubmitted, setIsSuccessfullySubmitted] = useState(false);
-  const fileKeyRef = useRef<string>("");
 
   const methods = useForm<BrandFormValues>({
     resolver: zodResolver(brandSchema),
     defaultValues: {
-      name: initialData?.name || "",
-      description: initialData?.description || "",
-      imageUrl: initialData?.imageUrl || "",
-      fileKey: initialData?.fileKey || "",
-      isActive: initialData?.isActive ?? true,
+      name: "",
+      description: "",
+      isActive: true,
+      imageUrl: "",
+      fileKey: "",
     },
   });
 
   const { formState: { isSubmitting }, control, handleSubmit, setValue, reset } = methods;
 
-  // Sync form values if initialData changes
-  useEffect(() => {
-    if (initialData) {
-      reset({
-        name: initialData.name,
-        description: initialData.description || "",
-        imageUrl: initialData.imageUrl || "",
-        fileKey: initialData.fileKey || "",
-        isActive: initialData.isActive,
-      });
-      fileKeyRef.current = initialData.fileKey || "";
-    }
-  }, [initialData, reset]);
-
-  // Cleanup logic: delete uploaded file if form is closed without saving
   useEffect(() => {
     return () => {
-      if (fileKeyRef.current && !isSuccessfullySubmitted && !isEditing) {
-        deleteUTFile(fileKeyRef.current);
+      if (uploadedFileKey && !isSuccessfullySubmitted) {
+        fetch("/api/uploadthing/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fileKey: uploadedFileKey }),
+          keepalive: true,
+        }).catch(console.error);
       }
     };
-  }, [isSuccessfullySubmitted, isEditing]);
+  }, [uploadedFileKey, isSuccessfullySubmitted]);
 
   const onSubmit = async (data: BrandFormValues) => {
     try {
       setIsSuccessfullySubmitted(true);
-      let response: AppResponse;
+      
+      // const response = await createBrand(data) as AppResponse;
 
-      if (isEditing && initialData) {
-        response = await updateBrand(initialData.id, data) as AppResponse;
-      } else {
-        response = await createBrand(data) as AppResponse;
-      }
-
-      if (response.success) {
-        toast.success(response.message || `Brand ${isEditing ? 'updated' : 'added'} successfully!`);
-        if (onSuccess) onSuccess();
-        if (!isEditing) reset();
-      } else {
-        setIsSuccessfullySubmitted(false);
-        toast.error(response.error || "Operation failed");
-      }
+      // if (response.success) {
+      //   toast.success(response.message || "Brand added successfully!");
+      //   if (onSuccess) onSuccess();
+      //   reset();
+      // } else {
+      //   setIsSuccessfullySubmitted(false);
+      //   toast.error(response.error || "Failed to add brand");
+      // }
     } catch (error) {
       setIsSuccessfullySubmitted(false);
       toast.error("An unexpected error occurred");
-      console.error("Brand Form Error: ", error);
+      console.error("Brand form error: ", error);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (onCancel) onCancel();
+    if (uploadedFileKey) {
+     await deleteUTFile(uploadedFileKey).catch(console.error);
+     setUploadedFileKey(null);
     }
   };
 
@@ -105,13 +90,12 @@ export default function BrandForm({
           endpoint="imageUploader" 
           label="Brand Logo"
           onImageUpload={(key) => {
-            setValue("fileKey", key);
-            fileKeyRef.current = key;
+            setUploadedFileKey(key);
+            setValue("fileKey", key); 
           }}
           onImageRemove={() => {
+            setUploadedFileKey(null);
             setValue("fileKey", "");
-            setValue("imageUrl", "");
-            fileKeyRef.current = "";
           }}
         />
 
@@ -122,8 +106,8 @@ export default function BrandForm({
         />
 
         <FormInput 
-          textArea
           name="description"
+          type="textarea"
           label="Description" 
           placeholder="Brief details about this brand" 
         />
@@ -149,16 +133,16 @@ export default function BrandForm({
           <CustomButton
             text="Cancel"
             type="button"
-            onClick={onCancel}
+            onClick={handleCancel}
             className="flex-1"
             customVariant="secondary"
           />
           <CustomButton
-            text={isEditing ? "Update Brand" : "Save Brand"}
+            text="Save Brand"
             type="submit"
             className="flex-1"
             customVariant="primary"
-            icon={isEditing ? <Save className="mr-2 h-4 w-4" /> : <Award className="mr-2 h-4 w-4" />}
+            icon={<Award className="mr-2 h-4 w-4" />}
             isLoading={isSubmitting}
           />
         </div>

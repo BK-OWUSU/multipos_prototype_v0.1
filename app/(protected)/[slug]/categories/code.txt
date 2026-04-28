@@ -5,99 +5,78 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { categorySchema, CategoryFormValues } from "@/schema/inventory.schema";
 import { FormInput } from "@/components/reusables/FormInput";
 import { FieldLabel } from "@/components/ui/field";
-import { Layers, Save } from "lucide-react";
+import { Layers } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { ImageSection } from "@/components/reusables/ImageSection";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import CustomButton from "@/components/reusables/CustomButton";
-import { useCategoryStore } from "@/store/categoryStore";
+import { useCategoryStore } from "@/store/categoryStore"; // Adjust based on your store name
 import { AppResponse } from "@/types/auth";
-import { deleteUTFile } from "@/lib/actions/uploadthing";
-import { Category } from "@/types/inventory"; // Make sure you have this type
 
-interface CategoryFormProps {
-  initialData?: Category;
+interface AddCategoryFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
-export default function CategoryForm({
-  initialData,
-  onSuccess,
-  onCancel
-}: CategoryFormProps) {
-  const isEditing = !!initialData;
-  const { createCategory, updateCategory } = useCategoryStore();
-
+export default function AddCategoryForm({ onSuccess, onCancel }: AddCategoryFormProps) {
+  const { createCategory } = useCategoryStore(); 
+  const [uploadedFileKey, setUploadedFileKey] = useState<string | null>(null);
   const [isSuccessfullySubmitted, setIsSuccessfullySubmitted] = useState(false);
-  const fileKeyRef = useRef<string>("");
 
   const methods = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
     defaultValues: {
-      name: initialData?.name || "",
-      description: initialData?.description || "",
-      imageUrl: initialData?.imageUrl || "",
-      fileKey: initialData?.fileKey || "",
-      isActive: initialData?.isActive ?? true,
+      name: "",
+      description: "",
+      isActive: true,
+      imageUrl: "", 
+      fileKey: "",
     },
   });
 
   const { formState: { isSubmitting }, control, handleSubmit, setValue, reset } = methods;
 
-  // Sync form values if initialData changes
-  useEffect(() => {
-    if (initialData) {
-      reset({
-        name: initialData.name,
-        description: initialData.description || "",
-        imageUrl: initialData.imageUrl || "",
-        fileKey: initialData.fileKey || "",
-        isActive: initialData.isActive,
-      });
-      fileKeyRef.current = initialData.fileKey || "";
-    }
-  }, [initialData, reset]);
 
-  // Cleanup logic: delete uploaded file if form is closed without saving
+  // Cleanup logic for uploaded images if the form is closed without saving
   useEffect(() => {
     return () => {
-      if (fileKeyRef.current && !isSuccessfullySubmitted && !isEditing) {
-        deleteUTFile(fileKeyRef.current);
+      if (uploadedFileKey && !isSuccessfullySubmitted) {
+        fetch("/api/uploadthing/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fileKey: uploadedFileKey }),
+          keepalive: true,
+        }).catch(console.error);
       }
     };
-  }, [isSuccessfullySubmitted, isEditing]);
+  }, [uploadedFileKey, isSuccessfullySubmitted]);
 
   const onSubmit = async (data: CategoryFormValues) => {
     try {
       setIsSuccessfullySubmitted(true);
-      let response: AppResponse;
-
-      if (isEditing && initialData) {
-        response = await updateCategory(initialData.id, data) as AppResponse;
-      } else {
-        response = await createCategory(data) as AppResponse;
-      }
+      
+      const response = await createCategory(data) as AppResponse;
 
       if (response.success) {
-        toast.success(response.message || `Category ${isEditing ? 'updated' : 'added'} successfully!`);
+        toast.success(response.message || "Category added successfully!");
         if (onSuccess) onSuccess();
-        if (!isEditing) reset();
+        reset();
       } else {
         setIsSuccessfullySubmitted(false);
-        toast.error(response.error || "Operation failed");
+        toast.error(response.error || "Failed to add category");
       }
     } catch (error) {
       setIsSuccessfullySubmitted(false);
       toast.error("An unexpected error occurred");
-      console.error("Category Form Error: ", error);
+      console.error("Category form error: ", error);
     }
   };
 
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {/* Optional: Add ImageSection if your Category model supports icons/images */}
         <ImageSection 
           control={control} 
           setValue={setValue} 
@@ -105,13 +84,12 @@ export default function CategoryForm({
           endpoint="imageUploader" 
           label="Category Icon"
           onImageUpload={(key) => {
-            setValue("fileKey", key);
-            fileKeyRef.current = key;
+            setUploadedFileKey(key);
+            setValue("fileKey", key); // Ensure this is in your schema/model
           }}
           onImageRemove={() => {
+            setUploadedFileKey(null);
             setValue("fileKey", "");
-            setValue("imageUrl", "");
-            fileKeyRef.current = "";
           }}
         />
 
@@ -122,12 +100,13 @@ export default function CategoryForm({
         />
 
         <FormInput 
-          textArea
           name="description"
+          type="textarea"
           label="Description" 
           placeholder="Brief details about this category" 
         />
 
+        {/* The isActive Switch - Styled exactly like Product form */}
         <div className="flex items-center justify-between p-2 border rounded-md px-4 bg-white shadow-sm">
           <div className="space-y-0.5">
             <FieldLabel className="text-sm">Category Status</FieldLabel>
@@ -145,20 +124,31 @@ export default function CategoryForm({
           />
         </div>
 
+        {/* Actions Section */}
         <div className="pt-4 flex items-center gap-3">
           <CustomButton
             text="Cancel"
             type="button"
-            onClick={onCancel}
+            onClick={()=> {
+              if (onCancel)onCancel();
+                if (uploadedFileKey){
+                fetch("/api/uploadthing/delete", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ fileKey: uploadedFileKey }),
+                    keepalive: true,
+                }).catch(console.error);
+             }
+            }}
             className="flex-1"
             customVariant="secondary"
           />
           <CustomButton
-            text={isEditing ? "Update Category" : "Save Category"}
+            text="Save Category"
             type="submit"
             className="flex-1"
             customVariant="primary"
-            icon={isEditing ? <Save className="mr-2 h-4 w-4" /> : <Layers className="mr-2 h-4 w-4" />}
+            icon={<Layers className="mr-2 h-4 w-4" />}
             isLoading={isSubmitting}
           />
         </div>

@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { GenericModal } from "@/components/reusables/GenericModal";
 import CustomButton from "@/components/reusables/CustomButton";
 import TableMain from "@/components/reusables/table/TableMain";
-import AddBrandForm from "./AddBrandForm";
+import BrandForm from "./AddBrandForm";
 import { brandsColumnDef } from "@/components/tablesColumnDef/brandsColumnDef"; // Ensure this is created
 
 // Mock Data updated for Brands
@@ -48,7 +48,7 @@ export default function BrandPage() {
             />
           }
         >
-          <AddBrandForm onSuccess={() => setIsModalOpen(false)} onCancel={() => setIsModalOpen(false)} />
+          <BrandForm onSuccess={() => setIsModalOpen(false)} onCancel={() => setIsModalOpen(false)} />
         </GenericModal>
       </div>
 
