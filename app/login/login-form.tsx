@@ -11,6 +11,7 @@ import { useAuthStore } from "@/store/useAuthStore"
 import { LoginResponse } from "@/types/auth"
 import CustomButton from "@/components/reusables/CustomButton"
 import { LogIn } from "lucide-react";
+import { toast } from "sonner"
 
 
 
@@ -38,7 +39,9 @@ export function LoginForm({className,...props}: React.ComponentProps<"form">) {
 
       //Successful login with single business → redirect to dashboard
       if(response.success && response.redirectTo) {
-        router.push(`/${response.redirectTo}/dashboard`);
+
+        toast.success("Login successful! Redirecting...");
+        router.push(response.redirectTo);
         return;
       }
       

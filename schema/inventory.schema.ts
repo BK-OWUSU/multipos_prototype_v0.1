@@ -25,10 +25,6 @@ export const productSchema = z.object({
 
 
 export type ProductFormValues = z.input<typeof productSchema>;
-export type EditProductFormValues = {
-  id: string,
-product : ProductFormValues,
-}
 
 
 //Category Schema

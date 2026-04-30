@@ -20,7 +20,7 @@ export async function GET() {
       },
       include: {
         _count: {
-          select: { users: true }
+          select: { employee: true }
         }
       },
       orderBy: { name: 'asc' }

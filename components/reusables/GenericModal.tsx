@@ -16,6 +16,7 @@ interface GenericModalProps {
   description?: string;    
   children: ReactNode;    
   isOpen?: boolean;
+  width?: string | null; // Optional width prop for custom sizing
   onOpenChange?: (open: boolean) => void;
 }
 
@@ -25,6 +26,7 @@ export function GenericModal({
   description,
   children,
   isOpen,
+  width,
   onOpenChange,
 }: GenericModalProps) {
   return (
@@ -34,7 +36,7 @@ export function GenericModal({
       </DialogTrigger>
       
       {/* sm:max-w-[600px] is a good middle-ground for most POS forms */}
-      <DialogContent className="sm:max-w-137.5 max-h-[90vh] overflow-y-auto">
+      <DialogContent className={`sm:max-w-${width || '137.5'} max-h-[90vh] overflow-y-auto`}>
         <DialogHeader>
           <DialogTitle className="text-center font-bold my-1">{header}</DialogTitle>
           {description && (

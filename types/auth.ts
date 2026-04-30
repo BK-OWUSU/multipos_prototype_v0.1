@@ -14,9 +14,22 @@ export type Role = {
   };
 };
 
-//Users  
+export type UserWithRelations = Prisma.UserGetPayload<{
+  include: {
+    employee: {
+      include: {
+        business: true,
+        role: true,
+        shop: true
+      }
+    }
+  }
+}>
+
+//User  
 export type User = {
   id: string;
+  employeeId: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -30,47 +43,57 @@ export type User = {
     name: string;
     slug: string;
   };
+  shopId?: string | null;
 }
 
-//Employee  
 export type Employee = {
   id: string;
   firstName: string;
   lastName: string;
   email: string;
+  imageUrl: string | null;
+  fileKey: string | null;
   phone: string | null;
-  isActive: boolean;        // Important: Can they log in?
-  isVerified: boolean;      // Important: Have they finished OTP?
-  needsPasswordChange: boolean;  // Important: have they reset their password
-  createdAt: string | Date;
+  address: string | null;
+  dateOfBirth: Date | null;
+  designation: string | null;
+  hasSystemAccess: boolean;
+  isActive: boolean;
+  createdAt: Date | string;
+
+  roleId: string;
+  shopId: string | null;
+
   role: {
     id: string;
     name: string;
   };
+  
   shop: {
     id: string;
     name: string;
-  } | null; // Nullable because some admins might not be tied to one shop
+  } | null;
+
+  user: {
+    id: string;
+    isVerified: boolean;
+    needsPasswordChange: boolean;
+  } | null; 
 };
 
-// export type EmployeeWithRelations = Prisma.UserGetPayload<{
-//    include: {
-//     role: true,
-//     business: true,
-//     shop: true
-//    } 
-// }>
 
 export type JwtPayload = {
   userId: string;
   businessId: string;
   businessSlug: string;
+  employeeId?: string;
   roleName: string;
   firstName: string;
   lastName: string;
   email: string;
   access: string[];
-  needsPasswordChange: boolean;
+  needsPasswordChange?: boolean;
+  shopId?: string;
 };
 
 //Token
@@ -80,12 +103,7 @@ export type Token = {
   email?: string
 }
 
-export type UserWithRelations = Prisma.UserGetPayload<{
-    include: {
-        business: true,
-        role: true
-    }
-}>
+
 
 export type OTPResponse = {
     valid?: boolean;

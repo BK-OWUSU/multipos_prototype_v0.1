@@ -1,22 +1,27 @@
 import { User, UserWithRelations } from "@/types/auth";
 
 export function mapUserToResponse(user: UserWithRelations): User {
+  const emp = user.employee; // Shortening for readability
+
   return {
     id: user.id,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
+    employeeId: emp.id,
+    firstName: emp.firstName,
+    lastName: emp.lastName,
+    email: emp.email,
 
     role: {
-      name: user.role.name,
-      permissions: user.role.permissions,
-      access: user.role.access,
+      name: emp.role.name,
+      permissions: emp.role.permissions,
+      access: emp.role.access,
     },
 
     business: {
-      id: user.business.id,
-      name: user.business.name,
-      slug: user.business.slug,
+      id: emp.business.id,
+      name: emp.business.name,
+      slug: emp.business.slug,
     },
+    
+    shopId: emp.shopId,
   };
 }

@@ -14,7 +14,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     // 1. Fetch role to check if it's a system role or has users
     const role = await prisma.role.findUnique({
       where: { id, businessId: session.businessId },
-      include: { _count: { select: { users: true } } }
+      include: { _count: { select: { employee: true } } }
     });
 
     if (!role) {
@@ -27,9 +27,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     }
 
     // 3. Prevent deletion if users are assigned (Referential Integrity)
-    if (role._count.users > 0) {
+    if (role._count.employee > 0) {
       return NextResponse.json({ 
-        error: `Cannot delete role. ${role._count.users} employee(s) are currently assigned to it.` 
+        error: `Cannot delete role. ${role._count.employee} employee(s) are currently assigned to it.` 
       }, { status: 400 });
     }
 

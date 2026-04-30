@@ -45,19 +45,24 @@ export type OTPFormSchema = z.infer<typeof otpSchema>;
 
 //EMPLOYEE SCHEMA
 export const createEmployeeSchema = z.object({
-  firstName: z.string().min(2,"First name must be at least 2 characters"),
-  lastName: z.string().min(2,"Last name cannot be empty"),
-  email: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .min(1, "Email is required")
-    .email("Please enter a valid email address"),
-  roleId: z.string(),
-  phone: z.string().optional(),
-  shopId: z.string().optional()
+  firstName: z.string().min(2, "First name is required"),
+  lastName: z.string().min(2, "Last name is required"),
+  email: z.string().email("Invalid email address").toLowerCase().trim(),
+  phone: z.string().optional().nullable(),
+  imageUrl: z.string().url("Invalid URL").optional().nullable().or(z.literal("")),
+  fileKey: z.string().optional().nullable().or(z.literal("")),
+  roleId: z.string().min(1, "Role is required"),
+  shopId: z.string().optional().nullable(),
+  // New fields from your full model
+  designation: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
+  dateOfBirth: z.coerce.date().optional().nullable(),
+  hasSystemAccess: z.boolean(),
 });
+
 export type CreateEmployeeSchema = z.infer<typeof createEmployeeSchema>;
+// Wrap your existing schema in an array
+export const CreateBulkEmployeeSchema = z.array(createEmployeeSchema);
 
 //PASSWORD CHANGE
 export const passwordSchema = z.object({

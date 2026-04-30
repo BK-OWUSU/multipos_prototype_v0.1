@@ -8,14 +8,15 @@ import {InputOTP,InputOTPGroup,InputOTPSeparator,InputOTPSlot} from "@/component
 import { useForm, FormProvider, Controller, SubmitHandler } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { otpSchema, OTPFormSchema } from "@/schema/auth.schema";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { OTPResponse } from "@/types/auth";
 
 export function InputOTPForm() {
-  const {verifyOtp, resendOtp, user} = useAuthStore();
-  const email = user?.email;
+  const searchParams = useSearchParams()
+  const email = searchParams.get("email");
+  const {verifyOtp, resendOtp} = useAuthStore();
   const [countdown, setCountdown] = useState(60)
   const canResend = countdown === 0;
   const router = useRouter();
@@ -83,7 +84,7 @@ export function InputOTPForm() {
             <CardTitle>Verify your login</CardTitle>
             <CardDescription>
               Enter the verification code we sent to your email address:
-              <span className="font-medium">{email || "your email"}</span>.
+              <span className="font-bold text-blue-950">{email || "your email"}</span>.
             </CardDescription>
           </CardHeader>
           <CardContent>

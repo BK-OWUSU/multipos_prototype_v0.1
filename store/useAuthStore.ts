@@ -3,6 +3,7 @@ import apiClient from "@/lib/api-client"
 import { LoginResponse, OTPResponse, SignUpResponse, User } from "@/types/auth"
 import { LoginSchema, OTPFormSchema, PasswordSchema, SignUpFormSchema } from "@/schema/auth.schema";
 import { AxiosError } from "axios";
+import { toast } from "sonner";
 
 type AuthStore = {
     user: User| null;
@@ -103,7 +104,9 @@ export const useAuthStore = create<AuthStore>((set, get)=>({
         try {
             const response =  await apiClient.post("/auth/logout");
             set({user: null})
-            console.log("Response Logout: ", response)
+            if (response.data?.success) {
+                toast.success("Logged out successfully!");
+            }
         } catch (error) {
             console.log("Error during logout: ", error);
         }

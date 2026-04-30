@@ -1,3 +1,4 @@
+// app/(protected)/[slug]/employees/page.tsx (or wherever your EmployeeList component is)
 "use client"
 import { useAuthStore } from "@/store/useAuthStore";
 import { useState, useEffect, useMemo } from "react";
@@ -6,7 +7,9 @@ import { useParams, useRouter } from "next/navigation";
 import hasAccess from "@/lib/accessPermissionSecurity";
 import { GenericModal } from "@/components/reusables/GenericModal";
 import AddEmployeeForm from "./AddEmployeeForm";
-import { Plus, Users2, PersonStanding, UserCheck, ShieldAlert } from "lucide-react"
+import GenericBulkImport from "@/components/reusables/GenericBulkImport";
+import { employeeImportConfig } from "@/lib/configs/employee-config";
+import { Plus, Users2, PersonStanding, UserCheck, ShieldAlert, Upload } from "lucide-react";
 import { Card, CardHeader, CardDescription, CardContent } from "@/components/ui/card";
 import CustomButton from "@/components/reusables/CustomButton";
 import { useRoleStore } from "@/store/rolesStore";
@@ -19,30 +22,33 @@ export default function EmployeeList() {
   const router = useRouter();
   const { slug } = useParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  //Stores
-  const {roles, fetchRoles} = useRoleStore();
-  const { currentSlug, user } = useAuthStore()
-  const {employees, loading, fetchEmployees} = useEmployeeStore();
-  //Fetching Roles
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
+  const [width, setWidth] = useState("")
+  
+  // Stores
+  const { roles, fetchRoles } = useRoleStore();
+  const { currentSlug, user } = useAuthStore();
+  const { employees, loading, fetchEmployees } = useEmployeeStore();
+
+  // Fetching Roles
   useEffect(() => {
-    // Check if data needs to be fetched
     if (roles.length === 0) fetchRoles();
     fetchEmployees();
   }, [fetchRoles, roles.length, fetchEmployees]);
 
-// 2. Stats calculated from REAL database data
-const stats = useMemo(() => {
-  const empList = employees || []; // Fallback to empty array
-  const active = empList.filter(e => e.isActive).length;
-  const admins = empList.filter(e => e.role?.name.toLowerCase().includes("admin")).length;
+  // Stats calculated from REAL database data
+  const stats = useMemo(() => {
+    const empList = employees || [];
+    const active = empList.filter(e => e.isActive).length;
+    const admins = empList.filter(e => e.role?.name.toLowerCase().includes("admin")).length;
 
-  return [
-    { label: "Total Staff", value: empList.length, icon: Users2, color: "text-blue-800" },
-    { label: "Active", value: active, icon: UserCheck, color: "text-green-600" },
-    { label: "On Leave", value: 0, icon: PersonStanding, color: "text-orange-600" },
-    { label: "Admins", value: admins, icon: ShieldAlert, color: "text-purple-600" },
-  ];
-}, [employees]);
+    return [
+      { label: "Total Staff", value: empList.length, icon: Users2, color: "text-blue-800" },
+      { label: "Active", value: active, icon: UserCheck, color: "text-green-600" },
+      { label: "On Leave", value: 0, icon: PersonStanding, color: "text-orange-600" },
+      { label: "Admins", value: admins, icon: ShieldAlert, color: "text-purple-600" },
+    ];
+  }, [employees]);
 
   useEffect(() => {
     if (!hasAccess(user, "dashboard")) {
@@ -54,16 +60,17 @@ const stats = useMemo(() => {
     router.push(`/${user?.business.slug}/dashboard`);
   }
 
-  const handleMultipleDelete = async(ids: string[]): Promise<AppResponse> => {
-    console.log("Passed IDS: ")
-    console.log(ids)
+  const handleMultipleDelete = async (ids: string[]): Promise<AppResponse> => {
+    console.log("Passed IDS: ", ids);
     return {
       success: true,
       message: `Delete ${ids.length} records`
-    }as AppResponse;
+    } as AppResponse;
+  };
+
+  if (!user || !hasAccess(user, "dashboard")) {
+    return <div className="p-10 text-center">Unauthorized</div>;
   }
-  
-  if (!user || !hasAccess(user, "dashboard")) return <div className="p-10 text-center">Unauthorized</div>;
 
   return (
     <div className="h-fit min-h-screen bg-gray-5 rounded-2xl flex flex-col gap-4 p-4">
@@ -72,40 +79,79 @@ const stats = useMemo(() => {
         <h1 className="text-base text-blue-950 md:text-2xl font-semibold flex items-center gap-2 uppercase tracking-tight">
           Staff <PersonStanding className="h-7 w-7 border-2 border-blue-950 p-1 rounded-full" />
         </h1>
-        
+
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
           <h1 className="text-gray-500 text-sm md:text-base">Manage your staff members</h1>
-          
+
           <div className="flex flex-wrap gap-2 md:gap-4 items-center">
+            {/* Add Employee Modal */}
             <GenericModal
-              header="Add New Staff" // Changed from header to title based on standard GenericModal props
+              header="Add New Staff"
               description="Fill in the details to invite a new employee to your business."
               isOpen={isModalOpen}
               onOpenChange={setIsModalOpen}
-              triggerBtn={ // Changed from triggerBtn to trigger
+              triggerBtn={
                 <CustomButton
                   className="border-blue-900 text-blue-900 font-bold"
                   text="Add Employee"
                   variant="outline"
                   customVariant="secondary"
-                  icon={<Plus className="mr-2 h-4 w-4" />} 
+                  icon={<Plus className="mr-2 h-4 w-4" />}
                 />
               }
             >
               <AddEmployeeForm
                 onSuccess={() => {
                   setIsModalOpen(false);
-                  fetchEmployees(); // Refresh list immediately
+                  fetchEmployees();
                 }}
-                roles={roles}  //<-- Pass your roles from server/props here
-                // shops={shops}  <-- Pass your shops from server/props here
+                roles={roles}
+              />
+            </GenericModal>
+
+            {/* Bulk Import Modal */}
+            <GenericModal
+              width={width}
+              header="Bulk Employee Import"
+              description="Import multiple employees from a CSV file"
+              isOpen={isBulkImportOpen}
+              onOpenChange={()=> {
+                setIsBulkImportOpen(prev => !prev);
+                setWidth(""); // Reset width when modal is closed
+              }}
+              triggerBtn={
+                <CustomButton
+                  // className="border-green-700 text-green-700 font-bold"
+                  text="Bulk Import"
+                  // variant="outline"
+                  customVariant="primary"
+                  icon={<Upload className="mr-2 h-4 w-4" />}
+                />
+              }
+            >
+              <GenericBulkImport
+                config={employeeImportConfig}
+                additionalPayload={{ businessId: user.business.id }}
+                onSuccess={(result) => {
+                  console.log('Import completed:', result);
+                  setIsBulkImportOpen(false);
+                  fetchEmployees();
+                  setWidth("");
+                }}
+                onCancel={() => {
+                  setIsBulkImportOpen(false);
+                  setWidth("");
+                }}
+                onImportParsedSuccess={()=> {
+                  setWidth("min");                  
+                }}
               />
             </GenericModal>
           </div>
         </header>
       </div>
 
-      {/* Stats Grid - Now Looped */}
+      {/* Stats Grid */}
       <article className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
         {stats.map((stat, index) => (
           <Card key={index} className="w-full h-28 shadow-lg border-none p-2">
@@ -124,14 +170,14 @@ const stats = useMemo(() => {
 
       {/* Table Section */}
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <TableMain 
-          columns={employeeColumns} 
-          data={employees || []} 
+        <TableMain
+          columns={employeeColumns}
+          data={employees || []}
           searchKey="firstName"
           columnVisibilityFilter={true}
-          placeholder="Search by name..." 
-          loading= {loading}
-          onActionSuccess={()=> fetchEmployees()}
+          placeholder="Search by name..."
+          loading={loading}
+          onActionSuccess={() => fetchEmployees()}
           handleMultipleToggleStatus={toggleMultipleUser}
           handleMultipleDelete={handleMultipleDelete}
         />

@@ -5,9 +5,9 @@ import { Employee } from "@/types/auth"
 import { Badge } from "@/components/ui/badge"
 import { 
   Users, Mail, Phone, ShieldCheck, 
-  Store, Calendar, MoreHorizontal, 
+  Store, Calendar, MoreHorizontal, UserRoundX,
   UserX, UserCheck, Trash2, CheckCircle2, XCircle, 
-  KeyRound, Lock, Unlock
+  KeyRound, Lock, Unlock, ShieldAlert, Shield
 } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { 
@@ -22,10 +22,12 @@ import { Button } from "@/components/ui/button"
 import { useEmployeeStore } from "@/store/employeeStore"
 import { toast } from "sonner"
 import AlertWithDialogue from "../reusables/AlertWithDialogue"
+import Image from "next/image"
 
-// --- Sub-component stays the same ---
 const ActionCell = ({ employee }: { employee: Employee }) => {
+  // Ensure these functions are exported from your store!
   const { toggleEmployeeStatus, deleteEmployee } = useEmployeeStore()
+  
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -35,40 +37,66 @@ const ActionCell = ({ employee }: { employee: Employee }) => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-        <DropdownMenuItem onClick={
-          () => {
+        <DropdownMenuItem onClick={() => {
             navigator.clipboard.writeText(employee.email)
             toast.success("Email copied to clipboard")
-            }
-          }>
+        }}>
           Copy Email
         </DropdownMenuItem>
+        
         <DropdownMenuSeparator />
+
+        {/* Dynamic Access Toggle based on hasSystemAccess boolean */}
+        {!employee.hasSystemAccess ? (
+          <DropdownMenuItem onClick={() => {
+            // grantAccess(employee.id)
+              toast("Granting access... (not implemented)", { icon: "⏳" })
+            }}>
+            <span className="flex items-center text-blue-600">
+              <Shield className="mr-2 h-4 w-4" /> Grant Access
+            </span>
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem onClick={() => {
+            // revokeAccess(employee.id)
+            toast("Revoking access... (not implemented)", { icon: "⏳" })
+          }}>
+            <span className="flex items-center text-orange-600">
+              <ShieldAlert className="mr-2 h-4 w-4" /> Revoke Access
+            </span>
+          </DropdownMenuItem>
+        )}
+
         <DropdownMenuItem onClick={() => toggleEmployeeStatus(employee.id, employee.isActive)}>
           {employee.isActive ? (
-            <span className="flex items-center text-yellow-600"><UserX className="mr-2 h-4 w-4" /> Deactivate</span>
+            <span className="flex items-center text-yellow-600">
+              <UserX className="mr-2 h-4 w-4" /> Deactivate
+            </span>
           ) : (
-            <span className="flex items-center text-green-600"><UserCheck className="mr-2 h-4 w-4" /> Activate</span>
+            <span className="flex items-center text-green-600">
+              <UserCheck className="mr-2 h-4 w-4" /> Activate
+            </span>
           )}
         </DropdownMenuItem>
+
         <AlertWithDialogue
-                  button = {
-                    <DropdownMenuItem
-                        className="text-destructive"
-                        onSelect={(e) => e.preventDefault()}
-                    >
-                       <Trash2 className="mr-2 h-4 w-4" /> Delete
-                    </DropdownMenuItem>
-                  }
-                  buttonText="Logout"
-                  customVariant="primary"
-                  btnClassName="p-4"
-                  confirmText="Yes"
-                  cancelText="Cancel"
-                  title="Delete Staff"
-                  message={`Are you sure you want to delete ${employee.firstName}?`}
-                  confirmFunction={()=> deleteEmployee(employee.id)}
-                />
+          button={
+            <DropdownMenuItem
+              className="text-destructive"
+              onSelect={(e) => e.preventDefault()}
+            >
+              <Trash2 className="mr-2 h-4 w-4" /> Delete
+            </DropdownMenuItem>
+          }
+          buttonText="Delete"
+          customVariant="primary"
+          btnClassName="p-4"
+          confirmText="Yes, Delete"
+          cancelText="Cancel"
+          title="Delete Staff Record"
+          message={`Are you sure? This will remove ${employee.firstName}'s profile and all system access. This cannot be undone.`}
+          confirmFunction={() => deleteEmployee(employee.id)}
+        />
       </DropdownMenuContent>
     </DropdownMenu>
   )
@@ -76,40 +104,75 @@ const ActionCell = ({ employee }: { employee: Employee }) => {
 
 export const employeeColumns: ColumnDef<Employee>[] = [
   {
-    accessorKey: "firstName", // Combined name column
-    header: () => (<span className='flex items-center'><Users className="mr-2" size={16}/>Full Name</span>),
-    cell: ({ row }) => <span className="font-medium">{`${row.original.firstName} ${row.original.lastName}`}</span>
+    accessorKey: "firstName", // Covers: firstName, lastName, imageUrl, designation
+    header: () => (<span className='flex items-center'><Users className="mr-2" size={16}/>Employee</span>),
+    cell: ({ row }) => {
+      const { firstName, lastName, imageUrl, designation, isActive } = row.original;
+      return (
+        <div className={`flex items-center gap-3 ${!isActive ? 'opacity-50' : ''}`}>
+          <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-background shadow-sm">
+            {imageUrl ? (
+              <Image src={imageUrl} alt={firstName} width={36} height={36} className="object-cover h-full w-full" />
+            ) : (
+              <Users size={16} className="text-muted-foreground" />
+            )}
+          </div>
+          <div className="flex flex-col">
+            <span className="font-semibold text-sm leading-none mb-1">{`${firstName} ${lastName}`}</span>
+            <span className="text-sm text-muted-foreground font-medium">
+              {designation || "No Designation"}
+            </span>
+          </div>
+        </div>
+      );
+    }
   },
   {
     accessorKey: "email",
-    header: () => (<span className='flex items-center'><Mail className="mr-2" size={16}/>Email</span>)
+    header: () => (<span className='flex items-center'><Mail className="mr-2" size={16}/>Email</span>),
+    cell: ({row}) => <span className="text-sm">{row.original.email}</span>
   },
   {
-    accessorKey: "phone", 
-    header: () => (<span className='flex items-center'><Phone className="mr-2" size={16}/>Phone</span>),
-    cell: ({ row }) => row.original.phone || "N/A"
+    accessorKey: "phone",
+    header: () => (<span className='flex items-center'><Phone className="mr-2" size={16}/>Contact</span>),
+    cell: ({ row }) => <span className="text-sm">{row.original.phone || "—"}</span>
   },
   {
     accessorKey: "role.name",
     header: () => (<span className='flex items-center'><ShieldCheck className="mr-2" size={16}/>Role</span>),
     cell: ({ row }) => (
-      <Badge variant="secondary" className="font-bold">
-        {row.original.role?.name || "No Role"}
+      <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">
+        {row.original.role?.name}
       </Badge>
     )
   },
   {
     accessorKey: "shop.name",
-    header: () => (<span className='flex items-center'><Store className="mr-2" size={16}/>Shop</span>),
+    header: () => (<span className='flex items-center'><Store className="mr-2" size={16}/>Assigned Shop</span>),
     cell: ({ row }) => (
-      <span className="text-sm text-muted-foreground">
-        {row.original.shop?.name || "Floating / All"}
-      </span>
+      <div className="flex flex-col">
+        <span className="text-xs font-medium">{row.original.shop?.name || "Floating"}</span>
+      </div>
     )
   },
   {
-    accessorKey: "isVerified", // ADDED VERIFICATION STATUS
-    header: "Verified",
+    accessorKey: "hasSystemAccess", // Primary Boolean Field
+    header: "Access",
+     filterFn: "equals",
+    meta: {
+      filterVariant: "select", 
+      trueLabel: "Software User",   
+      falseLabel: "On-Site Only" 
+    },
+    cell: ({ row }) => (
+      <Badge variant={row.original.hasSystemAccess ? "default" : "secondary"} className="text-[10px] uppercase">
+        {row.original.hasSystemAccess ? "Software User" : "On-Site Only"}
+      </Badge>
+    )
+  },
+  {
+    accessorKey: "user.isVerified", 
+    header: () => <div className="text-center">Verified</div>,
     filterFn: "equals",
     meta: {
       filterVariant: "select", 
@@ -118,10 +181,12 @@ export const employeeColumns: ColumnDef<Employee>[] = [
     },
     cell: ({ row }) => (
       <div className="flex justify-center">
-        {row.original.isVerified ? (
-          <CheckCircle2 className="text-green-500 h-5 w-5" />
+        {!row.original.hasSystemAccess ? (
+          <UserRoundX className="text-red-500 h-4 w-4" />
+        ) : row.original.user?.isVerified ? (
+          <CheckCircle2 className="text-green-500 h-4 w-4" />
         ) : (
-          <XCircle className="text-gray-300 h-5 w-5" />
+          <XCircle className="text-orange-400 h-4 w-4" />
         )}
       </div>
     )
@@ -129,57 +194,64 @@ export const employeeColumns: ColumnDef<Employee>[] = [
   {
     accessorKey: "isActive",
     header: "Status",
-    filterFn: "equals",
+     filterFn: "equals",
     meta: {
-      filterVariant: "select",
-       trueLabel: "Active",   
-       falseLabel: "Inactive" 
+      filterVariant: "select", 
+      trueLabel: "Active",   
+      falseLabel: "Inactive" 
     },
     cell: ({ row }) => {
       const active = row.original.isActive
       return (
-        <Badge className={active ? "bg-green-100 text-green-700 hover:bg-green-100" : "bg-red-100 text-red-700"}>
-          {active ? "Active" : "Inactive"}
-        </Badge>
+        <div className="flex items-center gap-2">
+           <div className={`h-2 w-2 rounded-full ${active ? 'bg-green-500' : 'bg-red-500'}`} />
+           <span className={`text-xs font-medium ${active ? 'text-green-700' : 'text-red-700'}`}>
+             {active ? "Active" : "Inactive"}
+           </span>
+        </div>
       )
     }
   },
   {
-    accessorKey: "createdAt",
-    header: () => (<span className='flex items-center'><Calendar className="mr-2" size={16}/>Joined</span>),
-    cell: ({ row }) => formatDate(new Date(row.original.createdAt))
+    accessorKey: "user.needsPasswordChange",
+    header: () => (<span className='flex items-center'><KeyRound className="mr-2" size={16}/>Security</span>),
+    filterFn: "equals",
+    meta: {
+        filterVariant: "select",
+        trueLabel: "Temp Pass",
+        falseLabel: "Secure"
+    },
+    cell: ({ row }) => {
+      const user = row.original.user;
+      if (!row.original.hasSystemAccess || !user) return (
+        <div className="flex items-center">
+          <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 text-sm gap-1">
+            <ShieldAlert size={10} /> No Access
+          </Badge>
+        </div>
+      );
+
+      return (
+        <div className="flex items-center">
+          {user.needsPasswordChange ? (
+            <Badge className="bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-50 text-sm gap-1">
+              <Lock size={10} /> Reset Required
+            </Badge>
+          ) : (
+            <Badge className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50 text-sm gap-1">
+              <Unlock size={10} /> Secure
+            </Badge>
+          )}
+        </div>
+      );
+    }
   },
   {
-  accessorKey: "needsPasswordChange",
-  header: () => (
-    <span className='flex items-center'>
-      <KeyRound className="mr-2" size={16}/> Security
-    </span>
-  ),
-  filterFn: "equals",
-  meta: {
-      filterVariant: "select",
-      trueLabel: "Temp Pass",
-      falseLabel: "Secure"
-    },
-  cell: ({ row }) => {
-    const needsChange = row.original.needsPasswordChange;
-    return (
-      <div className="flex items-center gap-2">
-        {needsChange ? (
-          <Badge variant="outline" className="text-orange-600 border-orange-200 bg-orange-50 flex gap-1 items-center">
-            <Lock size={12} /> Temp Pass
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50 flex gap-1 items-center">
-            <Unlock size={12} /> Secure
-          </Badge>
-        )}
-      </div>
-    );
-  }
-},
-  {
+    accessorKey: "createdAt",
+    header: "Joined",
+    cell: ({ row }) => <span className="text-xs text-muted-foreground">{formatDate(new Date(row.original.createdAt))}</span>
+  },
+ {
     accessorKey: "Actions",
     id: "actions",
     cell: ({ row }) => <ActionCell employee={row.original} />,

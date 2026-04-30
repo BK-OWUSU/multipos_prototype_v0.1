@@ -28,7 +28,7 @@ model Business {
   isOnboarded       Boolean    @default(false)
   workHrsStartTime  DateTime?
   workHrsCloseTime  DateTime?
-  users             User[]
+  employee          Employee[]
   shops             Shop[]
   products          Product[]
   customers         Customer[]
@@ -48,8 +48,8 @@ model Business {
 model OTPVerification {
   id        String   @id @default(cuid())
   userId    String
-  code      String   // 6 digit code
-  expiresAt DateTime // expires after 10 minutes
+  code      String   
+  expiresAt DateTime 
   isUsed    Boolean  @default(false)
   createdAt DateTime @default(now())
 
@@ -60,44 +60,86 @@ model OTPVerification {
   @@map("otp_verifications")
 }
 
-// ── USER ───────────────────────────────────────────
+// ── USER (System access only) ──────────────────────────────
 model User {
   id                  String     @id @default(cuid())
-  firstName           String
-  lastName            String
-  email               String
-  accountType         AccountType @default(EMPLOYEE)
-
-  imageUrl            String?
-  fileKey             String?      
-
+  employeeId          String     @unique  // Link to Employee
+  
   password            String
-  phone               String?
-  businessId          String
-  roleId              String
-  shopId              String?
-  isActive            Boolean    @default(true)
+  accountType         AccountType @default(EMPLOYEE)
+  
+  isVerified          Boolean    @default(false)
+  needsPasswordChange Boolean    @default(true) // Force change on first login
+  lastLogin           DateTime?
+  
+  accessGrantedAt     DateTime   @default(now())
+  accessGrantedBy     String?    
+  grantor             Employee? @relation("GrantorRelation", fields: [accessGrantedBy], references: [id])
+
   createdAt           DateTime   @default(now())
   updatedAt           DateTime   @updatedAt
-  isVerified          Boolean    @default(false)
-  needsPasswordChange Boolean    @default(false)
- 
-  isDeleted   Boolean    @default(false)
-  deletedAt   DateTime?
   
-  business            Business   @relation(fields: [businessId], references: [id])
-  role                Role       @relation(fields: [roleId], references: [id])
-  shop                Shop?      @relation(fields: [shopId], references: [id])
-  sales               Sale[]
-  stockLogs           StockLog[]
-  timeCards           TimeCard[]
+  // Relations
+  employee            Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  otpVerifications    OTPVerification[]
   auditLogs           AuditLog[]
+  
+  @@index([employeeId])
+  @@map("users")
+}
 
+
+// ── EMPLOYEE (Base table for all employees) ────────────────
+model Employee {
+  id                String     @id @default(cuid())
+  firstName         String
+  lastName          String
+  email             String
+  phone             String?
+  imageUrl          String?
+  fileKey           String?
+
+  // Employment Details
+  designation       String?
+  address           String?
+  dateOfBirth       DateTime?
+  hireDate          DateTime? @default(now())
+  
+  businessId        String
+  roleId            String
+  shopId            String?
+  
+  isActive          Boolean    @default(true)
+  isDeleted         Boolean    @default(false)
+  deletedAt         DateTime?
+  
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  
+  // Relations
+  business          Business   @relation(fields: [businessId], references: [id])
+  role              Role       @relation(fields: [roleId], references: [id])
+  shop              Shop?      @relation(fields: [shopId], references: [id])
+  
+  // One-to-one with User (if granted system access)
+  user              User?
+  hasSystemAccess   Boolean @default(false)
+  
+
+  grantedUsers      User[]    @relation("GrantorRelation")
+  // Employee activities (even without system access)
+  sales             Sale[]     @relation("EmployeeSales")
+  stockLogs         StockLog[]
+  timeCards         TimeCard[]
+  
+  
   @@unique([email, businessId])
   @@index([businessId])
-  @@map("users")
-  otpverifications OTPVerification[]
+  @@index([shopId])
+  @@index([email])
+  @@map("employees")
 }
+
 
 model Role {
   id          String   @id @default(cuid())
@@ -109,8 +151,10 @@ model Role {
   deletedAt   DateTime?
   createdAt   DateTime @default(now())
   business    Business @relation(fields: [businessId], references: [id])
-  users       User[]
+  employee    Employee[]
   isSystem    Boolean  @default(false)
+
+  expiresAt   DateTime? // For temporary roles (e.g., during onboarding)
 
   @@index([businessId])
   @@map("roles")
@@ -118,21 +162,21 @@ model Role {
 
 // ── SHOP ───────────────────────────────────────────
 model Shop {
-  id         String    @id @default(cuid())
-  name       String
-  address    String?
-  phone      String?
-  isActive   Boolean   @default(true)
-  businessId String
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id          String    @id @default(cuid())
+  name        String
+  address     String?
+  phone       String?
+  isActive    Boolean   @default(true)
+  businessId  String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   isDeleted   Boolean    @default(false)
   deletedAt   DateTime?
 
-  business   Business  @relation(fields: [businessId], references: [id])
-  users      User[]
-  sales      Sale[]
-  timeCards TimeCard[]
+  business    Business  @relation(fields: [businessId], references: [id])
+  employee    Employee[]
+  sales       Sale[]
+  timeCards   TimeCard[]
 
   @@index([businessId])
   @@map("shops")
@@ -142,7 +186,7 @@ model Shop {
 // ── TIME CARD ──────────────────────────────────────
 model TimeCard {
   id         String    @id @default(cuid())
-  userId     String
+  employeeId String
   businessId String
   shopId     String?
   clockIn    DateTime
@@ -151,7 +195,7 @@ model TimeCard {
   date       DateTime  @default(now())
   createdAt  DateTime  @default(now())
 
-  user       User      @relation(fields: [userId], references: [id])
+  employee   Employee  @relation(fields: [employeeId], references: [id])
   shop       Shop?       @relation(fields: [shopId], references: [id])
   @@index([businessId])
   @@map("time_cards")
@@ -240,6 +284,7 @@ model Product {
   @@index([businessId, categoryId]) 
   @@index([businessId, brandId]) // Index for faster brand-based reporting
   @@index([businessId])
+  @@index([sku])
   @@map("products")
 }
 // ── BRAND ──────────────────────────────────────────
@@ -268,17 +313,17 @@ model Brand {
 model StockLog {
   id         String   @id @default(cuid())
   productId  String
-  userId     String
+  employeeId     String
   businessId String
   change     Int
   reason     String?
   createdAt  DateTime @default(now())
 
   product    Product  @relation(fields: [productId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
+  employee   Employee @relation(fields: [employeeId], references: [id])
 
   @@index([productId, createdAt]) // See stock history for one item
-  @@index([businessId, userId])
+  @@index([businessId, employeeId])
   @@index([businessId])
   @@map("stock_logs")
 }
@@ -337,14 +382,14 @@ model Sale {
   status         SaleStatus  @default(COMPLETED)
   businessId     String
   shopId         String?
-  userId         String
+  employeeId     String
   customerId     String?
   discountId     String?
   createdAt      DateTime    @default(now())
 
   business       Business    @relation(fields: [businessId], references: [id])
   shop           Shop?       @relation(fields: [shopId], references: [id])
-  user           User        @relation(fields: [userId], references: [id])
+  employee       Employee    @relation("EmployeeSales",fields: [employeeId], references: [id])
   customer       Customer?   @relation(fields: [customerId], references: [id])
   discount       Discount?   @relation(fields: [discountId], references: [id])
   items          SaleItem[]
@@ -353,6 +398,7 @@ model Sale {
   @@index([businessId, createdAt])
   @@index([businessId, shopId])
   @@index([businessId])
+  @@index([employeeId])
   @@map("sales")
 }
 

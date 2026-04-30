@@ -83,7 +83,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
      <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex bg-gray-50 p-2 h-16 shrink-0 items-center gap-2 transition-[width,height] justify-between ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+        <header className="flex bg-gray-200 p-2 h-16 shrink-0 items-center gap-2 transition-[width,height] justify-between ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator
@@ -106,7 +106,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         </header>
          <main className="flex flex-1 flex-col gap-4 p-4">
                {children}
-            <Toaster position="top-right" richColors />
           </main>
       </SidebarInset>
     </SidebarProvider>
