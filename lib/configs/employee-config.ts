@@ -1,6 +1,7 @@
 // lib/bulk-import/configs/employee-config.ts
 import { z } from 'zod';
 import { BulkImportConfig } from '@/schema/bulkupload.schema';
+import { createBulkEmployees } from '@/lib/actions/business/employeesActions';
 
 export const employeeCSVSchema = z.object({
   firstName: z.string().min(2, "First name is required"),
@@ -10,8 +11,8 @@ export const employeeCSVSchema = z.object({
   designation: z.string().optional().nullable(),
   address: z.string().optional().nullable(),
   dateOfBirth: z.string().optional().nullable(),
-  roleId: z.string().min(1, "Role ID is required"),
-  shopId: z.string().optional().nullable(),
+  role: z.string().min(1, "Role is required"),
+  shop: z.string().optional().nullable(),
   hasSystemAccess: z
     .union([z.string(), z.boolean()])
     .transform((val) => {
@@ -19,8 +20,8 @@ export const employeeCSVSchema = z.object({
       return val.toLowerCase() === 'true' || val === '1';
     }),
 });
-
 export type EmployeeCSVRow = z.infer<typeof employeeCSVSchema>;
+
 
 export interface EmployeeImportPayload {
   firstName: string;
@@ -30,8 +31,8 @@ export interface EmployeeImportPayload {
   designation: string | null;
   address: string | null;
   dateOfBirth: Date | null;
-  roleId: string;
-  shopId: string | null;
+  role: string;
+  shop: string | null;
   hasSystemAccess: boolean;
 }
 
@@ -39,7 +40,8 @@ export const employeeImportConfig: BulkImportConfig<typeof employeeCSVSchema, Em
   entityName: 'Employee',
   entityNamePlural: 'Employees',
   schema: employeeCSVSchema,
-  apiEndpoint: '/api/employees/bulk-import',
+  apiEndpoint: createBulkEmployees,
+  // apiEndpoint: '/api/employees/bulk-import',
   
   templateHeaders: [
     'firstName',
@@ -49,7 +51,7 @@ export const employeeImportConfig: BulkImportConfig<typeof employeeCSVSchema, Em
     'designation',
     'address',
     'dateOfBirth',
-    'roleId',
+    'role',
     'shopId',
     'hasSystemAccess',
   ],
@@ -62,8 +64,8 @@ export const employeeImportConfig: BulkImportConfig<typeof employeeCSVSchema, Em
     'Sales Manager',
     '123 Main St',
     '1990-01-15',
-    'role_id_here',
-    'shop_id_here',
+    'CASHIER',
+    'null',
     'true',
   ],
   
@@ -75,8 +77,27 @@ export const employeeImportConfig: BulkImportConfig<typeof employeeCSVSchema, Em
     designation: row.designation || null,
     address: row.address || null,
     dateOfBirth: row.dateOfBirth ? new Date(row.dateOfBirth) : null,
-    roleId: row.roleId,
-    shopId: row.shopId && row.shopId !== '' ? row.shopId : null,
+    role: row.role,
+    shop: row.shop && row.shop !== '' ? row.shop : null,
     hasSystemAccess: row.hasSystemAccess,
   }),
 };
+
+
+export const EmployeeValidatedSchema = z.object({
+  firstName: z.string().min(2),
+  lastName: z.string().min(2),
+  email: z.string().email(),
+  phone: z.string().optional().nullable(),
+  designation: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
+  
+  // FIX: Change string() to date() since the payload contains Date objects
+  dateOfBirth: z.date().optional().nullable(), 
+  
+  role: z.string().min(1), 
+  shop: z.string().optional().nullable(),
+  hasSystemAccess: z.boolean(),
+});
+
+export const EmployeeValidatedArray = z.array(EmployeeValidatedSchema);

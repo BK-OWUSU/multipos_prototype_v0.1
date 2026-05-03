@@ -54,6 +54,22 @@ export function formatNumber(value: number, locale: string = "en-US"): string {
   return new Intl.NumberFormat(locale).format(value)
 }
 
+
+/**
+ * Formats a numeric value into a currency string based on business settings.
+ */
+export function formatBusinessCurrency(
+  amount: number, 
+  currencyCode: string = 'GHS', 
+  locale: string = 'en-GH'
+) {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: currencyCode,
+    minimumFractionDigits: 2,
+  }).format(amount);
+}
+
 export const humanize = (text: string) => {
   return text
     .replace(/([A-Z])/g, ' $1') // Add space before caps

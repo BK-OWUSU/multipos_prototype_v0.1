@@ -2,7 +2,7 @@ import { getSession, hashPassword } from "@/lib/auths";
 import { prisma } from "@/lib/dbHelper";
 // import { sendTempPasswordEmail } from "@/lib/email";
 import { AccountType } from "@/lib/generated/prisma/enums";
-import { createEmployee, getAllEmployeesService } from "@/lib/services/employee-services";
+import { createEmployee, getAllEmployeesService } from "@/lib/services/business/employee-services";
 // import { generateRandomPassword } from "@/lib/utils";
 // import { createEmployeeSchema } from "@/schema/auth.schema";
 import { NextRequest, NextResponse } from "next/server";

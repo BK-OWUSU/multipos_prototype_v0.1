@@ -13,12 +13,25 @@ export async function proxy(request: NextRequest) {
         return NextResponse.next();
     }
 
-    const token = request.cookies.get(POS_COOKIE_NAME)?.value;
+    const requestSession = request.cookies.get(POS_COOKIE_NAME);
+    const token = requestSession?.value;
     const reset_pass_token = request.cookies.get(PASSWORD_RESET_COOKIE_NAME)?.value;
     let session = null;
-
     if (token) {
         session = (await verifyPOSTokenEdge(token)) as JwtPayload;
+    }
+
+    //Resetting
+    if(requestSession) {
+        const response = NextResponse.next();
+        // Resetting the cookie to expire in 30 minutes
+        response.cookies.set(POS_COOKIE_NAME, requestSession.value, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 30 * 60, // 30 minutes in seconds
+        path: '/',
+        })
+        return response
     }
 
     const urlSlug = pathname.split("/")[1];

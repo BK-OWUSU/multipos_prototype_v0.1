@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/auths";
 import { NextRequest, NextResponse } from "next/server";
-import { createCategoryService, getAllCategoriesService } from "@/lib/services/category-service";
+import { createCategoryService, getAllCategoriesService } from "@/lib/services/business/category-service";
 
 
 

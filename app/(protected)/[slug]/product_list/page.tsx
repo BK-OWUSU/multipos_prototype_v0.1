@@ -10,14 +10,18 @@ import { useBrandStore } from "@/store/brandStore";
 import { useProductStore } from "@/store/productsStore";
 import { productsColumnDef } from "@/components/tablesColumnDef/productsColumnDef";
 import TableMain from "@/components/reusables/table/TableMain";
-import { deleteProductsAction, toggleProductsStatusAction } from "@/lib/actions/productsActions";
+import { deleteProductsAction, toggleProductsStatusAction } from "@/lib/actions/business/productsActions";
+import {Upload} from "lucide-react";
+import GenericBulkImport from "@/components/reusables/GenericBulkImport";
+import { productImportConfig } from "@/lib/configs/product-config";
 
 export default function ProductList() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  
   const { fetchCategories, categories } = useCategoryStore();
   const { fetchBrands } = useBrandStore();
   const { products, fetchProducts, loading } = useProductStore();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
+  const [width, setWidth] = useState("sm:max-w-137.5")
 
   useEffect(() => {
     fetchCategories();
@@ -46,30 +50,68 @@ export default function ProductList() {
           <h1 className="text-2xl font-bold text-gray-900">Products</h1>
           <p className="text-sm text-gray-500">Manager you products</p>
         </div>
-
-        <GenericModal
-          header="Add New Product"
-          description="Create a new item in your inventory. Provide details to keep your stock organized."
-          isOpen={isModalOpen}
-          onOpenChange={setIsModalOpen}
-          triggerBtn={
-            <CustomButton
-              text="Add Product"
-              customVariant="primary"
-              icon={<Plus className="h-4 w-4" />}
+        <div className="flex flex-wrap gap-2 md:gap-4 items-center">
+          <GenericModal
+            header="Add New Product"
+            description="Create a new item in your inventory. Provide details to keep your stock organized."
+            isOpen={isModalOpen}
+            onOpenChange={setIsModalOpen}
+            triggerBtn={
+              <CustomButton
+                text="Add Product"
+                customVariant="primary"
+                icon={<Plus className="h-4 w-4" />}
+              />
+            }
+          >
+            <AddProductForm 
+              categories={categories || []} 
+              brands={[]}
+              onSuccess={() => {
+                setIsModalOpen(false);
+                fetchProducts();
+              }} 
+              onCancel={() => setIsModalOpen(false)}
             />
-          }
-        >
-          <AddProductForm 
-            categories={categories || []} 
-            brands={[]}
-            onSuccess={() => {
-              setIsModalOpen(false);
-              fetchProducts();
-            }} 
-            onCancel={() => setIsModalOpen(false)}
-          />
-        </GenericModal>
+          </GenericModal>
+          {/* Bulk Import Modal */}
+            <GenericModal
+              width={width}
+              header="Bulk Employee Import"
+              description="Import multiple employees from a CSV file"
+              isOpen={isBulkImportOpen}
+              onOpenChange={()=> {
+                setIsBulkImportOpen(prev => !prev);
+                setWidth("sm:max-w-137.5"); // Reset width when modal is closed
+              }}
+              triggerBtn={
+                <CustomButton
+                  // className="border-green-700 text-green-700 font-bold"
+                  text="Bulk Import"
+                  // variant="outline"
+                  customVariant="primary"
+                  icon={<Upload className="mr-2 h-4 w-4" />}
+                />
+              }
+            >
+              <GenericBulkImport
+                config={productImportConfig}
+                // additionalPayload={{ businessId: user.business.id }}
+                onSuccess={(result) => {
+                  setIsBulkImportOpen(false);
+                  fetchProducts();
+                  setWidth("sm:max-w-137.5");
+                }}
+                onCancel={() => {
+                  setIsBulkImportOpen(false);
+                  setWidth("sm:max-w-137.5");
+                }}
+                onImportParsedSuccess={()=> {
+                  setWidth("sm:max-w-max");                  
+                }}
+              />
+            </GenericModal>          
+        </div>  
       </header>
 
       {/* 2. Stat Cards Section */}

@@ -1,14 +1,16 @@
 import { AppResponse } from "@/types/auth";
 import { prisma } from "@/lib/dbHelper";
 import { deleteUTFile } from "@/lib/actions/uploadthing";
-import { AccountType } from "../generated/prisma/enums";
+import { AccountType } from "@/lib/generated/prisma/enums";
 import { NextRequest } from "next/server";
-import { createEmployeeSchema, CreateBulkEmployeeSchema } from "@/schema/auth.schema";
-import { generateRandomPassword } from "../utils";
+import { createEmployeeSchema } from "@/schema/auth.schema";
+import { generateRandomPassword } from "@/lib/utils";
 import { hashPassword } from "@/lib/auths";
 import { sendTempPasswordEmail } from "@/lib/email";
+import { EmployeeValidatedArray, EmployeeImportPayload } from "@/lib/configs/employee-config";
+import { UserCreateManyInput } from "@/lib/generated/prisma/models";
 
-export async function createEmployee(request: NextRequest, adminId: string, businessId: string) {
+export async function createEmployee(request: NextRequest, userId: string, employeeId: string, businessId: string) {
     try {
         const body = await request.json();
         const validatedData = createEmployeeSchema.parse(body);
@@ -63,10 +65,15 @@ export async function createEmployee(request: NextRequest, adminId: string, busi
                     isVerified: false,
                     accountType: AccountType.EMPLOYEE,
                     needsPasswordChange: true,
-                    accessGrantedBy: adminId,
+                    accessGrantedBy: employeeId,
                     accessGrantedAt: new Date(),
                     createdAt: new Date(),
                 },
+                });
+
+                await prisma.employee.update({
+                    where: { id: employee.id },
+                    data: { hasSystemAccess: true }
                 });
             }
 
@@ -75,7 +82,7 @@ export async function createEmployee(request: NextRequest, adminId: string, busi
                     action: "CREATE_EMPLOYEE",
                     entity: "EMPLOYEE",
                     entityId: employee.id,
-                    userId: adminId,
+                    userId: userId,
                     businessId: businessId,
                 }
             });
@@ -87,7 +94,7 @@ export async function createEmployee(request: NextRequest, adminId: string, busi
         });
 
         if (validatedData.hasSystemAccess) {
-            //Send onboarding email
+            //Sending onboarding email
             try {
                 await sendTempPasswordEmail(
                     employee.email, 
@@ -102,7 +109,9 @@ export async function createEmployee(request: NextRequest, adminId: string, busi
 
         return { 
             success: true, 
-            message: `Employee ${employee.firstName} created successfully!`, 
+            message: validatedData.hasSystemAccess ? 
+            `Employee ${employee.firstName} created successfully and Onboarding email sent!` : 
+            `Employee ${employee.firstName} created successfully!`, 
             status: 200 
         } as AppResponse;
 
@@ -113,73 +122,215 @@ export async function createEmployee(request: NextRequest, adminId: string, busi
 }
 
 
-export async function createBulkEmployeesService(data : typeof CreateBulkEmployeeSchema, adminId: string, businessId: string, businessSlug: string) {
-    try {
-        const validatedData = CreateBulkEmployeeSchema.parse(data);
+export async function createBulkEmployeesService(
+  payload: { data: EmployeeImportPayload[]; [key: string]: unknown },
+  userId: string,
+  employeeId: string,
+  businessId: string,
+  businessSlug: string
+) {
+  try {
+    // 1. Validating the incoming data array first
+    const validatedData = EmployeeValidatedArray.parse(payload.data);
 
-        if (validatedData.length === 0) {
-            return { error: "No employee data provided.", success: false, status: 400 } as AppResponse;
-        }
-
-        // 1. Filter out emails that already exist in this business to prevent transaction failure
-        const existingEmails = await prisma.employee.findMany({
-            where: {
-                businessId: businessId,
-                email: { in: validatedData.map(emp => emp.email) }
-            },
-            select: { email: true }
-        });
-
-        const existingEmailSet = new Set(existingEmails.map(e => e.email));
-        const newEmployeesData = validatedData
-            .filter(emp => !existingEmailSet.has(emp.email))
-            .map(emp => ({
-                ...emp,
-                businessId: businessId,
-                hasSystemAccess: false, // Bulk import defaults to no access
-            }));
-
-        if (newEmployeesData.length === 0) {
-            return { error: "All provided employees already exist in this business.", success: false, status: 400 } as AppResponse;
-        }
-
-        const result = await prisma.$transaction(async (tx) => {
-            // 2. Bulk Insert using createManyAndReturn (Supported by PostgreSQL)
-            const createdEmployees = await tx.employee.createManyAndReturn({
-                data: newEmployeesData,
-                skipDuplicates: true,
-            });
-
-            // 3. Create Audit Logs for each new employee
-            await tx.auditLog.createMany({
-                data: createdEmployees.map((emp) => ({
-                    action: "CREATE_EMPLOYEE",
-                    entity: "EMPLOYEE",
-                    entityId: emp.id,
-                    userId: adminId,
-                    businessId: businessId,
-                    newValue: `Bulk imported: ${emp.firstName} ${emp.lastName}`
-                })),
-            });
-
-            return createdEmployees;
-        });
-
-        return { 
-            success: true, 
-            message: `Successfully imported ${result.length} employees.`, 
-            status: 200,
-            redirectTo: `/${businessSlug}/employees_list` // Redirect to employee list of the business
-        } as AppResponse;
-
-    } catch (error: unknown) {
-        console.error("BULK_EMPLOYEE_IMPORT_ERROR:", error);
-        return { error: "Failed to import employees. Check your file format.", success: false, status: 500 } as AppResponse;
+    if (validatedData.length === 0) {
+      return { error: "No employee data provided.", success: false, status: 400 } as AppResponse;
     }
+
+    // 1. Collecting unique Role and Shop names from the CSV data
+    const roleNamesToLookup = [...new Set(validatedData.map((emp) => emp.role))];
+    const shopNamesToLookup = [...new Set(validatedData.map(e => e.shop).filter(Boolean))];
+
+    // 2. Batch fetch Roles AND Shops using Names
+    const [rolesInDb, shopsInDb] = await Promise.all([
+    prisma.role.findMany({
+        where: { 
+            businessId, 
+            name: { in: roleNamesToLookup as string[] } 
+        },
+        select: { id: true, name: true },
+    }),
+    prisma.shop.findMany({
+        where: { 
+            businessId, 
+            name: { in: shopNamesToLookup as string[] } // Looking up by NAME
+        },
+        select: { id: true, name: true },
+    })
+    ]);
+    
+    
+    // 3. Create Lookup Maps
+    const roleMap = new Map(rolesInDb.map((r) => [r.name, r.id]));
+    const shopMap = new Map(shopsInDb.map((s) => [s.name, s.id]));
+    
+    // 5. Check for existing emails in this business to prevent unique constraint errors
+    const existingEmails = await prisma.employee.findMany({
+      where: {
+        businessId: businessId,
+        email: { in: validatedData.map((emp) => emp.email) },
+      },
+      select: { email: true },
+    });
+
+    const existingEmailSet = new Set(existingEmails.map((e) => e.email));
+  
+
+    // 4. Transform validated data
+    const newEmployeesData = validatedData
+    .filter((emp) => !existingEmailSet.has(emp.email))
+    .map((emp) => {
+        const roleIdFromName = roleMap.get(emp.role);
+        // Find the Shop ID based on the Name provided in the CSV
+        // We use .get(emp.shop) to find the UUID linked to that name
+        const shopIdFromName = (emp.shop && emp.shop !== "" && emp.shop !== "null") ? shopMap.get(emp.shop) : null;
+        if (!roleIdFromName) {
+        throw new Error(`Role "${emp.role}" does not exist in this business.`);
+        }
+        // Optional: Throw error if shop name was provided but not found in DB
+        // if (emp.shop && !shopIdFromName) {
+        //     console.log(`Shop "${emp.shop}" not found. Please check the spelling.`);
+        //     throw new Error(`Shop "${emp.shop}" not found. Please check the spelling.`);
+        // }
+
+        return {
+        firstName: emp.firstName,
+        lastName: emp.lastName,
+        email: emp.email,
+        phone: emp.phone || null,
+        designation: emp.designation || null,
+        address: emp.address || null,
+        dateOfBirth: emp.dateOfBirth ? new Date(emp.dateOfBirth) : null,
+        businessId: businessId,
+        roleId: roleIdFromName,
+        shopId: shopIdFromName,
+        hasSystemAccess: emp.hasSystemAccess || false, 
+        };
+    });
+
+    if (newEmployeesData.length === 0) {
+      return { 
+        error: "All provided employees already exist or have invalid roles.", 
+        success: false, 
+        status: 400 
+      } as AppResponse;
+    }
+  
+    const employeesWithAccess = newEmployeesData.filter(emp => emp.hasSystemAccess);
+    const UserAccountsRequests = await Promise.all(employeesWithAccess.map(async (emp) => {
+        const tempPassword = generateRandomPassword();
+        const hashed = await hashPassword(tempPassword);
+        return {
+            password: hashed,
+            firstName: emp.firstName,
+            email: emp.email,
+            tempPassword
+        };
+    }));
+
+    // 5. Execute Transaction: Insert Employees and Create Audit Logs
+    const result = await prisma.$transaction(async (tx) => {
+      // Bulk Insert
+      const createdEmployees = await tx.employee.createManyAndReturn({
+        data: newEmployeesData,
+        skipDuplicates: true,
+      });
+
+      // Create Audit Logs
+      await tx.auditLog.createMany({
+        data: createdEmployees.map((emp) => ({
+          action: "CREATE_EMPLOYEE",
+          entity: "EMPLOYEE",
+          entityId: emp.id,
+          userId: userId,
+          businessId: businessId,
+          newValue: `Bulk imported: ${emp.firstName} ${emp.lastName} as ${emp.roleId}`,
+        })),
+      });
+
+        // Create a Map of Email -> EmployeeID for reliable lookup
+        const emailToIdMap = new Map(createdEmployees.map(e => [e.email, e.id]));
+        // Standard Audit Logs for the import
+        await tx.auditLog.createMany({
+            data: createdEmployees.map((emp) => ({
+            action: "CREATE_EMPLOYEE",
+            entity: "EMPLOYEE",
+            entityId: emp.id,
+            userId: userId, 
+            businessId: businessId,
+            newValue: `Bulk imported staff`,
+            })),
+        });
+
+    
+    type UserCreateManyInputWithoutID = Omit<UserCreateManyInput, "id">;
+
+    if (UserAccountsRequests.length > 0) {
+    // 6. Create User records using the Email-to-ID Map (SAFE)
+    const userData = UserAccountsRequests.map((req) => {
+      const empId = emailToIdMap.get(req.email);
+      if (!empId) return null;
+
+      return {
+        employeeId: empId,
+        password: req.password,
+        needsPasswordChange: true,
+        isVerified: false,
+        accessGrantedBy: employeeId, 
+        accessGrantedAt: new Date(),
+      };
+    }).filter(Boolean) as UserCreateManyInputWithoutID[];
+
+
+    await tx.user.createMany({ data: userData });
+
+    // 7. Updating Employee hasSystemAccess status
+    const employeeIdsToUpdate = userData.map(u => u.employeeId);
+    await tx.employee.updateMany({
+      where: { id: { in: employeeIdsToUpdate } },
+      data: { hasSystemAccess: true }
+    });
+
+    // 8. Log Access Grants
+    await tx.auditLog.createMany({
+      data: employeeIdsToUpdate.map(id => ({
+        action: "GRANT_ACCESS_BULK",
+        entity: "USER",
+        entityId: id,
+        userId: userId,
+        businessId: businessId,
+        newValue: `System access granted via bulk import.`
+      }))
+    });
+  }
+   //     // 4. Send Emails (Asynchronous)
+    //     // In a real production app, you'd use a Queue (like BullMQ)
+    return createdEmployees;
+});
+
+    Promise.allSettled(UserAccountsRequests.map(req => 
+        sendTempPasswordEmail(req.email, req.tempPassword, req.firstName, businessSlug)
+    )).catch(err => console.error("Bulk Email Error:", err));
+
+    return {
+      success: true,
+      message: UserAccountsRequests.length > 0 ? 
+        `Successfully imported ${result.length} employees. Accounts created and emails sent to ${UserAccountsRequests.length} employees.` :
+        `Successfully imported ${result.length} employees.`,
+      status: 200,
+      redirectTo: `/${businessSlug}/employees_list`,
+    } as AppResponse;
+
+  } catch (error: unknown) {
+    console.error("BULK_EMPLOYEE_IMPORT_ERROR:", error);
+    if (error instanceof Error) {
+        return { error: error.message, success: false, status: 400 } as AppResponse;
+    }
+    return { error: "Failed to import employees. Check your file format.", success: false, status: 500 } as AppResponse;
+  }
 }
 
 //GET EMPLOYEES SERVICE
-
 export async function getAllEmployeesService(businessId: string, userId: string, employeeId: string) {
     try {
         const employees = await prisma.employee.findMany({
@@ -288,6 +439,7 @@ export async function hardDeleteMultipleUserService(ids: string[], userId: strin
     }
 }
 
+//Soft Delete
 export async function softDeleteMultipleUserService(ids: string[], userId: string, businessId: string, businessSlug: string) {
   
     try {
@@ -384,7 +536,7 @@ export async function toggleBulkEmployeeStatusService(ids: string[], userId: str
 
 
 
-export async function makeEmployeeAccountUser(employeeId: string, adminId: string, businessId: string) {
+export async function grantEmployeeSystemAccess(empId: string, userId: string, employeeId: string, businessId: string, businessSlug: string) {
     try {
         const tempPassword = generateRandomPassword();
         const hashTempPassword = await hashPassword(tempPassword);
@@ -392,7 +544,7 @@ export async function makeEmployeeAccountUser(employeeId: string, adminId: strin
         const result = await prisma.$transaction(async (tx) => {
             // 1. Fetch employee and business slug
             const employee = await tx.employee.findFirst({
-                where: { id: employeeId, businessId: businessId },
+                where: { id: empId, businessId: businessId },
                 include: { business: true, user: true }
             });
 
@@ -408,7 +560,7 @@ export async function makeEmployeeAccountUser(employeeId: string, adminId: strin
                     accountType: AccountType.EMPLOYEE,
                     needsPasswordChange: true,
                     isVerified: false,
-                    accessGrantedBy: adminId,
+                    accessGrantedBy: employeeId, // The employee performing the action
                     accessGrantedAt: new Date(),
                     createdAt: new Date(),
                 }
@@ -416,7 +568,7 @@ export async function makeEmployeeAccountUser(employeeId: string, adminId: strin
 
             // 3. Update the Employee status flag
             await tx.employee.update({
-                where: { id: employeeId },
+                where: { id: empId },
                 data: { hasSystemAccess: true }
             });
 
@@ -426,13 +578,13 @@ export async function makeEmployeeAccountUser(employeeId: string, adminId: strin
                     action: "GRANT_ACCESS",
                     entity: "USER",
                     entityId: newUser.id,
-                    userId: adminId,
+                    userId: userId,
                     businessId: businessId,
                     newValue: "System access granted to employee"
                 }
             });
 
-            return { employee, businessSlug: employee.business.slug };
+            return { employee};
         });
 
         // 5. Send onboarding email
@@ -441,7 +593,7 @@ export async function makeEmployeeAccountUser(employeeId: string, adminId: strin
                 result.employee.email, 
                 tempPassword, 
                 result.employee.firstName,
-                result.businessSlug
+                businessSlug
             );
         } catch (err) {
             console.error("Email sending failed:", err);
@@ -450,7 +602,8 @@ export async function makeEmployeeAccountUser(employeeId: string, adminId: strin
 
         return { 
             success: true, 
-            message: `Access granted to ${result.employee.firstName}. Credentials sent to email.`, 
+            message: `Access granted to ${result.employee.firstName}. Credentials sent to email.`,
+            redirectTo: `/${businessSlug}/employees_list`, 
             status: 200 
         } as AppResponse;
 
@@ -461,12 +614,12 @@ export async function makeEmployeeAccountUser(employeeId: string, adminId: strin
 }
 
 
-export async function revokeEmployeeAccess(employeeId: string, adminId: string, businessId: string) {
+export async function revokeEmployeeSystemAccess(empId: string, userId: string, businessId: string, businessSlug: string) {
     try {
         await prisma.$transaction(async (tx) => {
             // 1. Verify employee exists and has a user account
             const employee = await tx.employee.findFirst({
-                where: { id: employeeId, businessId: businessId },
+                where: { id: empId, businessId: businessId },
                 include: { user: true }
             });
 
@@ -475,12 +628,12 @@ export async function revokeEmployeeAccess(employeeId: string, adminId: string, 
 
             // 2. Delete the User record (This kills their ability to log in)
             await tx.user.delete({
-                where: { employeeId: employeeId }
+                where: { employeeId: empId }
             });
 
             // 3. Update the Employee flag
             await tx.employee.update({
-                where: { id: employeeId },
+                where: { id: empId },
                 data: { hasSystemAccess: false }
             });
 
@@ -489,8 +642,8 @@ export async function revokeEmployeeAccess(employeeId: string, adminId: string, 
                 data: {
                     action: "REVOKE_ACCESS",
                     entity: "EMPLOYEE",
-                    entityId: employeeId,
-                    userId: adminId,
+                    entityId: empId,
+                    userId: userId,
                     businessId: businessId,
                     newValue: "System access revoked; user record deleted."
                 }
@@ -499,7 +652,8 @@ export async function revokeEmployeeAccess(employeeId: string, adminId: string, 
 
         return { 
             success: true, 
-            message: "Access revoked successfully. The employee can no longer log in.", 
+            message: "Access revoked successfully. The employee can no longer log in.",
+            redirectTo: `/${businessSlug}/employees_list`, 
             status: 200 
         } as AppResponse;
 
@@ -510,7 +664,7 @@ export async function revokeEmployeeAccess(employeeId: string, adminId: string, 
 }
 
 
-export async function makeBulkEmployeesUserAccounts(employeeIds: string[], adminId: string, businessId: string) {
+export async function grantBulkEmployeesSystemAccess(employeeIds: string[], userId: string, employeeId: string, businessId: string) {
     try {
         if (!employeeIds || employeeIds.length === 0) {
             return { error: "No employees selected.", success: false, status: 400 } as AppResponse;
@@ -555,7 +709,7 @@ export async function makeBulkEmployeesUserAccounts(employeeIds: string[], admin
                     password: req.password,
                     needsPasswordChange: true,
                     isVerified: false,
-                    accessGrantedBy: adminId,
+                    accessGrantedBy: employeeId, // The employee performing the action
                     accessGrantedAt: new Date(),
                     createdAt: new Date(),
                 }))
@@ -573,7 +727,7 @@ export async function makeBulkEmployeesUserAccounts(employeeIds: string[], admin
                     action: "GRANT_ACCESS_BULK",
                     entity: "USER",
                     entityId: emp.id,
-                    userId: adminId,
+                    userId: userId,
                     businessId: businessId,
                     newValue: `System access granted via bulk action.`
                 }))
@@ -598,7 +752,7 @@ export async function makeBulkEmployeesUserAccounts(employeeIds: string[], admin
     }
 }
 
-export async function revokeBulkEmployeesUserAccounts(employeeIds: string[], adminId: string, businessId: string) {
+export async function revokeBulkEmployeesSystemAccess(employeeIds: string[], userId: string, businessId: string) {
     try {
         if (!employeeIds || employeeIds.length === 0) {
             return { error: "No employees selected.", success: false, status: 400 } as AppResponse;
@@ -639,7 +793,7 @@ export async function revokeBulkEmployeesUserAccounts(employeeIds: string[], adm
                     action: "REVOKE_ACCESS_BULK",
                     entity: "EMPLOYEE",
                     entityId: emp.id,
-                    userId: adminId,
+                    userId: userId,
                     businessId: businessId,
                     newValue: `System access revoked via bulk action by admin.`
                 }))

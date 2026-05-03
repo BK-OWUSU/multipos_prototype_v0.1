@@ -96,6 +96,7 @@ export async function verifyOTPService(request: NextRequest) {
       {
         success: true,
         message: "Email verified successfully",
+        businessSlug: emp.business.slug,
         redirectTo: `/${emp.business.slug}/dashboard`
       },
       { status: 200 }
@@ -106,7 +107,7 @@ export async function verifyOTPService(request: NextRequest) {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 8
+      maxAge: 30 * 60 
     })
 
     // Clear verification session

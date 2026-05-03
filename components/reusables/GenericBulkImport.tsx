@@ -77,9 +77,11 @@ export default function GenericBulkImport<TSchema extends z.ZodType, TOutput>({
 
     setIsUploading(true);
     
-    const transformedData = config.transformData
+    const transformedData =( 
+    config.transformData
       ? parseResult.data.map(config.transformData)
-      : parseResult.data;
+      : parseResult.data
+    ) as TOutput[];
     
     setUploadProgress({
       total: transformedData.length,
@@ -89,9 +91,9 @@ export default function GenericBulkImport<TSchema extends z.ZodType, TOutput>({
 
     // 2. Prepare the payload
     const payload = {
-      ...additionalPayload,
       data: transformedData,
-    };
+      ...additionalPayload,
+    } as { data: TOutput[]; [key: string]: unknown };
 
 try {
       let result: BulkImportResult;
@@ -110,6 +112,13 @@ try {
       } else {
         // Handle Server Action (Function) with startTransition because Server Actions impact app state
         result = await config.apiEndpoint(payload);
+        if (result.success && result.message) {
+          toast.success(result.message);
+        }else if (!result.success && result.error) {
+          toast.error(result.error);
+        }else {
+          toast.error('Bulk import failed');
+        } 
       }
 
       // 4. Handle the result

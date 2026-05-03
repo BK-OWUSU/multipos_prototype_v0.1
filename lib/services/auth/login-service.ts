@@ -133,7 +133,7 @@ export async function login(email: string, password: string ) {
                 httpOnly: true,
                 sameSite: "lax",
                 secure: process.env.NODE_ENV === "production",
-                maxAge: 60 * 60 * 8, // 8 hours
+                maxAge: 30 * 60, // 30 minutes
             });
 
             return response;

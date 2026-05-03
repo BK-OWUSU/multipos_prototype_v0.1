@@ -1,6 +1,6 @@
 import { getSession} from "@/lib/auths";
 import { NextRequest, NextResponse } from "next/server";
-import { deleteBrandService, getBrandByIdService, updateBrandService } from "@/lib/services/brand-service";
+import { deleteBrandService, getBrandByIdService, updateBrandService } from "@/lib/services/business/brand-service";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
         //Get Current user session

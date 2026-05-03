@@ -114,12 +114,17 @@ export const useAuthStore = create<AuthStore>((set, get)=>({
 
     verifyOtp: async (data) => {
         try {
-            const response =  await apiClient.post("/auth/verify-otp", {code: data.pin});
+            const result =  await apiClient.post("/auth/verify-otp", {code: data.pin});
+            const response = result.data as OTPResponse;
+            if (response.message) {
+                toast.success(response.message);
+            }
             return {
-                success: response.data?.success,
-                message: response.data?.message,
-                businessesSlug: response.data?.businessesSlug,
-                requiresPasswordChange: response.data?.requiresPasswordChange,
+                success: response.success,
+                message: response.message,
+                businessesSlug: response.businessesSlug,
+                requiresPasswordChange: response.requiresPasswordChange,
+                redirectTo: response.redirectTo,
                 status: response.status,
             } as OTPResponse;
         } catch (error) {

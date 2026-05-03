@@ -147,8 +147,6 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
     }
 };
 
-
-
     return (
     <div className="space-y-4 p-4">
         <div className="flex items-center  justify-between">

@@ -5,7 +5,7 @@ import { Employee } from "@/types/auth"
 import { Badge } from "@/components/ui/badge"
 import { 
   Users, Mail, Phone, ShieldCheck, 
-  Store, Calendar, MoreHorizontal, UserRoundX,
+  Store, MoreHorizontal, UserRoundX,
   UserX, UserCheck, Trash2, CheckCircle2, XCircle, 
   KeyRound, Lock, Unlock, ShieldAlert, Shield
 } from "lucide-react"
@@ -23,13 +23,16 @@ import { useEmployeeStore } from "@/store/employeeStore"
 import { toast } from "sonner"
 import AlertWithDialogue from "../reusables/AlertWithDialogue"
 import Image from "next/image"
+import { grantEmployeeAccess, revokeEmployeeAccess } from "@/lib/actions/business/employeesActions"
+import { useRouter } from "next/navigation"
 
 const ActionCell = ({ employee }: { employee: Employee }) => {
   // Ensure these functions are exported from your store!
-  const { toggleEmployeeStatus, deleteEmployee } = useEmployeeStore()
+  const { toggleEmployeeStatus, deleteEmployee, fetchEmployees } = useEmployeeStore()
+  const router = useRouter();
   
   return (
-    <DropdownMenu>
+    <DropdownMenu >
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-8 w-8 p-0">
           <MoreHorizontal className="h-4 w-4" />
@@ -50,7 +53,18 @@ const ActionCell = ({ employee }: { employee: Employee }) => {
         {!employee.hasSystemAccess ? (
           <DropdownMenuItem onClick={() => {
             // grantAccess(employee.id)
-              toast("Granting access... (not implemented)", { icon: "⏳" })
+              toast.promise(grantEmployeeAccess(employee.id),{
+                loading: "Granting access...",
+                success: (res)=> {
+                  if(res.success) {
+                    fetchEmployees();
+                    return res.message || "Access granted successfully."
+                  }else {
+                    throw new Error(res.error);
+                  }
+                },
+                error: "An error occurred while granting access."
+              })
             }}>
             <span className="flex items-center text-blue-600">
               <Shield className="mr-2 h-4 w-4" /> Grant Access
@@ -59,7 +73,18 @@ const ActionCell = ({ employee }: { employee: Employee }) => {
         ) : (
           <DropdownMenuItem onClick={() => {
             // revokeAccess(employee.id)
-            toast("Revoking access... (not implemented)", { icon: "⏳" })
+            toast.promise(revokeEmployeeAccess(employee.id),{
+              loading: "Revoking access...",
+              success: (res)=> {
+                if(res.success) {
+                  fetchEmployees();
+                  return res.message || "Access revoked successfully."
+                }else {
+                  throw new Error(res.error);
+                }
+              },
+              error: "An error occurred while revoking access."
+            })
           }}>
             <span className="flex items-center text-orange-600">
               <ShieldAlert className="mr-2 h-4 w-4" /> Revoke Access

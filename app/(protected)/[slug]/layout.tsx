@@ -61,7 +61,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-2">
           <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-blue-900"></div>
-          <p className="animate-pulse text-sm text-muted-foreground italic">Syncing your workspace...</p>
+          <p className="animate-pulse text-2xl text-muted-foreground italic">Syncing your workspace...</p>
         </div>
       </div>
     );

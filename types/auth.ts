@@ -42,6 +42,10 @@ export type User = {
     id: string;
     name: string;
     slug: string;
+    currencyCode: string;
+    currencySymbol: string;
+    locale: string;
+    countryCode?: string;
   };
   shopId?: string | null;
 }

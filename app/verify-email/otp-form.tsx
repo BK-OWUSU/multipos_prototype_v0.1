@@ -1,6 +1,6 @@
 "use client"
 import { cn } from "@/lib/utils";
-import { RefreshCwIcon } from "lucide-react";
+import { RefreshCwIcon,ShieldQuestionMark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {Card,CardContent,CardDescription,CardFooter,CardHeader,CardTitle} from "@/components/ui/card";
 import {Field,FieldDescription,FieldLabel} from "@/components/ui/field";
@@ -12,6 +12,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { OTPResponse } from "@/types/auth";
+import CustomButton from "@/components/reusables/CustomButton";
 
 export function InputOTPForm() {
   const searchParams = useSearchParams()
@@ -28,7 +29,7 @@ export function InputOTPForm() {
   const {
     handleSubmit, 
     setError,
-    formState: {errors}
+    formState: {errors, isSubmitting}
   } = otpForm;
 
   const onSubmit: SubmitHandler<OTPFormSchema> = async(data) => {
@@ -40,8 +41,8 @@ export function InputOTPForm() {
       }     
       
       //Successful
-       if(response.success && response.businessesSlug) {
-        router.push(`/${response.businessesSlug}/dashboard`);
+       if(response.success && response.message) {
+        router.push(response.redirectTo ? response.redirectTo : `/${response.businessesSlug}/dashboard`);
         return;
       }
       
@@ -135,15 +136,19 @@ export function InputOTPForm() {
               {errors.pin && (<FieldDescription className="text-destructive text-sm mt-2">{errors.pin.message}</FieldDescription>)}
               {/* ERROR */}
               <FieldDescription>
-                <a href="#">I no longer have access to this email address.</a>
+                <a href="/register">I no longer have access to this email address.</a>
               </FieldDescription>
             </Field>
           </CardContent>
           <CardFooter>
             <Field>
-              <Button type="submit" className="w-full">
-                Verify
-              </Button>
+              <CustomButton
+                text="Verify OTP"
+                type="submit" 
+                className="w-full"
+                isLoading={isSubmitting}
+                icon={<ShieldQuestionMark className="w-4 h-4" />}
+               />
               <div className="text-sm text-muted-foreground">
                 Having trouble signing in?{" "}
                 <a

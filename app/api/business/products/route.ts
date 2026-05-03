@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/auths";
 import { NextRequest, NextResponse } from "next/server";
-import { createProductService, getAllProductsService } from "@/lib/services/product-service";
+import { createProductService, getAllProductsService } from "@/lib/services/business/product-service";
 
 export async function POST(request: NextRequest) {
         // 1. Get and verify the session cookie
@@ -8,10 +8,10 @@ export async function POST(request: NextRequest) {
         if (!session || typeof session === "string") {
             return NextResponse.json({ error: "Unauthorized session", success: false }, { status: 401 });
         }
-        const { userId, businessId } = session;
+        const { userId,employeeId, businessId } = session;
         const body = await request.json();
 
-        const response = await createProductService(body,userId,businessId)
+        const response = await createProductService(body,userId, employeeId || "",businessId)
 
         if (response.status && response.message) {
             return NextResponse.json({ success: true, message: `Product ${response.product.name} created successfully`, product: response.product },{ status: 201 });

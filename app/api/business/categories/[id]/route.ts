@@ -1,6 +1,6 @@
 import { getSession} from "@/lib/auths";
 import { NextRequest, NextResponse } from "next/server";
-import { deleteCategoryService, getCategoryByIdService, updateCategoryService } from "@/lib/services/category-service";
+import { deleteCategoryService, getCategoryByIdService, updateCategoryService } from "@/lib/services/business/category-service";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
 

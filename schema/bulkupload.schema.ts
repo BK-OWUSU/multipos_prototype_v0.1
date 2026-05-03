@@ -1,9 +1,9 @@
 // lib/bulk-import/types.ts
 import { z } from 'zod';
 
-export type ImportHandler = 
+export type ImportHandler<T = unknown> = 
   | string // API endpoint
-  | ((payload: { data: unknown[]; [key: string]: unknown }) => Promise<BulkImportResult>); // Server action
+  | ((payload: { data: T[]; [key: string]: unknown }) => Promise<BulkImportResult>); // Server action
 
 export interface BulkImportConfig<TSchema extends z.ZodType, TOutput = z.infer<TSchema>> {
   entityName: string;
@@ -11,7 +11,7 @@ export interface BulkImportConfig<TSchema extends z.ZodType, TOutput = z.infer<T
   schema: TSchema;
   templateHeaders: string[];
   templateExample: string[];
-  apiEndpoint: ImportHandler;
+  apiEndpoint: ImportHandler<TOutput>;
   
   transformData?: (data: z.infer<TSchema>) => TOutput | Record<string, unknown>;
   validateRow?: (row: z.infer<TSchema>, index: number) => { valid: boolean; error?: string };

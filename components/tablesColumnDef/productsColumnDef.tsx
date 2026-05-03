@@ -7,9 +7,10 @@ import {
   Package, DollarSign, Hash, Archive,
   Tag, Building, Percent, Calendar,
   MoreHorizontal, Eye, Edit, Trash2,
-  AlertTriangle, Image as ImageIcon
+  AlertTriangle, Image as ImageIcon,
+  type LucideIcon
 } from "lucide-react"
-import { formatDate } from "@/lib/utils"
+import { formatBusinessCurrency, formatDate } from "@/lib/utils"
 import Image from "next/image"
 import {
   DropdownMenu,
@@ -29,6 +30,7 @@ import { useState } from "react"
 import { useCategoryStore } from "@/store/categoryStore"
 import { useBrandStore } from "@/store/brandStore"
 import AddProductForm from "@/app/(protected)/[slug]/product_list/AddProductForm"
+import { useAuthStore } from "@/store/useAuthStore"
 
 // --- Sub-component for Actions ---
 const ActionCell = ({ product }: { product: Product }) => {
@@ -111,6 +113,33 @@ const ActionCell = ({ product }: { product: Product }) => {
   )
 }
 
+//Currency Headers
+const CurrencyHeader = ({ title, icon: Icon }: { title: string, icon?: LucideIcon }) => {
+  const user = useAuthStore((state) => state.user);
+  const currencyCode = user?.business?.currencyCode || 'GHS';
+
+  return (
+    <span className="flex items-center">
+      {Icon && <Icon className="mr-2" size={16} />}
+      {title} ({currencyCode})
+    </span>
+  );
+};
+
+// Currency cell
+const CurrencyCell = ({ amount }: { amount: number }) => {
+  const user = useAuthStore((state) => state.user);
+  return (
+    <span>
+      {formatBusinessCurrency(
+        amount, 
+        user?.business?.currencyCode || 'GHS', 
+        user?.business?.locale || 'en-GH'
+      )}
+    </span>
+  );
+};
+
 export const productsColumnDef: ColumnDef<Product>[] = [
   {
     accessorKey: "name",
@@ -147,15 +176,15 @@ export const productsColumnDef: ColumnDef<Product>[] = [
   },
   {
     accessorKey: "price",
-    header: () => (<span className='flex items-center'><DollarSign className="mr-2" size={16} />Price</span>),
-    cell: ({ row }) => `$${Number(row.original.price).toFixed(2)}`
+    header: () => <CurrencyHeader title="Price" />,
+    cell: ({ row }) => <CurrencyCell amount={Number(row.original.price)} />
   },
   {
     accessorKey: "costPrice",
-    header: () => (<span className='flex items-center'><DollarSign className="mr-2" size={16} />Cost</span>),
-    cell: ({ row }) => `$${Number(row.original.costPrice).toFixed(2)}`
+    header: () => <CurrencyHeader title="Cost" />,
+    cell: ({ row }) => <CurrencyCell amount={Number(row.original.costPrice)} />
   },
-  {
+  { 
     accessorKey: "stock",
     header: "Stock",
     cell: ({ row }) => {

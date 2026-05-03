@@ -9,21 +9,21 @@ import { GenericModal } from "@/components/reusables/GenericModal";
 import AddEmployeeForm from "./AddEmployeeForm";
 import GenericBulkImport from "@/components/reusables/GenericBulkImport";
 import { employeeImportConfig } from "@/lib/configs/employee-config";
-import { Plus, Users2, PersonStanding, UserCheck, ShieldAlert, Upload } from "lucide-react";
+import { Plus, Users2, PersonStanding, UserCheck, ShieldAlert, Upload, Shield } from "lucide-react";
 import { Card, CardHeader, CardDescription, CardContent } from "@/components/ui/card";
 import CustomButton from "@/components/reusables/CustomButton";
 import { useRoleStore } from "@/store/rolesStore";
 import { useEmployeeStore } from "@/store/employeeStore";
 import { employeeColumns } from "@/components/tablesColumnDef/employeeColumns";
 import { AppResponse } from "@/types/auth";
-import { toggleMultipleUser } from "@/lib/actions/employeesActions";
+import { toggleMultipleUser } from "@/lib/actions/business/employeesActions";
 
 export default function EmployeeList() {
   const router = useRouter();
   const { slug } = useParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
-  const [width, setWidth] = useState("")
+  const [width, setWidth] = useState("sm:max-w-137.5")
   
   // Stores
   const { roles, fetchRoles } = useRoleStore();
@@ -41,15 +41,16 @@ export default function EmployeeList() {
     const empList = employees || [];
     const active = empList.filter(e => e.isActive).length;
     const admins = empList.filter(e => e.role?.name.toLowerCase().includes("admin")).length;
-
+    const hasSystemAccess = empList.filter(e => e.hasSystemAccess).length;
+    
     return [
       { label: "Total Staff", value: empList.length, icon: Users2, color: "text-blue-800" },
       { label: "Active", value: active, icon: UserCheck, color: "text-green-600" },
-      { label: "On Leave", value: 0, icon: PersonStanding, color: "text-orange-600" },
+      { label: "With System Access", value: hasSystemAccess, icon: Shield, color: "text-blue-600" },
       { label: "Admins", value: admins, icon: ShieldAlert, color: "text-purple-600" },
     ];
   }, [employees]);
-
+  
   useEffect(() => {
     if (!hasAccess(user, "dashboard")) {
       router.push(`/${user?.business.slug}/dashboard`);
@@ -117,7 +118,7 @@ export default function EmployeeList() {
               isOpen={isBulkImportOpen}
               onOpenChange={()=> {
                 setIsBulkImportOpen(prev => !prev);
-                setWidth(""); // Reset width when modal is closed
+                setWidth("sm:max-w-137.5"); // Reset width when modal is closed
               }}
               triggerBtn={
                 <CustomButton
@@ -133,17 +134,16 @@ export default function EmployeeList() {
                 config={employeeImportConfig}
                 additionalPayload={{ businessId: user.business.id }}
                 onSuccess={(result) => {
-                  console.log('Import completed:', result);
                   setIsBulkImportOpen(false);
                   fetchEmployees();
-                  setWidth("");
+                  setWidth("sm:max-w-137.5");
                 }}
                 onCancel={() => {
                   setIsBulkImportOpen(false);
-                  setWidth("");
+                  setWidth("sm:max-w-137.5");
                 }}
                 onImportParsedSuccess={()=> {
-                  setWidth("min");                  
+                  setWidth("sm:max-w-max");                  
                 }}
               />
             </GenericModal>

@@ -2,10 +2,11 @@ import { prisma } from "@/lib/dbHelper";
 import { AppResponse } from "@/types/auth";
 import { deleteUTFile } from "@/lib/actions/uploadthing";
 import { productSchema,ProductFormValues } from "@/schema/inventory.schema";
+import { ProductImportPayload, ProductsValidateArray } from "@/lib/configs/product-config";
 
 
 
-export async function createProductService(data: ProductFormValues, userId: string, businessId: string) {
+export async function createProductService(data: ProductFormValues,userId:string, employeeId: string, businessId: string) {
   try {
           const validatedData = productSchema.parse(data);
   
@@ -49,7 +50,7 @@ export async function createProductService(data: ProductFormValues, userId: stri
                   await tx.stockLog.create({
                       data: {
                           productId: newProduct.id,
-                          userId: userId,
+                          employeeId: employeeId,
                           businessId: businessId,
                           change: validatedData.stock,
                           reason: "Product created with initial stock",
@@ -77,6 +78,132 @@ export async function createProductService(data: ProductFormValues, userId: stri
           console.error("Product creation error:", error);
           return{ error: "Internal Server Error", success: false, status: 500 }
       } 
+}
+export async function createBulkProductService(
+    payload: { data: ProductImportPayload[]; [key: string]: unknown },
+    userId: string,
+    employeeId: string,
+    businessId: string,
+    businessSlug: string
+) {
+    try {
+        const validatedData = ProductsValidateArray.parse(payload.data);
+
+        if (validatedData.length === 0) {
+            return { error: "No products data provided.", success: false, status: 400 };
+        }
+
+        // 1. Unique lookups
+        const categoryNames = [...new Set(validatedData.map((p) => p.category).filter(Boolean))];
+        const brandNames = [...new Set(validatedData.map((p) => p.brand).filter(Boolean))];
+
+        const [categoriesInDB, brandsInDB] = await Promise.all([
+            prisma.category.findMany({
+                where: { businessId, name: { in: categoryNames as string[] } },
+                select: { id: true, name: true }
+            }),
+            prisma.brand.findMany({
+                where: { businessId, name: { in: brandNames as string[] } },
+                select: { id: true, name: true }
+            }),
+        ]);
+
+        // FIX: Map Name -> ID (The key must be the name from CSV)
+        const categoryMap = new Map(categoriesInDB.map((cat) => [cat.name, cat.id]));
+        const brandMap = new Map(brandsInDB.map((brand) => [brand.name, brand.id]));
+
+        // 2. SKU De-duplication
+        const skusToImport = validatedData.map((p) => p.sku).filter(Boolean) as string[];
+        const existingProducts = await prisma.product.findMany({
+            where: { businessId, sku: { in: skusToImport } },
+            select: { sku: true }
+        });
+        const existingSKUSet = new Set(existingProducts.map((p) => p.sku));
+
+        // 3. Prepare Data
+        const newProductsData = validatedData
+            .filter((prod) => !existingSKUSet.has(prod.sku || ""))
+            .map((prod) => {
+                const categoryId = prod.category ? categoryMap.get(prod.category) : null;
+                const brandId = prod.brand ? brandMap.get(prod.brand) : null;
+
+                // Optional: Validation if category/brand MUST exist
+                // if (prod.category && !categoryId) throw new Error(`Category "${prod.category}" not found.`);
+
+                return {
+                    name: prod.name,
+                    price: prod.price,
+                    costPrice: prod.costPrice,
+                    stock: prod.stock || 0,
+                    lowStockAlert: prod.lowStockAlert,
+                    isActive: prod.isActive ?? true,
+                    sku: prod.sku || null,
+                    businessId: businessId,
+                    description: prod.description || "",
+                    categoryId: categoryId, // Assuming field name is categoryId in DB
+                    brandId: brandId,       // Assuming field name is brandId in DB
+                    discountId: null,
+                    imageUrl: null,
+                    fileKey: null
+                };
+            });
+
+        if (newProductsData.length === 0) {
+            return { error: "All products already exist (SKU match).", success: false, status: 400 };
+        }
+
+        // 4. Execution Transaction
+        const finalResult = await prisma.$transaction(async (tx) => {
+            const createdProducts = await tx.product.createManyAndReturn({
+                data: newProductsData,
+                skipDuplicates: true
+            });
+
+            // Bulk Create Stock Logs (Performance Optimization)
+            const stockLogsData = createdProducts
+                .filter(p => p.stock > 0)
+                .map(p => ({
+                    productId: p.id,
+                    employeeId: employeeId,
+                    businessId: businessId,
+                    change: p.stock,
+                    reason: "Initial import stock"
+                }));
+
+            if (stockLogsData.length > 0) {
+                await tx.stockLog.createMany({ data: stockLogsData });
+            }
+
+            // Bulk Create Audit Logs
+            await tx.auditLog.createMany({
+                data: createdProducts.map((p) => ({
+                    action: "CREATE_PRODUCT",
+                    entity: "PRODUCT",
+                    entityId: p.id,
+                    userId: userId,
+                    businessId: businessId,
+                    newValue: `Imported SKU: ${p.sku}`
+                }))
+            });
+
+            return createdProducts;
+        });
+
+        return {
+            success: true,
+            message: `Successfully imported ${finalResult.length} products.`,
+            redirectTo: `/${businessSlug}/product_list`,
+            status: 200
+        };
+
+    } catch (error: unknown) {
+        console.error("Bulk Import Error:", error);
+        return { 
+            error: (error as Error).message || "Internal Server Error", 
+            success: false, 
+            status: 500 
+        };
+    }
 }
 
 export async function getAllProductsService(businessId: string) {
@@ -186,7 +313,7 @@ export async function getProductByIdService(productId: string, businessId: strin
       }
 }
 
-export async function updateProductService(productId: string, data: ProductFormValues, userId: string, businessId: string) { 
+export async function updateProductService(productId: string, data: ProductFormValues, userId: string, employeeId: string, businessId: string) { 
   try {
           // Use partial() so we only validate what's sent
           const validatedData = productSchema.partial().parse(data);
@@ -232,7 +359,7 @@ export async function updateProductService(productId: string, data: ProductFormV
                   await tx.stockLog.create({
                       data: {
                           productId: productId,
-                          userId,
+                          employeeId,
                           businessId,
                           change: stockChange,
                           reason: "Stock updated manually",
@@ -269,7 +396,7 @@ export async function updateProductService(productId: string, data: ProductFormV
 
 
 
-export async function softProductDeleteService(productId: string, userId: string, businessId: string) {
+export async function softProductDeleteService(productId: string, userId: string, employeeId: string, businessId: string) {
    try {  
           // Get current product to log stock removal
           const currentProduct = await prisma.product.findFirst({
@@ -289,7 +416,7 @@ export async function softProductDeleteService(productId: string, userId: string
                   await tx.stockLog.create({
                       data: {
                           productId: productId,
-                          userId: userId,
+                          employeeId: employeeId,
                           businessId: businessId,
                           change: -currentProduct.stock,
                           reason: "Product deleted - stock removed",
@@ -326,7 +453,7 @@ export async function softProductDeleteService(productId: string, userId: string
       }
 }
 
-export async function hardProductDeleteService(productId: string, userId: string, businessId: string) {
+export async function hardProductDeleteService(productId: string, userId: string,employeeId:string, businessId: string) {
    try {  
           // Get current product to log stock removal
           const currentProduct = await prisma.product.findFirst({
@@ -346,7 +473,7 @@ export async function hardProductDeleteService(productId: string, userId: string
                   await tx.stockLog.create({
                       data: {
                           productId: productId,
-                          userId: userId,
+                          employeeId: employeeId,
                           businessId: businessId,
                           change: -currentProduct.stock,
                           reason: "Product deleted - stock removed",

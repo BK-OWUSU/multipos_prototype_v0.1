@@ -35,8 +35,7 @@ export function GenericModal({
         {triggerBtn}
       </DialogTrigger>
       
-      {/* sm:max-w-[600px] is a good middle-ground for most POS forms */}
-      <DialogContent className={`sm:max-w-${width || '137.5'} max-h-[90vh] overflow-y-auto`}>
+      <DialogContent className={`max-h-[90vh] overflow-y-auto ${width}`}>
         <DialogHeader>
           <DialogTitle className="text-center font-bold my-1">{header}</DialogTitle>
           {description && (
@@ -44,7 +43,7 @@ export function GenericModal({
           )}
         </DialogHeader>
 
-        {/* This is where your AddEmployeeForm or any other component goes */}
+        {/* This is where other component goes */}
         <div className="py-2">
           {children}
         </div>

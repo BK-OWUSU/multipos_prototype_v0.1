@@ -10,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useAuthStore } from "@/store/useAuthStore"
 import { LoginResponse } from "@/types/auth"
 import CustomButton from "@/components/reusables/CustomButton"
-import { LogIn } from "lucide-react";
+import { LogIn,Loader2 } from "lucide-react";
 import { toast } from "sonner"
 
 
@@ -40,7 +40,7 @@ export function LoginForm({className,...props}: React.ComponentProps<"form">) {
       //Successful login with single business → redirect to dashboard
       if(response.success && response.redirectTo) {
 
-        toast.success("Login successful! Redirecting...");
+        toast.success("Login successful! Redirecting...", { icon: <Loader2 className="mr-2 h-4 w-4 animate-spin" /> });
         router.push(response.redirectTo);
         return;
       }

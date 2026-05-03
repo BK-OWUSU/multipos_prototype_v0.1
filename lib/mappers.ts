@@ -20,6 +20,10 @@ export function mapUserToResponse(user: UserWithRelations): User {
       id: emp.business.id,
       name: emp.business.name,
       slug: emp.business.slug,
+      currencyCode: emp.business.currencyCode,
+      currencySymbol: emp.business.currencySymbol,
+      locale: emp.business.locale,
+      countryCode: emp.business.countryCode || undefined,
     },
     
     shopId: emp.shopId,

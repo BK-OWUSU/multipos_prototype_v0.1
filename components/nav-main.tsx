@@ -88,7 +88,7 @@ export function NavMain({ items }: { items: NavGroup[] }) {
                       {group.items?.map((subItem) => (
                         <SidebarMenuSubItem key={subItem.title}>
                           <SidebarMenuSubButton
-			                      className="text-white" 
+			                      className="text-white active:text-red-500" 
                             asChild 
                             isActive={pathname === subItem.url}
                           >

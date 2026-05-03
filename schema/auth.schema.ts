@@ -61,8 +61,6 @@ export const createEmployeeSchema = z.object({
 });
 
 export type CreateEmployeeSchema = z.infer<typeof createEmployeeSchema>;
-// Wrap your existing schema in an array
-export const CreateBulkEmployeeSchema = z.array(createEmployeeSchema);
 
 //PASSWORD CHANGE
 export const passwordSchema = z.object({

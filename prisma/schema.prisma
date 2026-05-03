@@ -28,6 +28,14 @@ model Business {
   isOnboarded       Boolean    @default(false)
   workHrsStartTime  DateTime?
   workHrsCloseTime  DateTime?
+
+  // Localization Fields
+  currencyCode      String     @default("GHS") // e.g., "GHS", "USD", "EUR"
+  currencySymbol    String     @default("₵")   // e.g., "GH₵", "$", "€"
+  locale            String     @default("en-GH") // e.g., "en-GH", "en-US", "de-DE"
+  countryCode       String?    // e.g., "GH", "US", "GB"
+
+
   employee          Employee[]
   shops             Shop[]
   products          Product[]
@@ -313,7 +321,7 @@ model Brand {
 model StockLog {
   id         String   @id @default(cuid())
   productId  String
-  employeeId     String
+  employeeId String
   businessId String
   change     Int
   reason     String?
@@ -475,4 +483,14 @@ enum SaleStatus {
 enum DiscountType {
   PERCENTAGE
   FIXED
+}
+
+enum RoleName {
+  OWNER
+  ADMIN
+  MANAGER
+  CASHIER
+  CUSTOM_A
+  CUSTOM_B
+  CUSTOM_C
 }

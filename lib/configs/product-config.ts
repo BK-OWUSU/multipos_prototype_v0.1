@@ -1,6 +1,7 @@
 // lib/bulk-import/configs/product-config.ts
 import { z } from 'zod';
 import { BulkImportConfig } from '@/schema/bulkupload.schema';
+import { createBulkProductsAction } from '../actions/business/productsActions';
 
 export const productCSVSchema = z.object({
   name: z.string().min(2, "Product name is required"),
@@ -10,8 +11,8 @@ export const productCSVSchema = z.object({
   costPrice: z.coerce.number().min(0, "Cost price must be positive"),
   stock: z.coerce.number().int().min(0, "Stock must be non-negative"),
   lowStockAlert: z.coerce.number().int().min(0).default(5),
-  categoryId: z.string().optional().nullable(),
-  brandId: z.string().optional().nullable(),
+  category: z.string().optional().nullable(),
+  brand: z.string().optional().nullable(),
   isActive: z
     .union([z.string(), z.boolean()])
     .transform((val) => {
@@ -22,6 +23,7 @@ export const productCSVSchema = z.object({
 });
 
 export type ProductCSVRow = z.infer<typeof productCSVSchema>;
+export const ProductsValidateArray = z.array(productCSVSchema);
 
 export interface ProductImportPayload {
   name: string;
@@ -31,16 +33,17 @@ export interface ProductImportPayload {
   costPrice: number;
   stock: number;
   lowStockAlert: number;
-  categoryId: string | null;
-  brandId: string | null;
+  category: string | null;
+  brand: string | null;
   isActive: boolean;
 }
 
-export const productImportConfig: BulkImportConfig<typeof productCSVSchema> = {
+export const productImportConfig: BulkImportConfig<typeof productCSVSchema, ProductImportPayload> = {
   entityName: 'Product',
   entityNamePlural: 'Products',
   schema: productCSVSchema,
-  apiEndpoint: '/api/products/bulk-import',
+  apiEndpoint: createBulkProductsAction,
+  // apiEndpoint: '/api/products/bulk-import',
   
   templateHeaders: [
     'name',
@@ -50,8 +53,8 @@ export const productImportConfig: BulkImportConfig<typeof productCSVSchema> = {
     'costPrice',
     'stock',
     'lowStockAlert',
-    'categoryId',
-    'brandId',
+    'category',
+    'brand',
     'isActive',
   ],
   
@@ -63,8 +66,8 @@ export const productImportConfig: BulkImportConfig<typeof productCSVSchema> = {
     '80.00',
     '50',
     '10',
-    'category_id_here',
-    'brand_id_here',
+    'null',
+    'null',
     'true',
   ],
   
@@ -76,8 +79,8 @@ export const productImportConfig: BulkImportConfig<typeof productCSVSchema> = {
     costPrice: row.costPrice,
     stock: row.stock,
     lowStockAlert: row.lowStockAlert,
-    categoryId: row.categoryId && row.categoryId !== 'none' ? row.categoryId : null,
-    brandId: row.brandId && row.brandId !== 'none' ? row.brandId : null,
+    category: row.category && row.category !== 'none' ? row.category : null,
+    brand: row.brand && row.brand !== 'none' ? row.brand : null,
     isActive: row.isActive,
   }),
   

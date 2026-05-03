@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/auths";
 import { NextRequest, NextResponse } from "next/server";
-import { createBrandService, getAllBrandsService } from "@/lib/services/brand-service";
+import { createBrandService, getAllBrandsService } from "@/lib/services/business/brand-service";
 
 
 

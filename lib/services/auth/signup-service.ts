@@ -1,10 +1,11 @@
 import { generateEmailVerificationToken, hashPassword, VERIFY_COOKIE_NAME } from "@/lib/auths";
 import { prisma } from "@/lib/dbHelper";
 import { sendOTPEmail } from "@/lib/email";
-import { AccountType } from "@/lib/generated/prisma/enums";
+import { AccountType, RoleName } from "@/lib/generated/prisma/enums";
 import { generateOTP, saveOTP } from "@/lib/otp";
 import { generateUniqueSlug } from "@/lib/slugGenerator";
 import { NextResponse } from "next/server";
+import { seedRoles } from "../seed/roles.seed";
 
 export async function signUp(businessName: string ,email: string, password: string,firstName: string,lastName: string) {
     try {
@@ -36,36 +37,19 @@ export async function signUp(businessName: string ,email: string, password: stri
                 data : {name: businessName, slug: subdomainSlug, email}
             });
             
-            // 2 Creating OWNER role
+            // 2 Creating Owner Role for the new business
             const ownerRole = await transact.role.create({
                 data: {
-                    name: "OWNER",
+                    name: RoleName.OWNER,
                     permissions: ["*"],
                     access: ["*"],
                     businessId: business.id,
                     isSystem: true
                 }
-            });
+            }); 
 
-            //Cresting admin role
-            await transact.role.create({
-                data: {
-                    name: "ADMIN",
-                    permissions: ["*"],
-                    access: ["pos", "sales_terminal","transactions","invoices"],
-                    businessId: business.id
-                }
-            });
-
-            //Cashier Role creating
-            await transact.role.create({
-                data: {
-                    name: "CASHIER",
-                    permissions: ["sell","print"],
-                    access: ["pos"],
-                    businessId: business.id
-                }
-            });
+            // 3 Creating Other Roles for the new Business
+            await seedRoles(business.id, transact);
 
             //Creating OWNER Employee Account
             const ownerEmployee = await transact.employee.create({
@@ -76,10 +60,10 @@ export async function signUp(businessName: string ,email: string, password: stri
                     phone: null,
                     roleId: ownerRole.id,
                     businessId: business.id,
-                    hasSystemAccess: true, // Grant system access to OWNER
+                    hasSystemAccess: true, 
                 }
             });
-            // 3 Creating OWNER User Account
+            // 4 Creating OWNER User Account
              const user = await transact.user.create({
                 data: {
                     accountType: AccountType.OWNER,
@@ -89,7 +73,7 @@ export async function signUp(businessName: string ,email: string, password: stri
                 },
             });
 
-            // 4 Generating OPT
+            // 5 Generating OPT
             const otpCode = generateOTP();
             await saveOTP(user.id, otpCode, transact);
             return { user, otpCode, ownerEmployee };

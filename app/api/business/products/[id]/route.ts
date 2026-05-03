@@ -1,7 +1,6 @@
-import { prisma } from "@/lib/dbHelper";
 import { getSession } from "@/lib/auths";
 import { NextRequest, NextResponse } from "next/server";
-import { getProductByIdService, softProductDeleteService, updateProductService } from "@/lib/services/product-service";
+import { getProductByIdService, softProductDeleteService, updateProductService } from "@/lib/services/business/product-service";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
         const { id } = await params;
@@ -28,10 +27,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
         } 
 
-        const { userId, businessId } = session;
+        const { userId,employeeId, businessId } = session;
         const body = await request.json();
         
-        const response = await updateProductService(id, body,userId, businessId);
+        const response = await updateProductService(id, body,userId,employeeId || "", businessId);
         if (response.success && response.message) {
             return NextResponse.json(
                 { success: true, message: `Product ${response.product.name} updated successfully`, product: response.product },
@@ -48,9 +47,9 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         if (!session || typeof session === "string"){
             return NextResponse.json({ error: "Unauthorized", success: false }, { status: 401 });
         } 
-        const { userId, businessId } = session;
+        const { userId,employeeId, businessId } = session;
 
-        const response = await softProductDeleteService(id,userId,businessId);
+        const response = await softProductDeleteService(id,userId,employeeId || "",businessId);
 
         if (response.success && response.message) {
             return NextResponse.json({ success: true, message: response.message },{ status: response.status });

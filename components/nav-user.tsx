@@ -99,7 +99,6 @@ export function NavUser({ user,}:{user: {name: string, email: string, avatar: st
                               }
                               buttonText="Logout"
                               customVariant="primary"
-                              className="p-4"
                               confirmText="Yes"
                               cancelText="Cancel"
                               title="Delete Staff"

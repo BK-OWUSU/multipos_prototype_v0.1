@@ -16,7 +16,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { ChevronsUpDownIcon, PlusIcon, type LucideIcon } from "lucide-react"
+import { Store , ChevronsUpDownIcon, PlusIcon, type LucideIcon } from "lucide-react"
+import { toast } from "sonner"
 
 export function TeamSwitcher({
   teams,
@@ -43,7 +44,7 @@ export function TeamSwitcher({
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground text-white hover:bg-blue-900"
+               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-blue-600 text-white">
                 {/* Render it as a component */}
@@ -82,11 +83,16 @@ export function TeamSwitcher({
               )
             })}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 p-2">
+            <DropdownMenuItem className="gap-2 p-2"
+              onClick={() => {
+                // Handle "Add Store" action here
+                toast.success("Add store feature coming soon!");
+              }}
+            >
               <div className="flex size-6 items-center justify-center rounded-md border bg-background">
                 <PlusIcon className="size-4" />
               </div>
-              <div className="font-medium text-muted-foreground">Add business</div>
+              <div className="font-medium text-muted-foreground">Add Store</div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
