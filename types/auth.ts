@@ -85,6 +85,49 @@ export type Employee = {
   } | null; 
 };
 
+// types/customer.ts
+export interface Customer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  // Analytics
+  firstVisit: Date | string | null;
+  lastVisit: Date | string | null;
+  totalVisit: number;
+
+  // Financials
+  isCreditCustomer: boolean;
+  creditLimit: number | string; 
+  businessId: string;
+  registeredAtShopId: string | null;
+  // Metadata
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  isDeleted: boolean;
+  deletedAt: Date | string | null;
+  // Relations (Optional loads)
+  registeredAtShop?: {
+    id: string;
+    name: string;
+  } | null;
+
+  loyalty?: {
+    id: string;
+    points: number;
+    totalEarned: number;
+    totalSpent: number;
+  } | null;
+
+  //Extra Helper Info
+  fullName?: string;
+  _count?: {
+    sales: number,
+  }; 
+}
+
 
 export type JwtPayload = {
   userId: string;

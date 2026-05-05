@@ -1,0 +1,99 @@
+"use server"
+
+import { revalidatePath } from "next/cache";
+import { getSession } from "@/lib/auths";
+import { AppResponse } from "@/types/auth";
+import { BulkImportResult } from '@/schema/bulkupload.schema';
+import { CustomerImportPayload } from "@/lib/configs/customer-config";
+import { createBulkCustomersService, createCustomer, softDeleteCustomers } from "@/lib/services/business/customer-service";
+import { CreateCustomerSchema } from "@/schema/auth.schema";
+
+
+
+
+
+export async function createSingleCustomer(data: CreateCustomerSchema) {
+        const session = await getSession();
+
+    // 1. Check Session
+    if(!session || typeof session === "string") {
+        return { 
+            success: false, 
+            error: "Unauthorized session",
+            status: 400
+        } as AppResponse;
+    }
+
+    const {businessId, userId, businessSlug} = session;
+
+    const response = await createCustomer(data, userId,businessId, businessSlug);
+
+    if (response.success && response.message && response.redirectTo) {
+        revalidatePath(response.redirectTo)
+        return response;
+    }else {
+        return response;
+    } 
+}
+
+export async function createBulkCustomer(payload: { data: CustomerImportPayload[]; [key: string]: unknown }) {
+    const session = await getSession();
+
+    // 1. Check Session
+    if(!session || typeof session === "string") {
+        return { 
+            success: false, 
+            total: 0, 
+            success_count: 0, 
+            failed_count: 0, 
+            error: "Unauthorized session" 
+        } as BulkImportResult;
+    }
+
+    const { userId, businessId, businessSlug } = session;
+    
+    // 2. Call your existing service
+    const response = await createBulkCustomersService(payload,userId,businessId, businessSlug);
+
+    // 3. Transform AppResponse to BulkImportResult
+    if (response.success) {
+        if (response.redirectTo) revalidatePath(response.redirectTo);
+        
+        return {
+            success: true,
+            total: payload.data.length,
+            success_count: payload.data.length, 
+            failed_count: 0,
+            message: response.message
+        } as BulkImportResult;
+    }
+
+    // 4. Handle Failure
+    return {
+        success: false,
+        total: payload.data.length,
+        success_count: 0,
+        failed_count: payload.data.length,
+        error: response.error
+    } as BulkImportResult;
+}
+
+
+export async function deleteMultipleUser(ids: string[]) {
+    const session = await getSession();
+
+    if(!session || typeof session === "string") {
+        return {success: false, error: "Unauthorized session "} as AppResponse;
+    }
+
+    const {userId, businessId, businessSlug} = session;
+    
+    const response = await softDeleteCustomers(ids, userId, businessId, businessSlug);
+
+    if (response.success && response.message && response.redirectTo) {
+        revalidatePath(response.redirectTo)
+        return response;
+    }else {
+        return response;
+    } 
+}

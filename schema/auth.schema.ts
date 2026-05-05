@@ -12,6 +12,7 @@ export const signupSchema = z.object({
     .email("Please enter a valid email address"),
     password: z.string().min(8,"Password must be at least 8 characters"),
     confirmPassword: z.string(),
+    countryCode: z.string().min(2, "Please select a country"),
     termsAgreement: z.boolean().refine((val)=> val === true, {
         message: "You must agree to the terms and conditions"
     })
@@ -72,3 +73,43 @@ export const passwordSchema = z.object({
 });
 export type PasswordSchema = z.infer<typeof passwordSchema>;
 
+// ─── CREATE CUSTOMER SCHEMA ────────────────────────────────────────────
+export const createCustomerSchema = z.object({
+  firstName: z.string().min(2, "First name must be at least 2 characters"),
+  lastName: z.string().min(2, "Last name must be at least 2 characters"),
+  email: z.string().email("Invalid email address").toLowerCase().trim().optional().nullable().or(z.literal("")),
+  phone: z
+.string()
+    .min(10, "Phone number must be at least 10 digits")
+    .max(15, "Phone number must be at most 15 digits")
+    .regex(/^[0-9+\-\s()]*$/, "Invalid phone number format")
+    .optional()
+    .nullable()
+    .or(z.literal("")),
+  address: z.string().max(500, "Address must be at most 500 characters").optional().nullable().or(z.literal("")),
+  isCreditCustomer: z.boolean().default(false), 
+  creditLimit: z.coerce.number().min(0, "Credit limit must be non-negative").default(0),
+  registeredAtShopId: z.string().optional().nullable().or(z.literal("")),
+});
+export type CreateCustomerSchema = z.input<typeof createCustomerSchema>;
+
+// ─── QUICK CUSTOMER SCHEMA (For POS) ──────────────────────────────────
+// Simplified schema for quick customer creation during sales
+export const quickCustomerSchema = z.object({
+  firstName: z.string().min(2, "First name is required"),
+  lastName: z.string().min(2, "Last name is required"),
+  phone: z
+    .string()
+    .min(10, "Phone number required")
+    .regex(/^[0-9+\-\s()]*$/, "Invalid phone number"),
+});
+export type QuickCustomerSchema = z.infer<typeof quickCustomerSchema>;
+
+// ─── CUSTOMER SEARCH SCHEMA ────────────────────────────────────────────
+export const customerSearchSchema = z.object({
+  query: z.string().min(1, "Search query required"),
+  isCreditCustomer: z.boolean().optional(),
+  shopId: z.string().optional(),
+});
+
+export type CustomerSearchSchema = z.infer<typeof customerSearchSchema>;

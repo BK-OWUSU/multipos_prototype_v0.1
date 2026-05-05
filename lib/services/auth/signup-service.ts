@@ -5,17 +5,23 @@ import { AccountType, RoleName } from "@/lib/generated/prisma/enums";
 import { generateOTP, saveOTP } from "@/lib/otp";
 import { generateUniqueSlug } from "@/lib/slugGenerator";
 import { NextResponse } from "next/server";
-import { seedRoles } from "../seed/roles.seed";
+import { seedRoles } from "@/lib/services/seed/roles.seed";
+import { getAllInfoByISO } from 'iso-country-currency';
+import { SignUpFormSchema, signupSchema } from "@/schema/auth.schema";
 
-export async function signUp(businessName: string ,email: string, password: string,firstName: string,lastName: string) {
+export async function signUp(rawData: SignUpFormSchema) {
     try {
 
-        if (!businessName || !email || !password || !firstName || !lastName) {
-            return NextResponse.json({ error: "All fields are required", success: false},{ status: 400 });
-        }
+        const validatedData = signupSchema.parse(rawData);
+        const { businessName, email, password, firstName, lastName, countryCode } = validatedData;
 
+        // Get the rich metadata from the latest library version
+        const countryData = getAllInfoByISO(countryCode);
+        if (!countryData) throw new Error("Unsupported country selected.");
+        //Generate unique slug for the business and password hash
         const subdomainSlug = await generateUniqueSlug(businessName); 
         const hashedPassword = await hashPassword(password);
+
          //Check if user already exists
         const existingEmployeeInBusiness = await prisma.employee.findFirst({
             where: {
@@ -30,11 +36,22 @@ export async function signUp(businessName: string ,email: string, password: stri
                 success: false 
             }, { status: 400 });
         }
+
         //using transactions to register the new tenant
         const {user, otpCode, ownerEmployee} = await prisma.$transaction(async(transact)=> {
             // 1️ Creating Business
             const business = await transact.business.create({
-                data : {name: businessName, slug: subdomainSlug, email}
+                data : {
+                    name: businessName, 
+                    slug: subdomainSlug, 
+                    email,
+                    countryCode: validatedData.countryCode,
+                    currencyCode: countryData.currency,
+                    currencySymbol: countryData.symbol,
+                    dateFormat: countryData.dateFormat,
+                    locale: validatedData.countryCode === 'GH' ? 'en-GH' : 'en-US',
+                    termsAgreement: validatedData.termsAgreement
+                }
             });
             
             // 2 Creating Owner Role for the new business

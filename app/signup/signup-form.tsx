@@ -1,7 +1,7 @@
 "use client"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
 import {Card,CardContent,CardHeader,CardTitle} from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {Field,FieldDescription,FieldGroup,FieldContent} from "@/components/ui/field"
 import { SignUpFormSchema, signupSchema } from "@/schema/auth.schema"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -12,13 +12,30 @@ import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/store/useAuthStore"
 import { SignUpResponse } from "@/types/auth"
 import CustomButton from "@/components/reusables/CustomButton"
+import { getAllISOCodes } from 'iso-country-currency';
 
 export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
   const router = useRouter();
   const signup = useAuthStore((state)=> state.signup)
+
+  // Getting all countries and sort them alphabetically by name
+  const countries = getAllISOCodes()
+    .map(c => ({ name: c.countryName, code: c.iso }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
   //Declaring forms Component from react use form hook 
   const forms = useForm<SignUpFormSchema>({
-          resolver: zodResolver(signupSchema)
+          resolver: zodResolver(signupSchema),
+          defaultValues: {
+            businessName: "",
+            firstName: "",
+            lastName: "",
+            email: "",
+            password: "",
+            confirmPassword: "",
+            countryCode: "",
+            termsAgreement: false
+          }
         });
   //Destructuring forms component      
   const {
@@ -51,6 +68,26 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
         <form onSubmit={handleSubmit(onSubmit)}>
           <FieldGroup>
              <FormInput name="businessName" type="text" placeholder="Enter business name"/>
+
+             {/* --- Country Selection Field --- */}
+            <Field>
+              <Select onValueChange={(value) => setValue("countryCode", value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select your country" />
+                </SelectTrigger>
+                <SelectContent>
+                  {countries.map(c => (
+                    <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
+                  ))}
+              </SelectContent>
+              </Select>
+              {errors.countryCode && (
+                <FieldDescription className="text-destructive">
+                  {errors.countryCode.message}
+                </FieldDescription>
+              )}
+            </Field>
+
              <FormInput name="firstName" type="text" placeholder="Enter firstname"/>
              <FormInput name="lastName" type="text" placeholder="Enter lastname"/>
              <FormInput name="email" type="text" placeholder="Enter your email"/>

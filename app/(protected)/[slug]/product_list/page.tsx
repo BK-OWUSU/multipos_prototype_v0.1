@@ -14,10 +14,12 @@ import { deleteProductsAction, toggleProductsStatusAction } from "@/lib/actions/
 import {Upload} from "lucide-react";
 import GenericBulkImport from "@/components/reusables/GenericBulkImport";
 import { productImportConfig } from "@/lib/configs/product-config";
+import { useAuthStore } from "@/store/useAuthStore";
 
 export default function ProductList() {
   const { fetchCategories, categories } = useCategoryStore();
   const { fetchBrands } = useBrandStore();
+  const user = useAuthStore((state) => state.user);
   const { products, fetchProducts, loading } = useProductStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
@@ -30,17 +32,43 @@ export default function ProductList() {
   }, [fetchCategories, fetchBrands, fetchProducts]);
 
   // Logic for the Stat Cards
-  const stats = useMemo(() => {
-    if (!products) return { total: 0, active: 0, lowStock: 0, outOfStock: 0, totalValue: 0 };
+ const stats = useMemo(() => {
+  const initialStats = { 
+    total: 0, 
+    active: 0, 
+    lowStock: 0, 
+    outOfStock: 0, 
+    totalValue: 0 
+  };
+  if (!products) return { ...initialStats, formattedTotalValue: "..." };
+
+  const result = products.reduce((acc, p) => {
+    acc.total++;
+    if (p.isActive) acc.active++;
     
-    return {
-      total: products.length,
-      active: products.filter(p => p.isActive).length,
-      lowStock: products.filter(p => p.stock > 0 && p.stock <= p.lowStockAlert).length,
-      outOfStock: products.filter(p => p.stock === 0).length,
-      totalValue: products.reduce((acc, p) => acc + (Number(p.price) * p.stock), 0)
-    };
-  }, [products]);
+    if (p.stock === 0) {
+      acc.outOfStock++;
+    } else if (p.stock <= (p.lowStockAlert || 0)) {
+      acc.lowStock++;
+    }
+
+    acc.totalValue += Number(p.price || 0) * (p.stock || 0);
+    return acc;
+  }, { ...initialStats });
+
+  // Accessing the business data safely
+  const business = user?.business;
+  const symbol = business?.currencySymbol || "GH₵"; 
+  const locale = business?.locale || "en-GH";
+
+  return {
+    ...result,
+    formattedTotalValue: `${symbol} ${result.totalValue.toLocaleString(locale, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`
+  };
+}, [products, user?.business]); // Depend on the whole business object for better tracking
 
   return (
     <div className="p-6 space-y-6 bg-gray-50/50 min-h-screen">
@@ -120,7 +148,7 @@ export default function ProductList() {
         <StatCard title="Active Products" value={stats.active} icon={<CheckCircle2 className="text-green-600" />} subtitle={`${((stats.active / stats.total) * 100 || 0).toFixed(1)}% of total`} />
         <StatCard title="Low Stock" value={stats.lowStock} icon={<AlertCircle className="text-orange-500" />} subtitle="Need attention" />
         <StatCard title="Out of Stock" value={stats.outOfStock} icon={<XCircle className="text-red-500" />} subtitle="Not available" />
-        <StatCard title="Total Value" value={`₵ ${stats.totalValue.toLocaleString()}`} icon={<BadgeCent className="text-blue-600" />} subtitle="Inventory value" />
+        <StatCard title="Total Value" value={stats.formattedTotalValue} icon={<BadgeCent className="text-blue-600" />} subtitle="Inventory value" />
       </div>
 
       {/* 3. The Table Container */}

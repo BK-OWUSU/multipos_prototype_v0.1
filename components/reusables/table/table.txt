@@ -20,7 +20,6 @@ import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue} from "@/compo
 import AlertWithDialogue from "../AlertWithDialogue";
 import { AppResponse } from "@/types/auth";
 import { cn } from "@/lib/utils";
-import { TablePinActions } from "./TablePinActions";
 
 
 declare module "@tanstack/react-table" {
@@ -65,6 +64,7 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
             globalFilter,
             columnVisibility,
             rowSelection,
+            // 2. ADDED: columnPinning state
             columnPinning, 
         },
         enableRowSelection: true,
@@ -77,8 +77,13 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
         onGlobalFilterChange: setGlobalFilter,
         onColumnVisibilityChange: setColumnVisibility,
         onRowSelectionChange: setRowSelection,
+        
+        // 3. ADDED: handler for pinning changes
         onColumnPinningChange: setColumnPinning, 
+        
+        // 4. ADDED: Enable pinning features
         enablePinning: true, 
+
         globalFilterFn: "includesString"
     });
 
@@ -126,6 +131,7 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
   });
 
   if (exportData.length === 0) {
+    // alert("No rows selected for export.");
     toast.error("No rows selected for export.")
     return;
   }
@@ -149,25 +155,28 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
         head: headers,
         body: body,
         theme: 'grid',
-        headStyles: { fillColor: [23, 37, 84] },
+        headStyles: { fillColor: [23, 37, 84] }, // Matches your bg-blue-950
         styles: { fontSize: 8 }
         });
         doc.save(`${fileName}.pdf`);
     }
 };
 
-    //Check if the 'actions' column is actually pinned right
+    // 5. HELPER: Check if the 'actions' column is actually pinned right
     const isActionsPinned = useMemo(() => {
         // Safely check if 'actions' exists within the right pinning array
         return columnPinning.right?.includes('actions') ?? false;
     }, [columnPinning.right]);
 
+    // 6. HELPER: Defines sticky styles for the pinned column
+    // This part is the core manual CSS still needed even with API
     const getPinningStyles = (columnId: string): React.CSSProperties => {
+        // We handle selection column pinning (left) and actions column pinning (right)
         if (columnId === 'actions' && isActionsPinned) {
             return {
                 position: 'sticky',
                 right: 0,
-                zIndex: 10, 
+                zIndex: 10, // Ensure it sits above scrolling content body cells
                 boxShadow: '-4px 0 6px -2px rgba(0, 0, 0, 0.1)', // Subtle shadow separating it
                 
             };
@@ -185,7 +194,6 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
     };
 
     return (
-     <TablePinActions.Provider table={table}>   
     <div className="space-y-4 p-4">
         <div className="flex items-center  justify-between">
         {searchKey && (        
@@ -197,6 +205,35 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
                 />)
         }
           <div className="flex items-center gap-2">
+            
+            {/* 7. MODIFIED: Toggle Button uses standard Pinning API */}
+            <Button
+                variant={isActionsPinned ? "default" : "outline"}
+                size="sm"
+                // Change icons to Pin/PinOff
+                onClick={() => {
+                     if (isActionsPinned) {
+                         // Unpin by removing 'actions' from the right array
+                         setColumnPinning(prev => ({
+                             ...prev,
+                             right: prev.right?.filter(id => id !== 'actions') ?? []
+                         }))
+                     } else {
+                         // Pin by ensuring 'actions' is in the right array
+                         setColumnPinning(prev => ({
+                             ...prev,
+                             // Merge with existing pinned columns
+                             right: [...(prev.right ?? []), 'actions']
+                         }))
+                     }
+                }}
+                className="flex items-center p-4 gap-2 border-amber-600 text-amber-700 hover:bg-amber-50"
+                title={isActionsPinned ? "Unpin actions column" : "Pin actions column"}
+            >
+                {isActionsPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+                {isActionsPinned ? "Unpin" : "Pin Actions"}
+            </Button>
+
             <Button 
                 variant={showColumnFilters ? "default" : "outline"} 
                 size="sm"
@@ -345,7 +382,8 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
          {/* Table Content */}
             <div className="overflow-auto max-h-85 relative">
              <Table className="w-full">
-                <TableHeader className="sticky top-0 z-10"> 
+                {/* 8. MODIFIED Z-INDEX: Added z-20 here. Sticky headers need higher z-index than sticky cells */}
+                <TableHeader className="sticky top-0 z-20"> 
                     {table.getHeaderGroups().map((headerGroup) => (
                     <React.Fragment key={headerGroup.id}>    
                     <TableRow key={headerGroup.id} className="bg-blue-950 hover:bg-blue-900">
@@ -583,11 +621,11 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
                 <div className="flex items-center gap-2">
                 <p className="text-sm font-medium">Rows per page</p>
                 <select
-                    className="h-8 w-20 rounded-md border  text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="h-8 w-17.5 rounded-md border  text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
                     value={table.getState().pagination.pageSize}
                     onChange={(e) => table.setPageSize(Number(e.target.value))}
                 >
-                    {[10, 20, 30, 40, 50,200,500].map((pageSize) => (
+                    {[10, 20, 30, 40, 50].map((pageSize) => (
                     <option key={pageSize} value={pageSize}>
                         {pageSize}
                     </option>
@@ -641,6 +679,5 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
             </div>
         </div>
     </div>
-    </TablePinActions.Provider>
   )
 }

@@ -59,15 +59,17 @@ export function formatNumber(value: number, locale: string = "en-US"): string {
  * Formats a numeric value into a currency string based on business settings.
  */
 export function formatBusinessCurrency(
-  amount: number, 
-  currencyCode: string = 'GHS', 
-  locale: string = 'en-GH'
+  amount: number | string, 
+  currency: string = 'USD', 
+  locale: string = 'en-US'
 ) {
+  const value = typeof amount === 'string' ? parseFloat(amount) : amount;
+  
   return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: currencyCode,
+    currency: currency,
     minimumFractionDigits: 2,
-  }).format(amount);
+  }).format(value || 0);
 }
 
 export const humanize = (text: string) => {

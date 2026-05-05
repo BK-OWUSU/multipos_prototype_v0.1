@@ -4,11 +4,10 @@ import { ColumnDef } from "@tanstack/react-table"
 import { Product } from "@/types/inventory"
 import { Badge } from "@/components/ui/badge"
 import {
-  Package, DollarSign, Hash, Archive,
+  Package, Hash, Archive,
   Tag, Building, Percent, Calendar,
   MoreHorizontal, Eye, Edit, Trash2,
   AlertTriangle, Image as ImageIcon,
-  type LucideIcon
 } from "lucide-react"
 import { formatBusinessCurrency, formatDate } from "@/lib/utils"
 import Image from "next/image"
@@ -31,6 +30,7 @@ import { useCategoryStore } from "@/store/categoryStore"
 import { useBrandStore } from "@/store/brandStore"
 import AddProductForm from "@/app/(protected)/[slug]/product_list/AddProductForm"
 import { useAuthStore } from "@/store/useAuthStore"
+import { TablePinActions } from "../reusables/table/TablePinActions"
 
 // --- Sub-component for Actions ---
 const ActionCell = ({ product }: { product: Product }) => {
@@ -113,28 +113,27 @@ const ActionCell = ({ product }: { product: Product }) => {
   )
 }
 
-//Currency Headers
-const CurrencyHeader = ({ title, icon: Icon }: { title: string, icon?: LucideIcon }) => {
+// Header sub-component to show currency code in the title
+const CurrencyHeader = ({ title}: { title: string}) => {
   const user = useAuthStore((state) => state.user);
-  const currencyCode = user?.business?.currencyCode || 'GHS';
-
+  const currencySymbol = user?.business?.currencySymbol || "";
   return (
     <span className="flex items-center">
-      {Icon && <Icon className="mr-2" size={16} />}
-      {title} ({currencyCode})
+      {currencySymbol && <span className="mr-1">{currencySymbol}</span>}
+      {title} 
     </span>
   );
 };
 
-// Currency cell
+// Cell sub-component to handle currency logic
 const CurrencyCell = ({ amount }: { amount: number }) => {
   const user = useAuthStore((state) => state.user);
   return (
     <span>
       {formatBusinessCurrency(
         amount, 
-        user?.business?.currencyCode || 'GHS', 
-        user?.business?.locale || 'en-GH'
+        user?.business?.currencyCode, 
+        user?.business?.locale
       )}
     </span>
   );
@@ -253,10 +252,27 @@ export const productsColumnDef: ColumnDef<Product>[] = [
     header: () => (<span className='flex items-center'><Calendar className="mr-2" size={16} />Created</span>),
     cell: ({ row }) => formatDate(new Date(row.original.createdAt))
   },
+  // {
+  //   accessorKey: "Actions",
+  //   id: "actions",
+  //   cell: ({ row }) => <ActionCell product={row.original} />,
+  //   enableSorting: false,
+  //   enableResizing: false,
+  //   enableColumnFilter: false
+  // }
+
   {
     accessorKey: "Actions",
     id: "actions",
+    header: () => (
+        <div className="flex items-center justify-end w-full gap-2 px-1">
+          <TablePinActions.HeaderIcon />
+          <span className="font-semibold text-white">Actions</span>
+        </div>
+      ),
+
     cell: ({ row }) => <ActionCell product={row.original} />,
+    enableHiding: false, 
     enableSorting: false,
     enableResizing: false,
     enableColumnFilter: false

@@ -121,7 +121,7 @@ export async function createEmployee(request: NextRequest, userId: string, emplo
     }
 }
 
-
+//CREATE BULK EMPLOYEES
 export async function createBulkEmployeesService(
   payload: { data: EmployeeImportPayload[]; [key: string]: unknown },
   userId: string,
@@ -466,7 +466,10 @@ export async function softDeleteMultipleUserService(ids: string[], userId: strin
                 employeesToDeleteWithFiles.map((employee) => 
                     tx.employee.update({
                         where: {id: employee.id},
-                        data: {isDeleted: true},
+                        data: {
+                            isDeleted: true,
+                            deletedAt: new Date(),
+                        },
                     })
                 )
             )

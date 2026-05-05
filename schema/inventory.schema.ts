@@ -22,8 +22,6 @@ export const productSchema = z.object({
   fileKey: z.string().optional().nullable().or(z.literal("")),
   isActive: z.boolean().default(true),
 });
-
-
 export type ProductFormValues = z.input<typeof productSchema>;
 
 

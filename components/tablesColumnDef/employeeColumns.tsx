@@ -24,12 +24,10 @@ import { toast } from "sonner"
 import AlertWithDialogue from "../reusables/AlertWithDialogue"
 import Image from "next/image"
 import { grantEmployeeAccess, revokeEmployeeAccess } from "@/lib/actions/business/employeesActions"
-import { useRouter } from "next/navigation"
 
 const ActionCell = ({ employee }: { employee: Employee }) => {
   // Ensure these functions are exported from your store!
   const { toggleEmployeeStatus, deleteEmployee, fetchEmployees } = useEmployeeStore()
-  const router = useRouter();
   
   return (
     <DropdownMenu >
@@ -155,7 +153,8 @@ export const employeeColumns: ColumnDef<Employee>[] = [
   {
     accessorKey: "email",
     header: () => (<span className='flex items-center'><Mail className="mr-2" size={16}/>Email</span>),
-    cell: ({row}) => <span className="text-sm">{row.original.email}</span>
+    cell: ({row}) => <span className="text-sm">{row.original.email}</span>,
+    enableGlobalFilter: true,
   },
   {
     accessorKey: "phone",
