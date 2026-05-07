@@ -12,7 +12,7 @@ import { generateOTP, saveOTP } from "@/lib/otp";
 import { JwtPayload } from "@/types/auth";
 import { NextResponse } from "next/server";
 
-export async function login(email: string, password: string ) {
+export async function login(email: string, password: string, ipAddress?: string, userAgent?: string ) {
     try {
         if (!email || !password) {
             return NextResponse.json({ success: false, error: "Email and password are required" }, { status: 400 });
@@ -33,8 +33,14 @@ export async function login(email: string, password: string ) {
                         business: true,
                         role: true,
                         shop: true
-                    }
-                }
+                    },
+                },
+                userSessionLogs: {
+                    orderBy: {
+                        loginAt: "desc",
+                    },
+                    take: 1,
+                },
             }
         });
 
@@ -112,11 +118,24 @@ export async function login(email: string, password: string ) {
                 return response;
             }
 
-            // 4. Successful Login - Generate Session
+            
+            // 4. Successful Login - 
+            // Creating session log
+             const session = await prisma.userSessionLog.create({
+             data: {
+                 userId: user.id,
+                 businessId: emp.businessId,
+                 ipAddress: ipAddress,
+                 userAgent: userAgent,
+                 },
+             });
+
+           // Generate Session 
             const tokenObject: JwtPayload = {
                 userId: user.id,
                 employeeId: emp.id,
                 businessId: emp.businessId,
+                sessionLogId: session.id,
                 businessSlug: emp.business.slug,
                 roleName: emp.role.name,
                 firstName: emp.firstName,
@@ -125,6 +144,7 @@ export async function login(email: string, password: string ) {
                 access: emp.role.access,
                 shopId: emp.shopId || undefined
             };
+
 
             const token = generatePOSToken(tokenObject);
             const response = NextResponse.json({ success: true, redirectTo: `/${emp.business.slug}/dashboard` }, { status: 200 });

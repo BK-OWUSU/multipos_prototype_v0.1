@@ -20,9 +20,10 @@ export type UserWithRelations = Prisma.UserGetPayload<{
       include: {
         business: true,
         role: true,
-        shop: true
-      }
-    }
+        shop: true,
+      },
+    },
+    userSessionLogs: true
   }
 }>
 
@@ -32,12 +33,23 @@ export type User = {
   employeeId: string;
   firstName: string;
   lastName: string;
+  fullName: string;
   email: string;
+  imageUrl?:  string | null;
+  fileKey?:   string | null;
+
+  // Employment Details
+  designation?: string | null;
+  address?:     string | null;
+  dateOfBirth?: Date | null;
+  hireDate?:    Date | null;
+  //Role Details
   role: {
     name: string;
     permissions: string[];
     access: string[];
   };
+  //Business Details
   business: {
     id: string;
     name: string;
@@ -47,8 +59,31 @@ export type User = {
     locale: string;
     countryCode?: string;
   };
-  shopId?: string | null;
+  //Shop Details
+  shop?: {
+    id:        string;
+    name?:     string | null;
+    address?:  string | null;
+    phone?:    string | null;
+  }
+
+  //Session Details
+  session?: {
+    currentLoginAt: Date;
+    lastLoginAt?: Date | null;
+    logoutAt?:    Date | null;
+    ipAddress?:   string | null;
+    userAgent?:   string | null;
+  } 
 }
+
+export type Session = {
+    currentLoginAt: Date;
+    lastLoginAt?: Date | null;
+    logoutAt?:    Date | null;
+    ipAddress?:   string | null;
+    userAgent?:   string | null;
+  }
 
 export type Employee = {
   id: string;
@@ -132,8 +167,9 @@ export interface Customer {
 export type JwtPayload = {
   userId: string;
   businessId: string;
-  businessSlug: string;
   employeeId?: string;
+  sessionLogId?: string;
+  businessSlug: string;
   roleName: string;
   firstName: string;
   lastName: string;
@@ -149,8 +185,6 @@ export type Token = {
   businessId: string;
   email?: string
 }
-
-
 
 export type OTPResponse = {
     valid?: boolean;

@@ -1,28 +1,67 @@
 "use client"
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
-import LogoutButton from "@/components/LogoutButton"
 import {Breadcrumb,BreadcrumbItem,BreadcrumbLink,BreadcrumbList,BreadcrumbPage,BreadcrumbSeparator,} from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import {SidebarInset,SidebarProvider,SidebarTrigger} from "@/components/ui/sidebar"
 import { useAuthStore } from "@/store/useAuthStore"
 import { useRouter, usePathname } from "next/navigation"
-import { Toaster } from "sonner"
+import { toast, Toaster } from "sonner"
+import { SessionInfo } from "@/components/formatSessionDate"
+import { NavbarNotifications } from "@/components/NavbarNotifications"
+import { NavbarUser } from "@/components/NavbarUser"
 
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, currentSlug, fetchUser, loading } = useAuthStore();
   const router = useRouter();
+  const hasToasted = useRef(false);
 
-  // // Determine toast position dynamically
-  // const getToastPosition = () => {
-  //   if (pathname.endsWith("/reset-password")) return "bottom-center";
-  //   if (pathname.includes("/sales")) return "top-center"; // Example for specific modules
-  //   return "top-right"; // Default
-  // };
+  console.log(user)
 
-  // Extract slug and determine if this is a system route
+  //Rendering User Session Details
+  useEffect(()=> {
+    // 1. Guard Clause: If anything is missing or we already toasted, stop here.
+    if (loading || !user?.session || hasToasted.current) {
+        return
+      }
+      // Create a constant to satisfy
+      const session = user.session;
+
+      toast.custom((t) => (
+        <div className="bg-white border shadow-lg rounded-lg p-4 w-87.5">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse" />
+            <h4 className="font-bold text-sm text-slate-900">Security Snapshot</h4>
+          </div>
+          
+          {/* Use the SessionInfo component inside the toast */}
+          <SessionInfo 
+            currentLoginAt={session.currentLoginAt}
+            lastLoginAt={session.lastLoginAt}
+            logoutAt={session.logoutAt}
+            ipAddress={session.ipAddress}
+            userAgent={session.userAgent}
+          />
+          
+          <button 
+            onClick={() => toast.dismiss(t)}
+            className="mt-3 w-full bg-slate-900 text-white py-2 rounded-md text-[11px] font-bold uppercase hover:bg-slate-800 transition-colors"
+          >
+            Dismiss
+          </button>
+        </div>
+      ), {
+        duration: Infinity,
+        // duration: 15000, //15 seconds
+        position: "bottom-right",
+      });
+
+      hasToasted.current = true;
+    
+  },[loading,hasToasted, user])
+
   
   const slug = pathname.split("/")[1];
   const isResetPasswordPage = pathname.endsWith("/reset-password");
@@ -102,7 +141,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-           <LogoutButton />
+           {/* Top left NavBar Section */}
+           <div className="flex items-center gap-6">
+            <NavbarNotifications />
+            <NavbarUser />
+          </div>
         </header>
          <main className="flex flex-1 flex-col gap-4 p-4">
                {children}

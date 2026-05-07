@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import crypto from "crypto";
+import { format, formatRelative } from "date-fns";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -71,6 +72,50 @@ export function formatBusinessCurrency(
     minimumFractionDigits: 2,
   }).format(value || 0);
 }
+
+
+//Converts ISO strings into relative formats (Today, Yesterday, or full date)
+
+export const formatSessionDate = (dateString: string | Date | null | undefined) => {
+  const fallback = { relative: "—", precise: "—" };
+  
+  if (!dateString) return fallback;
+  
+  try {
+    const date = new Date(dateString);
+    
+    // Check if the date is actually valid
+    if (isNaN(date.getTime())) return fallback;
+
+    const relative = formatRelative(date, new Date());
+    const capitalizedRelative = relative.charAt(0).toUpperCase() + relative.slice(1);
+
+    return {
+      relative: capitalizedRelative.replace(" at ", " "),
+      precise: format(date, "eeee d, yyyy 'at' p")
+    };
+  } catch (error) {
+    console.log("Error Session Time Formatting: ",error)
+    return fallback;
+  }
+};
+
+export const parseUserAgent = (ua: string | null | undefined) => {
+  if (!ua) return "Unknown Device";
+  
+  if (ua.includes("Chrome")) return "Chrome on Windows";
+  if (ua.includes("Firefox")) return "Firefox on Windows";
+  if (ua.includes("Safari") && !ua.includes("Chrome")) return "Safari on macOS";
+  if (ua.includes("iPhone")) return "Safari on iPhone";
+  
+  return "Desktop Browser"; // Fallback
+};
+
+export const formatIP = (ip: string | null | undefined) => {
+  if (!ip) return "Unknown IP";
+  // Convert IPv6 localhost to standard format
+  return ip === "::1" ? "127.0.0.1 (Local)" : ip;
+};
 
 export const humanize = (text: string) => {
   return text

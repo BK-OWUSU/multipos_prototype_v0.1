@@ -8,109 +8,147 @@ import {
   LayoutDashboard, HandCoins, ChartColumnStacked, BookUser, Banknote,
   Monitor, ArrowRightLeft, FileText, List, Layers, Percent, PackagePlus,
   UserRoundCog, Clock, Hourglass, Contact2, Trophy, ShieldCheck,
-  Store, MessageSquare, Globe,Dices
+  Store, MessageSquare, Globe,Dices,
+  icons
 } from "lucide-react";
 
-export const getNavData = (slug: string): NavGroup[] => [
-  { title: "Dashboard", url: `/${slug}/dashboard`, accessKey: "dashboard", icon: LayoutDashboard 
 
-},
+export const navConfig = [
+  {
+    title: "Dashboard",
+    accessKey: "dashboard",
+    icon: LayoutDashboard,
+  },
   {
     title: "Reports",
-    url: "#",
     accessKey: "reports",
     icon: ChartNetwork,
     items: [
-      { title: "Sales Summary", url: `/${slug}/sale_summary`, accessKey: "sale_summary", icon: Banknote },
-      { title: "Sale By Category", url: `/${slug}/sale_category`, accessKey: "sale_category", icon: ChartColumnStacked },
-      { title: "Sale By Employee", url: `/${slug}/sale_employee`, accessKey: "sale_employee", icon: BookUser },
-      { title: "Sale By Payment", url: `/${slug}/sale_payment-type`, accessKey: "sale_payment-type", icon: HandCoins },
+      { title: "Sales Summary", accessKey: "sale_summary", icon: Banknote },
+      { title: "Sale By Category", accessKey: "sale_category", icon: ChartColumnStacked },
+      { title: "Sale By Employee", accessKey: "sale_employee", icon: BookUser },
+      { title: "Sale By Payment", accessKey: "sale_payment-type", icon: HandCoins },
     ],
   },
   {
     title: "POS",
-    url: "#",
     accessKey: "pos",
     icon: ShoppingBasket,
     items: [
-      { title: "Sales Terminal", url: `/${slug}/sales_terminal`, accessKey: "sales_terminal", icon: Monitor },
-      { title: "Transactions", url: `/${slug}/transactions`, accessKey: "transactions", icon: ArrowRightLeft },
-      { title: "Invoices", url: `/${slug}/invoices`, accessKey: "invoices", icon: FileText },
+      { title: "Sales Terminal", accessKey: "sales_terminal", icon: Monitor },
+      { title: "Transactions", accessKey: "transactions", icon: ArrowRightLeft },
+      { title: "Invoices", accessKey: "invoices", icon: FileText },
     ],
   },
   {
     title: "Product",
-    url: "#",
     accessKey: "product",
     icon: PackageSearch,
     items: [
-      { title: "Product List", url: `/${slug}/product_list`, accessKey: "product_list", icon: List },
-      { title: "Add Product", url: `/${slug}/add_product`, accessKey: "add_product", icon: PackagePlus },
-      { title: "Categories", url: `/${slug}/categories`, accessKey: "categories", icon: Layers },
-      { title: "Brands", url: `/${slug}/brands`, accessKey: "brands", icon: Dices },
-      { title: "Discount", url: `/${slug}/discount`, accessKey: "discount", icon: Percent },
+      { title: "Product List", accessKey: "product_list", icon: List },
+      { title: "Add Product", accessKey: "add_product", icon: PackagePlus },
+      { title: "Categories", accessKey: "categories", icon: Layers },
+      { title: "Brands", accessKey: "brands", icon: Dices },
+      { title: "Discount", accessKey: "discount", icon: Percent },
     ],
   },
   {
     title: "Employee",
-    url: "#",
     accessKey: "employee",
     icon: Users,
     items: [
-      { title: "Employee List", url: `/${slug}/employees_list`, accessKey: "employees_list", icon: UserRoundCog },
-      { title: "Time Cards", url: `/${slug}/time_cards`, accessKey: "time_cards", icon: Clock },
-      { title: "Total Hours Worked", url: `/${slug}/total_hours_worked`, accessKey: "total_hours_worked", icon: Hourglass },
+      { title: "Employee List", accessKey: "employees_list", icon: UserRoundCog },
+      { title: "Time Cards", accessKey: "time_cards", icon: Clock },
+      { title: "Total Hours Worked", accessKey: "total_hours_worked", icon: Hourglass },
     ],
   },
   {
     title: "Customers",
-    url: "#",
     accessKey: "customers",
     icon: FileUser,
     items: [
-      { title: "Customer Base", url: `/${slug}/customers_base`, accessKey: "customers_base", icon: Contact2 },
-      { title: "Loyalty", url: `/${slug}/loyalty`, accessKey: "loyalty", icon: Trophy },
+      { title: "Customer Base", accessKey: "customers_base", icon: Contact2 },
+      { title: "Loyalty", accessKey: "loyalty", icon: Trophy },
     ],
   },
   {
     title: "Settings",
-    url: "#",
     accessKey: "settings",
     icon: Settings,
     items: [
-      { title: "Access Controls", url: `/${slug}/access_controls`, accessKey: "access_controls", icon: ShieldCheck },
-      { title: "Shops", url: `/${slug}/shops`, accessKey: "shops", icon: Store },
+      { title: "Access Controls", accessKey: "access_controls", icon: ShieldCheck },
+      { title: "Shops", accessKey: "shops", icon: Store },
     ],
   },
   {
     title: "Help",
-    url: "#",
     accessKey: "help",
     icon: HelpCircle,
     items: [
-      { title: "Community", url: "#", isExternal: true, accessKey: "community", icon: Globe },
-      { title: "Chat", url: "#", isExternal: true, accessKey: "chat", icon: MessageSquare },
+      { title: "Community", accessKey: "community", icon: Globe },
+      { title: "Chat", accessKey: "chat", icon: MessageSquare },
     ],
   },
 ];
+
+export const getNavData = (slug: string): NavGroup[] => {
+  return navConfig.map((group) => ({
+    ...group,
+    url: group.accessKey === "dashboard"
+      ? `/${slug}/dashboard`
+      : "#",
+    items: group.items?.map((item) => ({
+      ...item,
+      url: `/${slug}/${item.accessKey}`,
+    })),
+  }));
+};
 
 
 export function filterNavData(navData: NavGroup[], user: User): NavGroup[] {
   return navData
     .map((group) => {
       if (group.items?.length) {
-        // Group with children
+        const hasParentAccess = hasAccess(user, group.accessKey);
+
         const filteredItems = group.items.filter((item) =>
           hasAccess(user, item.accessKey)
         );
+        // Show group if:
+        // - parent allowed OR
+        // - at least one child allowed
+        if (hasParentAccess || filteredItems.length > 0) {
+          return {
+            ...group,
+            items: filteredItems,
+          };
+        }
 
-        return filteredItems.length > 0
-          ? { ...group, items: filteredItems }
-          : null;
+        return null;
       } else {
-        // Top-level item (e.g., Dashboard)
-        return hasAccess(user, group.accessKey) ? { ...group } : null;
+        return hasAccess(user, group.accessKey) ? group : null;
       }
     })
     .filter((group): group is NavGroup => group !== null);
 }
+
+
+export const getAccessOnly = () => {
+  return navConfig.map(group => ({
+    title: group.title,
+    accessKey: group.accessKey,
+    icon: group.icon,
+    items: group.items?.map(item => ({
+      title: item.title,
+      accessKey: item.accessKey,
+      icon: item.icon
+    })),
+  }));
+};
+
+export const getAllAccessKeys = () => {
+  return navConfig.flatMap(group => [
+    group.accessKey,
+    ...(group.items?.map(item => item.accessKey) || [])
+  ]);
+};

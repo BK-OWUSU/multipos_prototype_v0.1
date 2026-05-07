@@ -1,14 +1,14 @@
-import { Prisma, RoleName } from "@/lib/generated/prisma/client";
+import { Prisma, RoleName, RoleType } from "@/lib/generated/prisma/client";
 
 
 export async function seedRoles(businessId:string, transaction: Prisma.TransactionClient) {
     const rolesData = [
-        { name: RoleName.MANAGER, permissions: ["*"], access: ["pos", "sales_terminal","transactions","invoices"], isSystem:false },
-        { name: RoleName.ADMIN, permissions: ["*"], access: ["pos", "sales_terminal","transactions","invoices"], isSystem:false },
-        { name: RoleName.CASHIER, permissions: ["process_sales"], access: ["pos", "sales_terminal"], isSystem:false },
-        { name: RoleName.CUSTOM_A, permissions: [""], access: [""], isSystem:false },
-        { name: RoleName.CUSTOM_B, permissions: [""], access: [""], isSystem:false },
-        { name: RoleName.CUSTOM_C, permissions: [""], access: [""], isSystem:false },
+        { name: RoleName.MANAGER, permissions: ["*"], access: ["pos", "sales_terminal","transactions","invoices"], isSystem:false,type: RoleType.SYSTEM },
+        { name: RoleName.ADMIN, permissions: ["*"], access: ["pos", "sales_terminal","transactions","invoices"], isSystem:false,type: RoleType.SYSTEM },
+        { name: RoleName.CASHIER, permissions: ["process_sales"], access: ["pos", "sales_terminal"], isSystem:false,type: RoleType.SYSTEM},
+        { name: RoleName.CUSTOM_A, permissions: [""], access: [""], isSystem:false, type: RoleType.CUSTOM },
+        { name: RoleName.CUSTOM_B, permissions: [""], access: [""], isSystem:false, type: RoleType.CUSTOM },
+        { name: RoleName.CUSTOM_C, permissions: [""], access: [""], isSystem:false, type: RoleType.CUSTOM },
     ];
 
     try {
@@ -19,7 +19,8 @@ export async function seedRoles(businessId:string, transaction: Prisma.Transacti
                 permissions: roleData.permissions,
                 access: roleData.access,
                 businessId: businessId,
-                isSystem: roleData.isSystem
+                isSystem: roleData.isSystem,
+                type: roleData.type
             }
         });
     }

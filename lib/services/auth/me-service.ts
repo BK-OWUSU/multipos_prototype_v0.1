@@ -10,7 +10,7 @@ export async function getCurrentUser(userId: string, businessId: string) {
                 id: userId, 
                 employee: { 
                     businessId: businessId,
-                    isActive: true, // check if the user are still active
+                    isActive: true, 
                     isDeleted: false
                 } 
             },
@@ -20,8 +20,16 @@ export async function getCurrentUser(userId: string, businessId: string) {
                         business: true,
                         role: true,
                         shop: true
-                    }
-                }
+                    },
+                    
+                },
+                userSessionLogs: {
+                    orderBy: {
+                    loginAt: "desc",
+                    },
+
+                    take: 2,
+                },
             }
         });
 

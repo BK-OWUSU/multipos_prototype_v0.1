@@ -175,7 +175,7 @@ export default function EmployeeList() {
           data={employees || []}
           searchKey="firstName"
           columnVisibilityFilter={true}
-          placeholder="Search by name..."
+          placeholder="Search by name, email , role, etc..."
           loading={loading}
           onActionSuccess={() => fetchEmployees()}
           handleMultipleToggleStatus={toggleMultipleUser}

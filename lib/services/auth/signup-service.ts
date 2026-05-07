@@ -1,7 +1,7 @@
 import { generateEmailVerificationToken, hashPassword, VERIFY_COOKIE_NAME } from "@/lib/auths";
 import { prisma } from "@/lib/dbHelper";
 import { sendOTPEmail } from "@/lib/email";
-import { AccountType, RoleName } from "@/lib/generated/prisma/enums";
+import { AccountType, RoleName, RoleType } from "@/lib/generated/prisma/enums";
 import { generateOTP, saveOTP } from "@/lib/otp";
 import { generateUniqueSlug } from "@/lib/slugGenerator";
 import { NextResponse } from "next/server";
@@ -61,7 +61,8 @@ export async function signUp(rawData: SignUpFormSchema) {
                     permissions: ["*"],
                     access: ["*"],
                     businessId: business.id,
-                    isSystem: true
+                    isSystem: true,
+                    type: RoleType.SYSTEM
                 }
             }); 
 
