@@ -12,8 +12,8 @@ import { toast } from "sonner";
 import { useEffect, useRef, useState } from "react";
 import CustomButton from "@/components/reusables/CustomButton";
 // import { useCustomerStore } from "@/store/customerStore";
-import { AppResponse, Customer } from "@/types/auth";
-import { createCustomerSchema ,CreateCustomerSchema} from "@/schema/auth.schema";
+import { AppResponse, Customer } from "@/types/auth/auth";
+import { createCustomerSchema ,CreateCustomerSchema} from "@/types/schema/auth.schema";
 
 interface CustomerFormProps {
   initialData?: Customer;

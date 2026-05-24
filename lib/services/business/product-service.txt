@@ -1,0 +1,1227 @@
+import { prisma } from "@/lib/dbHelper";
+import { AppResponse } from "@/types/auth/auth";
+import { deleteUTFile } from "@/lib/actions/uploadthing";
+import { productSchema,ProductFormValues } from "@/types/schema/inventory.schema";
+import { ProductImportPayload, ProductsValidateArray } from "@/lib/configs/product-config";
+import { Product } from "@/types/inventory";
+import { Prisma } from "@/lib/generated/prisma/client";
+
+//TYPE
+type VariantCreationData = {
+  // Parent Product Data
+  parentName: string;
+  parentDescription: string | null ;
+  categoryId: string | null;
+  brandId: string | null;
+  parentBaseSku: string | null;
+  // Variant Data (Source of Truth)
+  sku: string;
+  barcode: string | null;
+  price: number;
+  costPrice: number;
+  stock: number;
+  lowStockAlert: number;
+  weight: number | null;
+  isActive: boolean;
+  // Attributes
+  color: string | null;
+  size: string | null;
+  material: string | null;
+};
+//TYPE
+
+
+export async function createBulkProductService(
+    payload: { data: ProductImportPayload[]; [key: string]: unknown },
+    userId: string,
+    employeeId: string,
+    businessId: string,
+    businessSlug: string
+) {
+    try {
+        // 1. Validate CSV Data using nested Zod array schema
+        const validatedImportData = ProductsValidateArray.parse(payload.data);
+
+        if (validatedImportData.length === 0) {
+            return { error: "No products data provided in the file.", success: false, status: 400 };
+        }
+
+        // 2. Lookup Unique Relations (Optimization)
+        // Soft delete filtering (isDeleted: false) is critical here.
+        const categoryNames = [...new Set(validatedImportData.map((p) => p.category).filter(Boolean))];
+        const brandNames = [...new Set(validatedImportData.map((p) => p.brand).filter(Boolean))];
+
+        const [categoriesInDB, brandsInDB] = await Promise.all([
+            prisma.category.findMany({
+                where: { businessId, name: { in: categoryNames as string[] }, isDeleted: false },
+                select: { id: true, name: true }
+            }),
+            prisma.brand.findMany({
+                where: { businessId, name: { in: brandNames as string[] }, isDeleted: false },
+                select: { id: true, name: true }
+            }),
+        ]);
+
+        // Fix: Map Name -> ID for efficient lookup during data prep
+        const categoryMap = new Map(categoriesInDB.map((cat) => [cat.name, cat.id]));
+        const brandMap = new Map(brandsInDB.map((brand) => [brand.name, brand.id]));
+
+
+        // 3. Prepare Variant-Specific Data Matrix
+        const preparedVariantsList: VariantCreationData[] = validatedImportData.map((row) => {
+            // Validation check (Zod usually handles this, but good for defensive programming)
+            if (!row.sku) throw new Error("CSV Import Error: SKU is required for every row.");
+            if (!row.parentName) throw new Error(`CSV Import Error: 'parentName' is required for the variant with SKU: ${row.sku}`);
+
+            return {
+             // Parent Product Data
+                parentName: row.parentName,
+                parentDescription: row.description ?? null,
+                categoryId: row.category ? categoryMap.get(row.category) ?? null : null,
+                brandId: row.brand ? brandMap.get(row.brand) ?? null : null,
+                parentBaseSku: row.parentBaseSku ?? null,
+
+                sku: row.sku, 
+                barcode: row.barcode ?? null,
+                price: row.price,
+                costPrice: row.costPrice,
+                stock: row.stock,
+                lowStockAlert: row.lowStockAlert || 5, // default
+                weight: row.weight ?? null, // kg
+                isActive: row.isActive ?? true, // default active
+
+                color: row.color ??  null,
+                size: row.size ?? null,
+                material: row.material ?? null,
+            };
+        });
+
+
+        // 4. SEQUENTIAL IMPORT TRANSACTION (Crucial for dependent relationships)
+        // createMany cannot handle parent-product consolidation or sequential loops reliably.
+        const importResults = await prisma.$transaction(async (tx) => {
+          
+          let createdParentCount = 0;
+          let createdVariantCount = 0;
+          let skippedSkuCount = 0;
+
+          // Helper Map to cache newly created Parent IDs within this transactional context
+          const parentProductMap = new Map<string, string>(); // Maps "Parent Name" to "cuid_ID"
+
+          // ── LOOP: Process each flat variant row sequentially ────
+          for (const variantData of preparedVariantsList) {
+            
+            // Step A: SKU Deduplication (Variant Level)
+            const existingSku = await tx.productVariant.findFirst({
+              where: {
+                sku: variantData.sku,
+                product: { businessId: businessId }, // Filter variant by parent's business
+              },
+              select: { id: true },
+            });
+
+            if (existingSku) {
+              skippedSkuCount++;
+              continue; // Move to the next row in the import file
+            }
+
+            // Step B: Consolidated Parent Product Creation
+            // We reuse an ID if this Parent Name was already created or found within this transactional run.
+            let parentProductId = parentProductMap.get(variantData.parentName);
+
+            if (!parentProductId) {
+              // Not in map? Try to find if this Parent exists in the database already (not soft-deleted)
+              const existingProduct = await tx.product.findFirst({
+                where: {
+                  businessId: businessId,
+                  name: variantData.parentName,
+                  isDeleted: false,
+                },
+                select: { id: true },
+              });
+
+              if (existingProduct) {
+                parentProductId = existingProduct.id;
+              } else {
+                // Not in map OR DB? Create the Generic Parent Product (Shared Data)
+                const newProduct = await tx.product.create({
+                  data: {
+                    name: variantData.parentName,
+                    description: variantData.parentDescription,
+                    categoryId: variantData.categoryId,
+                    brandId: variantData.brandId,
+                    businessId: businessId,
+                    
+                    // Display/Auditing Metadata (Cached Summary)
+                    baseSku: variantData.parentBaseSku,
+                    totalStock: 0, // Note: Set to 0 initially, updated in STEP F
+                    basePriceFrom: variantData.price, // Initial display price default
+                    lowStockAlert: variantData.lowStockAlert, // default from first SKU
+                    isActive: true, // Parents created as active in bulk
+                  },
+                });
+                parentProductId = newProduct.id;
+                createdParentCount++;
+              }
+              
+              // Cache the Parent ID for this name for other variants later in the same import run
+              parentProductMap.set(variantData.parentName, parentProductId);
+            }
+
+            // Step C: Create the specific sellable item (ProductVariant)
+            const newVariant = await tx.productVariant.create({
+              data: {
+                productId: parentProductId!, // Guaranteed parent ID link
+                sku: variantData.sku,
+                price: variantData.price,
+                costPrice: variantData.costPrice,
+                stock: variantData.stock,
+                lowStockAlert: variantData.lowStockAlert,
+                barcode: variantData.barcode,
+                weight: variantData.weight,
+                isActive: variantData.isActive,
+                sortOrder: 0, // default
+              },
+            });
+            createdVariantCount++;
+
+            // Step D: Individual Stock Log (Source of Truth)
+            // Audited against the User.id (or Employee.id if schema enforces that)
+            if (newVariant.stock > 0) {
+              await tx.stockLog.create({
+                data: {
+                  productVariantId: newVariant.id, // linked specifically to the new SKU
+                  employeeId: employeeId,
+                  businessId: businessId,
+                  change: newVariant.stock,
+                  reason: `Bulk variant import (CSV).`,
+                },
+              });
+            }
+
+            // Step E: Final Auditing for this SKU/Variant creation
+            await tx.auditLog.create({
+              data: {
+                action: "CREATE_VARIANT_IMPORT",
+                entity: "PRODUCT_VARIANT",
+                entityId: newVariant.id,
+                userId: userId,
+                businessId: businessId,
+                newValue: `Imported SKU: ${newVariant.sku}, linked to Parent Product: ${variantData.parentName}`,
+              },
+            });
+
+          } // End Sequential Loop
+
+          // Step F (REFACTORED/OPTIMIZED): Update totalStock for ALL affected parent products
+          const uniqueParentIds = Array.from(parentProductMap.values());
+          
+          if (uniqueParentIds.length > 0) {
+            // F1. (Optimized) Fetch ALL variants for ALL affected parents in ONE database query
+            const allVariants = await tx.productVariant.findMany({
+              where: { productId: { in: uniqueParentIds }, isDeleted: false },
+              select: { productId: true, stock: true, price: true },
+            });
+
+            // F2. (Blistering Fast) Consolidate summaries in-memory using JavaScript
+            const summariesMap = new Map<string, { totalStock: number; lowestPrice: number }>();
+            
+            for (const variant of allVariants) {
+              let summary = summariesMap.get(variant.productId);
+              if (!summary) {
+                summary = { totalStock: 0, lowestPrice: Infinity }; // Infinity ensures first price sets baseline
+                summariesMap.set(variant.productId, summary);
+              }
+              
+              summary.totalStock += variant.stock;
+              const variantPrice = Number(variant.price);
+              if (variantPrice < summary.lowestPrice) {
+                summary.lowestPrice = variantPrice;
+              }
+            }
+
+            // F3. Perform sequential updates (Updates MUST be sequential within transaction)
+            for (const [parentId, summaryData] of summariesMap.entries()) {
+              // Defense check: lowestPrice remains Infinity if parent has no variants
+              if (summaryData.lowestPrice === Infinity) continue;
+              
+              await tx.product.update({
+                where: { id: parentId },
+                data: {
+                  totalStock: summaryData.totalStock,
+                  basePriceFrom: summaryData.lowestPrice, // Update the cached "From ₵" display
+                },
+              });
+            }
+          } // End Step F Optimization
+
+          // Return transactional write summary
+          return { 
+            parents: createdParentCount, 
+            variants: createdVariantCount, 
+            skipped: skippedSkuCount 
+          };
+        }); // End Transaction (Atomic rollback if ANY sequential loop logic failed)
+
+        // 5. Final Success Response and redirect
+        return {
+            success: true,
+            message: `Import complete. Created ${importResults.parents} product(s) with ${importResults.variants} variant(s). Skipped ${importResults.skipped} duplicate SKU(s).`,
+            redirectTo: `/${businessSlug}/product_list`,
+            summary: importResults, // helpful for UI feedback/dashboard
+            status: 200
+        };
+
+    } catch (error: unknown) {
+        console.error("Transactional Bulk Import Server Error:", error);
+        // Standard error handling recommended
+        return { 
+            error: (error as Error).message || "Internal Server Error", 
+            success: false, 
+            status: 500 
+        };
+    }
+}
+
+
+
+
+export async function getProductByIdService(productId: string, businessId: string) {
+  try {
+    // 1. Validation check for essential parameters
+    if (!productId || !businessId) {
+      return { error: "Product ID and Business ID are required", success: false, status: 400 };
+    }
+
+    // 2. Fetch the Product and its ENTIRE NESTED STACK 
+    const productData = await prisma.product.findFirst({
+      where: {
+        id: productId,
+        businessId: businessId, // CRITICAL: Ensure cross-tenant data isolation
+        isDeleted: false, // Standard: only fetch non-archived parent products
+      },
+      
+      // *** THE CRUCIAL CHANGE: Deeply nested include ***
+      include: {
+        // Shared Lookups (Category, Brand, Discount)
+        category: {
+          select: { id: true, name: true }
+        },
+        brand: {
+          select: { id: true, name: true }
+        },
+        discount: {
+          select: {
+            id: true,
+            name: true,
+            type: true, // "PERCENTAGE" | "FIXED"
+            value: true,
+          }
+        },
+
+        // ── 1. THE AUDIT LOG (Useful for edit history in detailed view) ─
+        auditLogs: {
+          where: { isDeleted: false },
+          select: { id: true, action: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+          take: 5, // Just get the latest five for context
+        },
+
+        // ── 2. THE VARIANTS (The SKUs) ────────────────────
+        // This is where all the transactional data resides now.
+        variants: {
+          where: { isDeleted: false }, // Critical filter
+          select: {
+            id: true,
+            productId: true,
+            
+            // source of truth identifiers
+            sku: true, // e.g., TEE-BLU-L
+            barcode: true,
+            
+            imageUrl: true, // Specific image for this variant
+            fileKey: true,
+            
+            // source of truth PRICING & INVENTORY
+            // (Note: Prisma Decimals return as specific Decimal objects, 
+            // you may need a mapper in your API handler to convert to numbers for the frontend type)
+            price: true, 
+            costPrice: true,
+            stock: true, // source of truth physical inventory
+            lowStockAlert: true, // specific variant alert level
+            
+            // Physical attributes
+            weight: true,
+            length: true,
+            width: true,
+            height: true,
+            
+            isActive: true,
+            sortOrder: true,
+            
+            // ─── THE NESTED JCT TYPE: VariantOptions ─────
+            // e.g., connecting "TEE-BLU-L" to "Color: Blue"
+            options: {
+              select: {
+                id: true,
+                variantId: true,
+                attributeId: true,
+                value: true, // e.g., "Blue"
+                
+                // --- NEST THE PARENT ATTRIBUTE DATA ---
+                // e.g., link back to "Color" attribute name
+                attribute: {
+                  select: {
+                    id: true,
+                    name: true, // e.g., "Color"
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { sortOrder: 'asc' }, // Order variants consistent with UI sorting
+        },
+        
+        // ── 3. PRODUCT ATTRIBUTES (The Rules) ───────────
+        // (Used to know which attribute rules were defined for this product,
+        // even if no variants are currently using them).
+        // variants: { some: { ... } } would ensure they have variants,
+        // but often we want the defined set regardless.
+        productAttributes: {
+          where: { isActive: true },
+          select: {
+            id: true,
+            name: true, // e.g., "Color", "Size"
+            predefinedValues: true, // Json array, e.g., ["S", "M", "L"]
+            sortOrder: true,
+          },
+          orderBy: { sortOrder: 'asc' },
+        },
+      },
+    });
+
+    // 3. Not Found Handling
+    if (!productData) {
+      return { error: "Product not found or access denied.", success: false, status: 404 };
+    }
+
+    // *** OPTIONAL: DATA MAPPING ***
+    // (Decimal Conversion)
+    // If you need the output to exactly match the TypeScript 'Product' type 
+    // where price/costPrice are 'number' (JS Floats) rather than the Prisma 
+    // Decimal objects, you must map the results here inside the service 
+    // or in the API handler before returning the response.
+
+    const mappedProduct = {
+      ...productData,
+      variants: productData.variants.map((v) => ({
+        ...v,
+        price: Number(v.price), // Convert Prisma Decimal to Float
+        costPrice: Number(v.costPrice),
+      })),
+    } as unknown as Product; // (Use appropriate type assertion based on your mapping strategy)
+
+    // 4. Return the complete, mapped nested stack
+    return { success: true, product: mappedProduct, status: 200 };
+
+  } catch (error: unknown) {
+    console.error("DEEP_GET_PRODUCT_ERROR:", error);
+    // standard error handling recommended
+    return { error: "Internal Server Error", success: false, status: 500 };
+  }
+}
+
+
+
+
+// Type for current product state
+type ProductUpdateSyncState = {
+  id: string;
+  fileKey: string | null;
+  variants: Array<{
+    id: string;
+    sku: string;
+    stock: number;
+    fileKey: string | null;
+  }>;
+  productAttributes: Array<{
+    id: string;
+    name: string;
+  }>;
+};
+
+
+
+
+
+
+export async function updateProductService(
+  productId: string,
+  data: ProductFormValues,
+  userId: string,
+  employeeId: string,
+  businessId: string
+) {
+  try {
+    // 1. Validate incoming data
+    const validatedData = productSchema.parse(data);
+
+    // 2. Fetch current product state with variants and attributes
+    const currentProduct = await prisma.product.findFirst({
+      where: { id: productId, businessId, isDeleted: false },
+      include: {
+        variants: {
+          where: { isDeleted: false },
+          select: { 
+            id: true, 
+            sku: true, 
+            stock: true, 
+            fileKey: true,
+            price: true,
+            costPrice: true,
+          }
+        },
+        productAttributes: {
+          where: { isActive: true },
+          select: { id: true, name: true }
+        },
+      },
+    })as ProductUpdateSyncState;
+
+    if (!currentProduct) {
+      return { error: "Product not found", success: false, status: 404 };
+    }
+
+    // 3. Prepare data for sync
+    const { variants = [], attributes = [], ...parentProductData } = validatedData;
+    
+    // Create maps for quick lookups
+    const currentVariantMap = new Map(currentProduct.variants.map(v => [v.id, v]));
+    const currentVariantSkuMap = new Map(currentProduct.variants.map(v => [v.sku, v.id]));
+
+    // 4. SKU Uniqueness Check
+    const variantSkusToSync = variants.map(v => v.sku).filter(Boolean);
+    
+    if (variantSkusToSync.length > 0) {
+      const existingVariantSkus = await prisma.productVariant.findMany({
+        where: {
+          sku: { in: variantSkusToSync },
+          product: { businessId },
+          NOT: { productId },
+        },
+        select: { sku: true },
+      });
+
+      if (existingVariantSkus.length > 0) {
+        const duplicateSkus = existingVariantSkus.map(v => v.sku).join(", ");
+        return { 
+          error: `These SKUs already exist in other products: ${duplicateSkus}`, 
+          success: false, 
+          status: 400 
+        };
+      }
+    }
+
+    // Track old images for cleanup
+    const oldFileKeysToDelete: string[] = [];
+    
+    if (parentProductData.fileKey && currentProduct.fileKey && 
+        parentProductData.fileKey !== currentProduct.fileKey) {
+      oldFileKeysToDelete.push(currentProduct.fileKey);
+    }
+
+    // 5. TRANSACTION - Atomic update of product, variants, and attributes
+    const result = await prisma.$transaction(async (tx) => {
+      
+      // ─── STEP A: Update Parent Product ───────────────────
+      const updatedProduct = await tx.product.update({
+        where: { id: productId, businessId },
+        data: {
+          name: parentProductData.name,
+          description: parentProductData.description,
+          baseSku: parentProductData.baseSku,
+          categoryId: parentProductData.categoryId === "none" ? null : parentProductData.categoryId,
+          brandId: parentProductData.brandId === "none" ? null : parentProductData.brandId,
+          discountId: parentProductData.discountId === "none" ? null : parentProductData.discountId,
+          imageUrl: parentProductData.imageUrl,
+          fileKey: parentProductData.fileKey,
+          isActive: parentProductData.isActive,
+          lowStockAlert: parentProductData.lowStockAlert,
+          updatedAt: new Date(),
+        },
+      });
+
+      // ─── STEP B: Sync Product Attributes ─────────────────
+        const attributeIdMap: Record<string, string> = {};
+        currentProduct.productAttributes.forEach(a => {
+        attributeIdMap[a.name] = a.id;
+        });
+
+        if (attributes && attributes.length > 0) {
+        for (const attrData of attributes) {
+            const attribute = await tx.productAttribute.upsert({
+            // Use the ID if we have it, otherwise check our map, 
+            // otherwise use the placeholder to create new.
+            where: { id: attrData.id || attributeIdMap[attrData.name] || 'new-attr' },
+            create: {
+                name: attrData.name,
+                businessId,
+                sortOrder: attrData.sortOrder || 0,
+                predefinedValues: attrData.predefinedValues as Prisma.InputJsonValue,
+            },
+            update: {
+                name: attrData.name,
+                sortOrder: attrData.sortOrder || 0,
+                predefinedValues: attrData.predefinedValues as Prisma.InputJsonValue,
+            },
+            });
+            
+            // Update the map with the final IDs (especially important for brand new ones)
+            attributeIdMap[attrData.name] = attribute.id;
+        }
+        }
+
+      // ─── STEP C: Sync Product Variants ───────────────────
+      const processedVariantIds: string[] = [];
+
+      for (const variantData of variants) {
+        // Prepare variant options (attributes)
+        const optionData = (variantData.options || []).map(opt => {
+          const attributeId = attributeIdMap[opt.attributeName];
+          if (!attributeId) {
+            throw new Error(`Attribute '${opt.attributeName}' not found`);
+          }
+          return { attributeId, value: opt.value };
+        });
+
+        // Check if this variant already exists
+        const existingVariantId = currentVariantSkuMap.get(variantData.sku);
+        const existingVariant = existingVariantId ? currentVariantMap.get(existingVariantId) : null;
+
+        // Calculate stock change
+        let stockChange = 0;
+        if (existingVariant && variantData.stock !== undefined) {
+          stockChange = variantData.stock - existingVariant.stock;
+        } else if (!existingVariant && variantData.stock > 0) {
+          stockChange = variantData.stock;
+        }
+
+        // Track old variant image for cleanup
+        if (variantData.fileKey && existingVariant?.fileKey && 
+            variantData.fileKey !== existingVariant.fileKey) {
+          oldFileKeysToDelete.push(existingVariant.fileKey);
+        }
+
+        // Upsert variant
+        const updatedVariant = await tx.productVariant.upsert({
+          where: { 
+            id: variantData.id || existingVariantId || `new-${Date.now()}-${Math.random()}` 
+          },
+          create: {
+            productId,
+            sku: variantData.sku,
+            barcode: variantData.barcode || null,
+            imageUrl: variantData.imageUrl || null,
+            fileKey: variantData.fileKey || null,
+            price: variantData.price,
+            costPrice: variantData.costPrice,
+            stock: variantData.stock,
+            lowStockAlert: variantData.lowStockAlert || 5,
+            weight: variantData.weight || null,
+            sortOrder: variantData.sortOrder || 0,
+            isActive: true,
+            options: {
+              create: optionData,
+            },
+          },
+          update: {
+            sku: variantData.sku,
+            barcode: variantData.barcode || null,
+            imageUrl: variantData.imageUrl || null,
+            fileKey: variantData.fileKey || null,
+            price: variantData.price,
+            costPrice: variantData.costPrice,
+            stock: variantData.stock,
+            lowStockAlert: variantData.lowStockAlert || 5,
+            weight: variantData.weight || null,
+            sortOrder: variantData.sortOrder || 0,
+            isActive: true,
+            options: {
+              deleteMany: {},
+              create: optionData,
+            },
+          },
+        });
+
+        processedVariantIds.push(updatedVariant.id);
+
+        // Create stock log if stock changed
+        if (stockChange !== 0) {
+          await tx.stockLog.create({
+            data: {
+              productVariantId: updatedVariant.id,
+              employeeId: employeeId,
+              businessId,
+              change: stockChange,
+              reason: "Manual stock adjustment during product update",
+            },
+          });
+        }
+      }
+
+      // ─── STEP D: Soft Delete Removed Variants ────────────
+      const removedVariantIds = currentProduct.variants
+        .map(v => v.id)
+        .filter(id => !processedVariantIds.includes(id));
+
+      if (removedVariantIds.length > 0) {
+        await tx.productVariant.updateMany({
+          where: { id: { in: removedVariantIds } },
+          data: { 
+            isDeleted: true, 
+            deletedAt: new Date() 
+          },
+        });
+      }
+
+      // ─── STEP E: Update Product Summary (totalStock, basePriceFrom) ───
+      const allActiveVariants = await tx.productVariant.findMany({
+        where: { productId, isDeleted: false },
+        select: { stock: true, price: true },
+      });
+
+      const totalStock = allActiveVariants.reduce((sum, v) => sum + v.stock, 0);
+      const prices = allActiveVariants.map(v => Number(v.price));
+      const lowestPrice = prices.length > 0 ? Math.min(...prices) : 0;
+
+      await tx.product.update({
+        where: { id: productId },
+        data: {
+          totalStock,
+          basePriceFrom: lowestPrice,
+        },
+      });
+
+      // ─── STEP F: Audit Log ────────────────────────────────
+      await tx.auditLog.create({
+        data: {
+          action: "UPDATE_PRODUCT_WITH_VARIANTS",
+          entity: "PRODUCT",
+          entityId: productId,
+          userId,
+          businessId,
+          newValue: `Updated product: ${updatedProduct.name} with ${processedVariantIds.length} variants`,
+        },
+      });
+
+      return updatedProduct;
+    });
+
+    // 6. POST-TRANSACTION: Clean up old images
+    if (oldFileKeysToDelete.length > 0) {
+      for (const fileKey of oldFileKeysToDelete) {
+        try {
+          await deleteUTFile(fileKey);
+        } catch (error) {
+          console.error(`Failed to delete file: ${fileKey}`, error);
+        }
+      }
+    }
+
+    return { 
+      success: true, 
+      message: "Product updated successfully", 
+      product: result, 
+      status: 200 
+    };
+
+  } catch (error: unknown) {
+    console.error("Product update error:", error);
+    return { 
+      error: error instanceof Error ? error.message : "Update failed", 
+      success: false, 
+      status: 500 
+    };
+  }
+}
+
+
+
+
+
+export async function softProductDeleteService(
+  productId: string, 
+  userId: string, 
+  employeeId: string, 
+  businessId: string
+) {
+  try {
+    // 1. Fetch the product AND all its active variants
+    const currentProduct = await prisma.product.findFirst({
+      where: { id: productId, businessId, isDeleted: false },
+      include: {
+        variants: {
+          where: { isDeleted: false },
+          select: { id: true, stock: true, sku: true }
+        }
+      }
+    });
+
+    if (!currentProduct) {
+      return { error: "Product not found", success: false, status: 404 };
+    }
+
+    // 2. TRANSACTION
+    await prisma.$transaction(async (tx) => {
+      
+      // A. Loop through variants to log stock removal for EACH SKU
+      for (const variant of currentProduct.variants) {
+        if (variant.stock > 0) {
+          await tx.stockLog.create({
+            data: {
+              productVariantId: variant.id, // Linked to the specific SKU
+              employeeId: employeeId,
+              businessId: businessId,
+              change: -variant.stock,
+              reason: `Product parent deleted - removing stock for SKU: ${variant.sku}`,
+            }
+          });
+        }
+      }
+
+      // B. Soft-delete all Variants
+      await tx.productVariant.updateMany({
+        where: { productId: productId, isDeleted: false },
+        data: { 
+          isDeleted: true, 
+          deletedAt: new Date() 
+        }
+      });
+
+      // C. Soft-delete the Parent Product
+      const deletedProduct = await tx.product.update({
+        where: { id: productId, businessId },
+        data: { 
+          isDeleted: true, 
+          deletedAt: new Date(),
+          totalStock: 0 // Clear cached stock
+        }
+      });
+
+      // D. Create Audit Log
+      await tx.auditLog.create({
+        data: {
+          action: "SOFT_DELETE_PRODUCT_WITH_VARIANTS",
+          entity: "PRODUCT",
+          entityId: productId,
+          userId: userId,
+          businessId: businessId,
+          newValue: `Deleted product: ${deletedProduct.name} and ${currentProduct.variants.length} variants.`
+        }
+      });
+    });
+
+    return { success: true, message: `Product and its variants deleted successfully`, status: 200 };
+
+  } catch (error: unknown) {
+    console.error("Product delete error:", error);
+    
+    // Check for Prisma FK constraint error (P2003)
+    if (error instanceof Error && 'code' in error && error.code === 'P2003') {
+      return { 
+        error: "Cannot delete product with existing sales history. Deactivate it instead.", 
+        success: false, 
+        status: 400 
+      };
+    }
+    return { error: "Delete failed", success: false, status: 500 };
+  }
+}
+
+export async function hardProductDeleteService(
+  productId: string, 
+  userId: string, 
+  employeeId: string, 
+  businessId: string
+) {
+  try {
+    const currentProduct = await prisma.product.findFirst({
+      where: { id: productId, businessId },
+      include: {
+        variants: {
+          select: { id: true, stock: true, sku: true, fileKey: true }
+        }
+      }
+    });
+
+    if (!currentProduct) {
+      return { error: "Product not found", success: false, status: 404 };
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Log Stock
+      for (const variant of currentProduct.variants) {
+        if (variant.stock > 0) {
+          await tx.stockLog.create({
+            data: {
+              productVariantId: variant.id,
+              employeeId: employeeId,
+              businessId: businessId,
+              change: -variant.stock,
+              reason: `HARD DELETE: Product removed.`,
+            }
+          });
+        }
+      }
+
+      // 2. Delete Junction Table entries (ProductVariantOption)
+      // This is the property that was causing the "does not exist" error
+      await tx.productVariantOption.deleteMany({
+        where: { 
+          variant: { productId: productId } 
+        }
+      });
+
+      // 3. Delete the Variants
+      await tx.productVariant.deleteMany({
+        where: { productId: productId }
+      });
+
+      // 4. Audit Log
+      await tx.auditLog.create({
+        data: {
+          action: "HARD_DELETE_PRODUCT",
+          entity: "PRODUCT",
+          entityId: productId,
+          userId: userId,
+          businessId: businessId,
+        }
+      });
+
+      // 5. Final Delete: The Product itself
+      await tx.product.delete({
+        where: { id: productId, businessId }
+      });
+    });
+
+    // Cleanup images...
+    const keysToDelete = [
+      currentProduct.fileKey,
+      ...currentProduct.variants.map(v => v.fileKey)
+    ].filter((k): k is string => !!k);
+
+    if (keysToDelete.length > 0) {
+      await Promise.allSettled(keysToDelete.map(key => deleteUTFile(key)));
+    }
+
+    return { success: true, message: `Product deleted`, status: 200 };
+
+  } catch (error: unknown) {
+    console.error("Hard delete error:", error);
+    return { error: "Delete failed", success: false, status: 500 };
+  }
+}
+
+
+ export async function performBulkProductDeleteService(
+  ids: string[], 
+  userId: string, 
+  businessId: string, 
+  businessSlug: string 
+) {
+  try {
+    // 1. Fetch products AND their variants first to capture ALL fileKeys
+    const productsToDelete = await prisma.product.findMany({
+      where: { 
+        id: { in: ids }, 
+        businessId: businessId 
+      },
+      include: {
+        variants: {
+          select: { id: true, fileKey: true }
+        }
+      }
+    });
+
+    if (productsToDelete.length === 0) {
+      return { success: false, error: "No products found to delete.", status: 404 };
+    }
+
+    // 2. Database Transaction
+    const allFileKeys = await prisma.$transaction(async (tx) => {
+      
+      // A. Create Audit Logs for each product
+      await tx.auditLog.createMany({
+        data: productsToDelete.map((product) => ({
+          action: "BULK_HARD_DELETE",
+          entity: "PRODUCT",
+          entityId: product.id,
+          userId: userId,
+          businessId: businessId,
+          newValue: `Bulk deleted product: ${product.name} with ${product.variants.length} variants.`
+        })),
+      });
+
+      // B. Manual cleanup of relations (if cascade is not set in Prisma)
+      // Delete Variant Options first
+      await tx.productVariantOption.deleteMany({
+        where: { variant: { productId: { in: ids } } }
+      });
+
+      // Delete Variants
+      await tx.productVariant.deleteMany({
+        where: { productId: { in: ids } }
+      });
+
+      // Delete Product Attributes
+      await tx.productAttribute.deleteMany({
+        where: { businessId, /* or link to product if applicable */ }
+      });
+
+      // C. Delete the Parent Products
+      await tx.product.deleteMany({
+        where: { 
+          id: { in: ids }, 
+          businessId: businessId 
+        },
+      });
+
+      // D. Collect ALL file keys (Parent + all Variants)
+      const parentKeys = productsToDelete.map(p => p.fileKey).filter(Boolean);
+      const variantKeys = productsToDelete.flatMap(p => 
+        p.variants.map(v => v.fileKey)
+      ).filter(Boolean);
+
+      return [...new Set([...parentKeys, ...variantKeys])] as string[];
+    });
+
+    // 3. Cleanup UploadThing (Comprehensive)
+    if (allFileKeys.length > 0) {
+      // Use Promise.allSettled so one failed delete doesn't crash the whole service
+      await Promise.allSettled(allFileKeys.map((key) => deleteUTFile(key)));
+    }
+
+    return {
+      success: true,
+      message: `Successfully deleted ${productsToDelete.length} products and cleaned up ${allFileKeys.length} images.`,
+      redirectTo: `/${businessSlug}/product_list`,
+      status: 200
+    };
+
+  } catch (error) {
+    console.error("BULK_DELETE_ERROR:", error);
+    
+    // Handle Foreign Key constraints
+    if (error instanceof Error && 'code' in error && error.code === 'P2003') {
+      return { 
+        success: false, 
+        error: "Some products have sales history and cannot be permanently deleted. Try archiving them instead." 
+      };
+    }
+    
+    return { success: false, error: "An error occurred during bulk deletion." };
+  }
+}
+
+
+export async function toggleBulkProductsStatusService(
+  ids: string[], 
+  userId: string, 
+  businessId: string, 
+  businessSlug: string 
+) {
+  try {
+    await prisma.$transaction(async (tx) => {
+      // 1. Fetch current status
+      const products = await tx.product.findMany({
+        where: { id: { in: ids }, businessId: businessId },
+        select: { id: true, isActive: true, name: true }
+      });
+
+      if (products.length === 0) throw new Error("No products found.");
+
+      // 2. Perform updates for Parent AND Variants
+      for (const product of products) {
+        const newStatus = !product.isActive;
+
+        // Update Parent Product
+        await tx.product.update({
+          where: { id: product.id },
+          data: { isActive: newStatus },
+        });
+
+        // Sync status to all non-deleted Variants
+        await tx.productVariant.updateMany({
+          where: { productId: product.id, isDeleted: false },
+          data: { isActive: newStatus },
+        });
+      }
+
+      // 3. Audit Log (Bulk create for efficiency)
+      await tx.auditLog.createMany({
+        data: products.map((p) => ({
+          action: "TOGGLE_STATUS",
+          entity: "PRODUCT",
+          entityId: p.id,
+          userId: userId,
+          businessId: businessId,
+          newValue: `Status changed to ${!p.isActive ? 'Active' : 'Inactive'}`,
+        })),
+      });
+    });
+
+    return {
+      success: true,
+      message: `Updated status for ${ids.length} products and their variants.`,
+      redirectTo: `/${businessSlug}/product_list`,
+      status: 200
+    };
+    
+  } catch (error) {
+    console.error("BULK_STATUS_TOGGLE_ERROR:", error);
+    return { success: false, error: "Failed to update products.", status: 500 };
+  }
+}
+
+
+// services/productVariantService.ts
+
+export async function updateProductVariantService(
+  variantId: string,
+  productId: string,
+  data: {
+    sku?: string;
+    price?: number;
+    costPrice?: number;
+    stock?: number;
+    lowStockAlert?: number;
+    weight?: number;
+    imageUrl?: string;
+    fileKey?: string;
+    isActive?: boolean;
+  },
+  userId: string,
+  employeeId: string,
+  businessId: string
+) {
+  try {
+    // 1. Fetch current variant
+    const currentVariant = await prisma.productVariant.findFirst({
+      where: { 
+        id: variantId, 
+        productId,
+        product: { businessId },
+        isDeleted: false 
+      },
+      select: { 
+        stock: true, 
+        fileKey: true,
+        sku: true,
+      }
+    });
+
+    if (!currentVariant) {
+      return { error: "Variant not found", success: false, status: 404 };
+    }
+
+    // 2. SKU Unique Check
+    if (data.sku && data.sku !== currentVariant.sku) {
+      const existingVariant = await prisma.productVariant.findFirst({
+        where: {
+          sku: data.sku,
+          product: { businessId },
+          NOT: { id: variantId }
+        }
+      });
+      
+      if (existingVariant) {
+        return { error: "A variant with this SKU already exists.", success: false, status: 400 };
+      }
+    }
+
+    // 3. Calculate Stock Change
+    let stockChange = 0;
+    if (data.stock !== undefined) {
+      stockChange = data.stock - currentVariant.stock;
+    }
+
+// 4. TRANSACTION
+    const result = await prisma.$transaction(async (tx) => {
+      // Update variant
+      const updatedVariant = await tx.productVariant.update({
+        where: { id: variantId },
+        data: {
+          ...data,
+          updatedAt: new Date(),
+        }
+      });
+
+      // Stock log
+      if (stockChange !== 0) {
+        await tx.stockLog.create({
+          data: {
+            productVariantId: variantId,
+            employeeId: employeeId,
+            businessId,
+            change: stockChange,
+            reason: "Variant stock updated manually",
+          }
+        });
+      }
+
+      // Recalculate parent product totals
+      const allActiveVariants = await tx.productVariant.findMany({
+        where: { productId, isDeleted: false },
+        select: { stock: true, price: true }
+      });
+
+      const totalStock = allActiveVariants.reduce((sum, v) => sum + v.stock, 0);
+      
+      // FIX: Handle empty array or zero prices gracefully
+      const prices = allActiveVariants.map(v => Number(v.price));
+      const lowestPrice = prices.length > 0 ? Math.min(...prices) : 0;
+
+      await tx.product.update({
+        where: { id: productId },
+        data: {
+          totalStock,
+          basePriceFrom: lowestPrice,
+        }
+      });
+
+      // Audit log - Improved with more context
+      await tx.auditLog.create({
+        data: {
+          action: "UPDATE_VARIANT",
+          entity: "PRODUCT_VARIANT",
+          entityId: variantId,
+          userId,
+          businessId,
+          newValue: `SKU: ${updatedVariant.sku} | Price: ${updatedVariant.price} | Stock: ${updatedVariant.stock}`,
+        }
+      });
+
+      return updatedVariant;
+    });
+
+    // 5. Image Cleanup
+    if (data.fileKey && currentVariant.fileKey && data.fileKey !== currentVariant.fileKey) {
+      await deleteUTFile(currentVariant.fileKey);
+    }
+
+    return { 
+      success: true, 
+      message: "Variant updated successfully", 
+      variant: result,
+      status: 200 
+    };
+
+  } catch (error: unknown) {
+    console.error("Variant update error:", error);
+    return { 
+      error: error instanceof Error ? error.message : "Update failed", 
+      success: false,
+      status: 500 
+    };
+  }
+}

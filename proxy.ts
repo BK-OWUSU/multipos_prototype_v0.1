@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyPOSTokenEdge } from "./lib/auths";
-import { JwtPayload } from "./types/auth";
+import { JwtPayload } from "./types/auth/auth";
 
 const POS_COOKIE_NAME = "pos_token";
 const PASSWORD_RESET_COOKIE_NAME = "password_reset";

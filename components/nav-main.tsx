@@ -88,7 +88,7 @@ export function NavMain({ items }: { items: NavGroup[] }) {
                       {group.items?.map((subItem) => (
                         <SidebarMenuSubItem key={subItem.title}>
                           <SidebarMenuSubButton
-			                      className="text-white" 
+			                      className="text-white hover:text-blue-950 transition-colors" 
                             asChild 
                             isActive={pathname === subItem.url}
                           >
@@ -98,13 +98,13 @@ export function NavMain({ items }: { items: NavGroup[] }) {
                                 target="_blank" 
                                 rel="noopener noreferrer"
                               >
-                                {subItem.icon && <subItem.icon className="h-4 w-4 text-white!" />}
+                                {subItem.icon && <subItem.icon className="h-4 w-4  transition-colors" />}
                                 <span>{subItem.title}</span>
                               </a>
                             ) : (
                               <Link href={subItem.url}
                               >
-                                {subItem.icon && <subItem.icon className="h-4 w-4 text-white!" />}
+                                {subItem.icon && <subItem.icon className="h-4 w-4  transition-colors" />}
                                 <span>{subItem.title}</span>
                               </Link>
                             )}

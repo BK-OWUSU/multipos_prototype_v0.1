@@ -1,11 +1,11 @@
 import { create } from "zustand";
 import apiClient from "@/lib/api-client";
 import { AxiosError } from "axios";
-import { AppResponse } from "@/types/auth";
-import { Customer } from "@/types/auth";
+import { AppResponse } from "@/types/auth/auth";
+import { Customer } from "@/types/auth/auth";
 // Assuming you'll create a CustomerFormValues schema similar to inventory
 import { toast } from "sonner";
-import { CreateCustomerSchema } from "@/schema/auth.schema";
+import { CreateCustomerSchema } from "@/types/schema/auth.schema";
 
 type CustomerStore = {
   customers: Customer[] | null;

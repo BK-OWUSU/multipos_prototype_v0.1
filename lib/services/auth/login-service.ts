@@ -9,7 +9,7 @@ import {
 import { prisma } from "@/lib/dbHelper";
 import { sendOTPEmail } from "@/lib/email";
 import { generateOTP, saveOTP } from "@/lib/otp";
-import { JwtPayload } from "@/types/auth";
+import { JwtPayload } from "@/types/auth/auth";
 import { NextResponse } from "next/server";
 
 export async function login(email: string, password: string, ipAddress?: string, userAgent?: string ) {

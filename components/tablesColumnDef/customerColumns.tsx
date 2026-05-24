@@ -4,7 +4,7 @@ import { useState } from "react"
 import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Customer } from "@/types/auth" 
+import { Customer } from "@/types/auth/auth" 
 import { formatBusinessCurrency, formatDate } from "@/lib/utils"
 import { useAuthStore } from "@/store/useAuthStore"
 import { 
@@ -36,6 +36,7 @@ import { toast } from "sonner"
 import AlertWithDialogue from "@/components/reusables/AlertWithDialogue"
 import { GenericModal } from "@/components/reusables/GenericModal"
 import { useCustomerStore } from "@/store/customerStore" 
+import { TablePinActions } from "../reusables/table/TablePinActions"
 
 // --- Sub-component for Actions ---
 const ActionCell = ({ customer }: { customer: Customer }) => {
@@ -202,12 +203,20 @@ export const customerColumns: ColumnDef<Customer>[] = [
       </span>
     ),
   },
-  {
-    accessorKey: "Actions",
-    id: "actions",
-    cell: ({ row }) => <ActionCell customer={row.original} />,
-    enableSorting: false,
-    enableResizing: false,
-    enableColumnFilter: false
-  },
+    {
+      accessorKey: "Actions",
+      id: "actions",
+      header: () => (
+          <div className="flex items-center justify-end w-full gap-2 px-1">
+            <TablePinActions.HeaderIcon />
+            <span className="font-semibold text-white">Actions</span>
+          </div>
+        ),
+  
+      cell: ({ row }) => <ActionCell customer={row.original} />,
+      enableHiding: false, 
+      enableSorting: false,
+      enableResizing: false,
+      enableColumnFilter: false
+    }
 ]

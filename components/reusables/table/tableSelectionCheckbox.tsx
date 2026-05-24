@@ -21,7 +21,7 @@ export function getSelectionColumn<TData>(): ColumnDef<TData> {
       </div>
     ),
     cell: ({ row }) => (
-      <div className="flex h-full w-full items-center justify-center">
+      <div className="flex h-full bg- w-full items-center justify-center">
         <Checkbox
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}

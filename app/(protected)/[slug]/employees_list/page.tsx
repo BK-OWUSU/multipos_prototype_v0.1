@@ -15,7 +15,7 @@ import CustomButton from "@/components/reusables/CustomButton";
 import { useRoleStore } from "@/store/rolesStore";
 import { useEmployeeStore } from "@/store/employeeStore";
 import { employeeColumns } from "@/components/tablesColumnDef/employeeColumns";
-import { AppResponse } from "@/types/auth";
+import { AppResponse } from "@/types/auth/auth";
 import { toggleMultipleUser } from "@/lib/actions/business/employeesActions";
 
 export default function EmployeeList() {

@@ -5,7 +5,7 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../lib/generated/prisma"
+  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -37,17 +37,20 @@ model Business {
   locale         String  @default("en-GH") // e.g., "en-GH", "en-US", "de-DE"
   dateFormat     String?
 
-  employee        Employee[]
-  shops           Shop[]
-  products        Product[]
-  customers       Customer[]
-  sales           Sale[]
-  categories      Category[]
-  roles           Role[]
-  discounts       Discount[]
-  auditLogs       AuditLog[]
-  brands          Brand[]
-  userSessionLogs UserSessionLog[]
+  employee          Employee[]
+  shops             Shop[]
+  products          Product[]
+  productAttributes VariantAttribute[]
+  customers         Customer[]
+  sales             Sale[]
+  saleItems         SaleItem[]
+  cashSessions      CashSession[]
+  categories        Category[]
+  roles             Role[]
+  discounts         Discount[]
+  auditLogs         AuditLog[]
+  brands            Brand[]
+  userSessionLogs   UserSessionLog[]
 
   @@index([slug])
   @@index([isOnboarded])
@@ -98,16 +101,17 @@ model Employee {
   updatedAt DateTime @updatedAt
 
   // Relations
-  business Business @relation(fields: [businessId], references: [id])
-  role     Role     @relation(fields: [roleId], references: [id])
-  shop     Shop?    @relation(fields: [shopId], references: [id])
+  business       Business      @relation(fields: [businessId], references: [id])
+  role           Role          @relation(fields: [roleId], references: [id])
+  shop           Shop?         @relation(fields: [shopId], references: [id])
+  openedSessions CashSession[] @relation("OpenedSessions")
+  closedSessions CashSession[] @relation("ClosedSessions")
 
   // One-to-one with User (if granted system access)
   user            User?
   hasSystemAccess Boolean @default(false)
 
   grantedUsers User[]     @relation("GrantorRelation")
-  // Employee activities (even without system access)
   sales        Sale[]     @relation("EmployeeSales")
   stockLogs    StockLog[]
   timeCards    TimeCard[]
@@ -129,9 +133,9 @@ model User {
 
   isVerified          Boolean   @default(false)
   needsPasswordChange Boolean   @default(true) // Force change on first login
-  accessGrantedAt DateTime  @default(now())
-  accessGrantedBy String?
-  grantor         Employee? @relation("GrantorRelation", fields: [accessGrantedBy], references: [id])
+  accessGrantedAt     DateTime  @default(now())
+  accessGrantedBy     String?
+  grantor             Employee? @relation("GrantorRelation", fields: [accessGrantedBy], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -141,27 +145,29 @@ model User {
   otpVerifications OTPVerification[]
   auditLogs        AuditLog[]
   userSessionLogs  UserSessionLog[]
+  createdRoles     Role[]            @relation("RoleCreator")
+  updatedRoles     Role[]            @relation("RoleUpdater")
 
   @@index([employeeId])
   @@map("users")
 }
 
 model UserSessionLog {
-  id          String @id @default(cuid())
+  id String @id @default(cuid())
 
-  userId      String
-  businessId  String
+  userId     String
+  businessId String
 
-  loginAt     DateTime @default(now())
-  logoutAt    DateTime?
+  loginAt  DateTime  @default(now())
+  logoutAt DateTime?
 
-  ipAddress   String?
-  userAgent   String?
+  ipAddress String?
+  userAgent String?
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([businessId])
@@ -170,22 +176,34 @@ model UserSessionLog {
 }
 
 model Role {
-  id          String     @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
   permissions String[]
   access      String[]
   businessId  String
   description String?
-  isDeleted   Boolean    @default(false)
+  isDeleted   Boolean   @default(false)
+  isSystem    Boolean   @default(false)
+  type        RoleType  @default(TEMPORARY)
   deletedAt   DateTime?
-  createdAt   DateTime   @default(now())
-  business    Business   @relation(fields: [businessId], references: [id])
-  employee    Employee[]
-  isSystem    Boolean    @default(false)
-  type        RoleType   @default(TEMPORARY)
+  expiresAt   DateTime?
 
-  expiresAt DateTime?
+  // 2. Audit Fields
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 
+  // 3. Auditing Relations (IDs)
+  createdById String?
+  updatedById String?
+
+  // New Audit Relations
+  creator User? @relation("RoleCreator", fields: [createdById], references: [id])
+  updater User? @relation("RoleUpdater", fields: [updatedById], references: [id])
+
+  business Business   @relation(fields: [businessId], references: [id])
+  employee Employee[]
+
+  @@index([createdById])
   @@index([businessId])
   @@map("roles")
 }
@@ -203,11 +221,12 @@ model Shop {
   isDeleted  Boolean   @default(false)
   deletedAt  DateTime?
 
-  business  Business   @relation(fields: [businessId], references: [id])
-  employee  Employee[]
-  sales     Sale[]
-  timeCards TimeCard[]
-  customers Customer[]
+  business     Business      @relation(fields: [businessId], references: [id])
+  employee     Employee[]
+  sales        Sale[]
+  timeCards    TimeCard[]
+  customers    Customer[]
+  cashSessions CashSession[]
 
   @@index([businessId])
   @@map("shops")
@@ -243,8 +262,8 @@ model Category {
   isDeleted   Boolean   @default(false)
   deletedAt   DateTime?
 
-  imageUrl String?
-  fileKey  String?
+  imageUrl    String?
+  fileKey     String?
 
   business Business  @relation(fields: [businessId], references: [id])
   products Product[]
@@ -252,6 +271,165 @@ model Category {
   @@index([businessId])
   @@map("categories")
 }
+
+// ── BRAND ──────────────────────────────────────────
+model Brand {
+  id          String    @id @default(cuid())
+  name        String
+  description String?   @db.Text
+  isActive    Boolean   @default(true)
+  isDeleted   Boolean   @default(false)
+  deletedAt   DateTime?
+
+  imageUrl    String?
+  fileKey     String?
+
+  businessId  String
+  business    Business  @relation(fields: [businessId], references: [id])
+  products    Product[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([businessId])
+  @@map("brands")
+}
+
+// ── PRODUCT ────────────────────────────────────────
+model Product {
+  id          String  @id @default(cuid())
+  name        String
+  description String? @db.Text
+  
+  // Base SKU prefix (e.g., "TEE" for T-shirts)
+  baseSku       String?
+  hasVariant    Boolean @default(false)
+
+  isActive  Boolean   @default(true)
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  businessId String
+  categoryId String?
+  brandId    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  variants ProductVariant[]
+
+  // Relations
+  business Business         @relation(fields: [businessId], references: [id])
+  category Category?        @relation(fields: [categoryId], references: [id])
+  brand    Brand?           @relation(fields: [brandId], references: [id])
+
+  @@index([businessId, name])
+  @@index([businessId, categoryId])
+  @@index([businessId, brandId])
+  @@map("products")
+}
+
+// ── PRODUCT VARIANT ──
+model ProductVariant {
+  id            String   @id @default(cuid())
+  productId     String
+  sku           String   
+  barcode       String?
+  
+  // Pricing & Stock 
+  price         Decimal  @db.Decimal(10, 2)
+  costPrice     Decimal  @db.Decimal(10, 2)
+  stock         Int      @default(0)
+  lowStockAlert Int      @default(5)
+  
+  // Physical attributes
+  weight        Decimal? @db.Decimal(8, 3)
+  length        Decimal? @db.Decimal(8, 2)
+  width         Decimal? @db.Decimal(8, 2)
+  height        Decimal? @db.Decimal(8, 2)
+  
+  sortOrder     Int      @default(0)
+
+  isActive      Boolean   @default(true)
+  isDeleted     Boolean   @default(false)
+  deletedAt     DateTime?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  product       Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantOptions   ProductVariantOption[] 
+  images        VariantImage[]         
+  saleItems     SaleItem[] 
+  stockLogs     StockLog[] 
+
+  @@unique([productId, sku])
+  @@index([productId])
+  @@index([sku])
+  @@index([barcode])
+  @@map("product_variants")
+}
+
+// ── VARIANT IMAGE──
+model VariantImage {
+  id        String  @id @default(cuid())
+  variantId String
+  imageUrl  String
+  imageKey  String? // For cloud storage (uploadthing, cloudinary, etc.)
+  sortOrder Int     @default(0)
+  isPrimary Boolean @default(false) // Main display image  
+  createdAt DateTime @default(now())  
+  variant ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)  
+  @@index([variantId])
+  @@map("variant_images")
+}
+
+// ── PRODUCT ATTRIBUTE ────────
+model VariantAttribute {
+  id               String @id @default(cuid())
+  businessId       String
+  name             String // Examples: "Size", "Color", "Material", "Flavor"
+  sortOrder        Int    @default(0)
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  business         Business               @relation(fields: [businessId], references: [id])
+  options          VariantAttributeValue []
+  // Prevent duplicate attribute names per business
+  @@unique([businessId, name])
+  @@index([businessId])
+  @@map("product_attributes")
+}
+
+// ── PRODUCT VARIANT OPTION ─────────────────────────
+model VariantAttributeValue {
+  id          String   @id @default(cuid())
+  attributeId String
+  value       String   // "Blue", "Small", "32GB"
+  createdAt   DateTime @default(now())
+
+  attribute   VariantAttribute       @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  // Join tracking for variants
+  variants    ProductVariantOption[]
+
+  @@unique([attributeId, value]) // Prevents creating "Blue" twice under Color
+  @@index([attributeId])
+  @@map("product_attribute_values")
+}
+
+
+// ── NEW PIVOT: LINKS VARIANT TO PREDEFINED VALUES ──
+model ProductVariantOption {
+  variantId        String
+  attributeValueId String
+
+  variant        ProductVariant        @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  attributeValue VariantAttributeValue @relation(fields: [attributeValueId], references: [id])
+
+  @@id([variantId, attributeValueId])
+  @@map("product_variant_options")
+}
+
 
 // ── DISCOUNT ───────────────────────────────────────
 model Discount {
@@ -270,94 +448,30 @@ model Discount {
   deletedAt DateTime?
 
   business Business  @relation(fields: [businessId], references: [id])
-  products Product[]
   sales    Sale[]
 
   @@index([businessId])
   @@map("discounts")
 }
 
-// ── PRODUCT ────────────────────────────────────────
-model Product {
-  id          String  @id @default(cuid())
-  imageUrl    String?
-  fileKey     String? //For deleting/replacing via UploadThing
-  sku         String? @unique
-  name        String
-  description String? @db.Text
 
-  price     Decimal @db.Decimal(10, 2)
-  costPrice Decimal @db.Decimal(10, 2)
-
-  stock         Int       @default(0)
-  lowStockAlert Int       @default(5)
-  isActive      Boolean   @default(true)
-  isDeleted     Boolean   @default(false)
-  deletedAt     DateTime?
-
-  businessId String
-  categoryId String?
-  brandId    String? // Link to the Brand table
-  discountId String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  business  Business   @relation(fields: [businessId], references: [id])
-  category  Category?  @relation(fields: [categoryId], references: [id])
-  brand     Brand?     @relation(fields: [brandId], references: [id])
-  discount  Discount?  @relation(fields: [discountId], references: [id])
-  saleItems SaleItem[]
-  stockLogs StockLog[]
-
-  @@index([businessId, name])
-  @@index([businessId, categoryId])
-  @@index([businessId, brandId]) // Index for faster brand-based reporting
-  @@index([businessId])
-  @@index([sku])
-  @@map("products")
-}
-
-// ── BRAND ──────────────────────────────────────────
-model Brand {
-  id          String    @id @default(cuid())
-  name        String
-  description String?   @db.Text
-  isActive    Boolean   @default(true)
-  isDeleted   Boolean   @default(false)
-  deletedAt   DateTime?
-
-  imageUrl String?
-  fileKey  String?
-
-  businessId String
-  business   Business  @relation(fields: [businessId], references: [id])
-  products   Product[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([businessId])
-  @@map("brands")
-}
 
 // ── STOCK LOG ──────────────────────────────────────
 model StockLog {
-  id         String   @id @default(cuid())
-  productId  String
-  employeeId String
-  businessId String
-  change     Int
-  reason     String?
-  createdAt  DateTime @default(now())
+  id               String   @id @default(cuid())
+  productVariantId String
+  employeeId       String
+  businessId       String
+  change           Int
+  reason           String?
+  createdAt        DateTime @default(now())
 
-  product  Product  @relation(fields: [productId], references: [id])
-  employee Employee @relation(fields: [employeeId], references: [id])
+  variant  ProductVariant @relation(fields: [productVariantId], references: [id])
+  employee Employee       @relation(fields: [employeeId], references: [id])
 
-  @@index([productId, createdAt]) // See stock history for one item
+  @@index([productVariantId, createdAt])
   @@index([businessId, employeeId])
-  @@index([businessId])
+  @@index([businessId, createdAt]) // (CRITICAL for auditing whole business history)
   @@map("stock_logs")
 }
 
@@ -425,15 +539,17 @@ model Sale {
   employeeId     String
   customerId     String?
   discountId     String?
+  cashSessionId  String?
   createdAt      DateTime    @default(now())
 
-  business Business   @relation(fields: [businessId], references: [id])
-  shop     Shop?      @relation(fields: [shopId], references: [id])
-  employee Employee   @relation("EmployeeSales", fields: [employeeId], references: [id])
-  customer Customer?  @relation(fields: [customerId], references: [id])
-  discount Discount?  @relation(fields: [discountId], references: [id])
-  items    SaleItem[]
-  invoice  Invoice?
+  business    Business     @relation(fields: [businessId], references: [id])
+  shop        Shop?        @relation(fields: [shopId], references: [id])
+  employee    Employee     @relation("EmployeeSales", fields: [employeeId], references: [id])
+  customer    Customer?    @relation(fields: [customerId], references: [id])
+  discount    Discount?    @relation(fields: [discountId], references: [id])
+  cashSession CashSession? @relation(fields: [cashSessionId], references: [id])
+  items       SaleItem[]
+  invoice     Invoice?
 
   @@index([businessId, createdAt])
   @@index([businessId, shopId])
@@ -445,26 +561,58 @@ model Sale {
 
 // ── SALE ITEM ──────────────────────────────────────
 model SaleItem {
-  id         String  @id @default(cuid())
-  saleId     String
-  productId  String
-  businessId String
-  quantity   Int
-  unitPrice  Decimal @db.Decimal(10, 2)
-  costPrice  Decimal @db.Decimal(10, 2) // Capture cost at the exact moment of sale
-  subtotal   Decimal @db.Decimal(10, 2)
-
-  sale    Sale    @relation(fields: [saleId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
+  id               String  @id @default(cuid())
+  saleId           String
+  productVariantId String
+  businessId       String
+  quantity         Int
+  unitPrice        Decimal @db.Decimal(10, 2)
+  costPrice        Decimal @db.Decimal(10, 2) // Capture cost at the exact moment of sale
+  subtotal         Decimal @db.Decimal(10, 2)
+  sale            Sale           @relation(fields: [saleId], references: [id])
+  variant         ProductVariant @relation(fields: [productVariantId], references: [id])
+  business        Business       @relation(fields: [businessId], references: [id])
 
   @@index([businessId])
   @@map("sale_items")
+}
+
+model CashSession {
+  id         String  @id @default(cuid())
+  businessId String
+  shopId     String
+  openedById String // Employee who opened the register
+  closedById String? // Employee who closed and counted the register
+
+  status   SessionStatus @default(OPEN)
+  openedAt DateTime      @default(now())
+  closedAt DateTime?
+
+  // Cash accountability fields
+  startFloat   Decimal  @db.Decimal(10, 2)
+  endFloat     Decimal? @db.Decimal(10, 2)
+  expectedCash Decimal? @db.Decimal(10, 2) // Calculated: startFloat + cashSales
+  actualCash   Decimal? @db.Decimal(10, 2) // Physical cash counted by employee
+  notes        String?  @db.Text
+
+  // Relations
+  business Business  @relation(fields: [businessId], references: [id])
+  shop     Shop      @relation(fields: [shopId], references: [id])
+  openedBy Employee  @relation("OpenedSessions", fields: [openedById], references: [id])
+  closedBy Employee? @relation("ClosedSessions", fields: [closedById], references: [id])
+
+  sales Sale[] // Connects transactions directly to this cash shift
+
+  @@index([businessId])
+  @@index([shopId])
+  @@map("cash_sessions")
 }
 
 // ── INVOICE ────────────────────────────────────────
 model Invoice {
   id         String   @id @default(cuid())
   invoiceNo  String
+  idSequence Int      @default(1)
   businessId String
   issuedAt   DateTime @default(now())
   saleId     String   @unique
@@ -533,4 +681,9 @@ enum RoleType {
   SYSTEM
   CUSTOM
   TEMPORARY
+}
+
+enum SessionStatus {
+  OPEN
+  CLOSED
 }

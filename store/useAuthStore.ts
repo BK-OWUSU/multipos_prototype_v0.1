@@ -1,7 +1,7 @@
 import {create} from "zustand"
 import apiClient from "@/lib/api-client"
-import { LoginResponse, OTPResponse, SignUpResponse, User } from "@/types/auth"
-import { LoginSchema, OTPFormSchema, PasswordSchema, SignUpFormSchema } from "@/schema/auth.schema";
+import { LoginResponse, OTPResponse, SignUpResponse, User } from "@/types/auth/auth"
+import { LoginSchema, OTPFormSchema, PasswordSchema, SignUpFormSchema } from "@/types/schema/auth.schema";
 import { AxiosError } from "axios";
 import { toast } from "sonner";
 

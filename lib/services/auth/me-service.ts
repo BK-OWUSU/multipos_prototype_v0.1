@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/dbHelper";
 import { mapUserToResponse } from "@/lib/mappers";
-import { UserWithRelations } from "@/types/auth";
+import { UserWithRelations } from "@/types/auth/auth";
 
 export async function getCurrentUser(userId: string, businessId: string) {
     try {

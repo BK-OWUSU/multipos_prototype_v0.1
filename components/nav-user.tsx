@@ -87,24 +87,12 @@ export function NavUser({ user,}:{user: {name: string, email: string, avatar: st
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <AlertWithDialogue
-                              button = {
-                                <DropdownMenuItem
-                                    className="text-destructive"
-                                    onSelect={(e) => e.preventDefault()}
-                                >
-                                  <LogOutIcon/>
-                                    Log out
-                                </DropdownMenuItem>
-                              }
-                              buttonText="Logout"
-                              customVariant="primary"
-                              confirmText="Yes"
-                              cancelText="Cancel"
-                              title="Delete Staff"
-                              message={`Are you sure you want to logout?`}
-                              confirmFunction={handleLogout}
-                            />
+            <DropdownMenuItem
+              onClick={handleLogout}
+            >
+               <LogOutIcon/>
+                Log out
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

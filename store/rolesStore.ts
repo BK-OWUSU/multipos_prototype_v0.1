@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import apiClient from "@/lib/api-client";
 import { toast } from "sonner";
-import { AppResponse, Role } from "@/types/auth"; // Using your existing response type
+import { AppResponse, Role } from "@/types/auth/auth"; // Using your existing response type
 import { AxiosError } from "axios";
 
 

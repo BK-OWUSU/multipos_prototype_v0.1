@@ -18,7 +18,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const router = useRouter();
   const hasToasted = useRef(false);
 
-  console.log(user)
 
   //Rendering User Session Details
   useEffect(()=> {
@@ -60,7 +59,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
       hasToasted.current = true;
     
-  },[loading,hasToasted, user])
+  },[loading, user])
 
   
   const slug = pathname.split("/")[1];
@@ -122,7 +121,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
      <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex bg-gray-200 p-2 h-16 shrink-0 items-center gap-2 transition-[width,height] justify-between ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+        <header className="flex bg-transparent border-b p-2 h-16 shrink-0 items-center gap-2 transition-[width,height] justify-between ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator
@@ -141,7 +140,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-           {/* Top left NavBar Section */}
+           {/* Top Right NavBar Section */}
            <div className="flex items-center gap-6">
             <NavbarNotifications />
             <NavbarUser />
@@ -149,7 +148,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         </header>
          <main className="flex flex-1 flex-col gap-4 p-4">
                {children}
-          </main>
+        </main>
       </SidebarInset>
     </SidebarProvider>
   );

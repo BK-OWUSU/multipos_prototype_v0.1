@@ -6,7 +6,7 @@ import { Upload, Download, FileSpreadsheet, AlertCircle, CheckCircle, X } from '
 import CustomButton from '@/components/reusables/CustomButton';
 import { toast } from 'sonner';
 import { parseCSV, downloadTemplate } from '@/lib/bulk-import/csv-parser';
-import { BulkImportConfig, CSVParseResult, BulkImportResult } from '@/schema/bulkupload.schema';
+import { BulkImportConfig, CSVParseResult, BulkImportResult } from '@/types/schema/bulkupload.schema';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { z } from 'zod';

@@ -8,7 +8,7 @@ import {
 } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import Image from "next/image"
-import { Brand } from "@/types/inventory" // Ensure this type matches your Brand schema
+import { Brand } from "@/types/schema/inventory" // Ensure this type matches your Brand schema
 import { 
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, 
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger 
@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import { useBrandStore } from "@/store/brandStore" // Pointing to your brand store
 import { toast } from "sonner"
 import AlertWithDialogue from "@/components/reusables/AlertWithDialogue"
+import { TablePinActions } from "../reusables/table/TablePinActions"
 
 // Brand Action Cell
 const BrandActionCell = ({ brand }: { brand: Brand }) => {
@@ -141,7 +142,15 @@ export const brandsColumnDef: ColumnDef<Brand>[] = [
   {
     accessorKey: "Actions",
     id: "actions",
+    header: () => (
+        <div className="flex items-center justify-end w-full gap-2 px-1">
+          <TablePinActions.HeaderIcon />
+          <span className="font-semibold text-white">Actions</span>
+        </div>
+      ),
+
     cell: ({ row }) => <BrandActionCell brand={row.original} />,
+    enableHiding: false, 
     enableSorting: false,
     enableResizing: false,
     enableColumnFilter: false

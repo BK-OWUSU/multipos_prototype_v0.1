@@ -2,11 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auths";
-import { AppResponse } from "@/types/auth";
-import { BulkImportResult } from '@/schema/bulkupload.schema';
+import { AppResponse } from "@/types/auth/auth";
+import { BulkImportResult } from '@/types/schema/bulkupload.schema';
 import { CustomerImportPayload } from "@/lib/configs/customer-config";
 import { createBulkCustomersService, createCustomer, softDeleteCustomers } from "@/lib/services/business/customer-service";
-import { CreateCustomerSchema } from "@/schema/auth.schema";
+import { CreateCustomerSchema } from "@/types/schema/auth.schema";
 
 
 

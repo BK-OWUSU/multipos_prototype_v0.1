@@ -1,6 +1,6 @@
 // lib/bulk-import/configs/employee-config.ts
 import { z } from 'zod';
-import { BulkImportConfig } from '@/schema/bulkupload.schema';
+import { BulkImportConfig } from '@/types/schema/bulkupload.schema';
 import { createBulkEmployees } from '@/lib/actions/business/employeesActions';
 
 export const employeeCSVSchema = z.object({

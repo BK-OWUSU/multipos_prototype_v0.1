@@ -1,8 +1,8 @@
 import {create} from "zustand"
 import apiClient from "@/lib/api-client"
 import { AxiosError } from "axios";
-import { AppResponse, Employee } from "@/types/auth";
-import { CreateEmployeeSchema } from "@/schema/auth.schema";
+import { AppResponse, Employee } from "@/types/auth/auth";
+import { CreateEmployeeSchema } from "@/types/schema/auth.schema";
 import { toast } from "sonner";
 
 type AuthStore = {

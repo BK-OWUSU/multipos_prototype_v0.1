@@ -226,5 +226,6 @@ export type AppResponse = {
     message?: string;
     error?: string;
     status?: number;
+    data?: unknown
 }
 

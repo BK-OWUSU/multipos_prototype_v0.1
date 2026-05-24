@@ -3,7 +3,7 @@ import { verifyOTP } from "@/lib/otp"
 import { generatePOSToken, POS_COOKIE_NAME, VERIFY_COOKIE_NAME, verifyEmailVerificationToken } from "@/lib/auths"
 import { NextRequest, NextResponse } from "next/server"
 import { cookies } from "next/headers"
-import { JwtPayload } from "@/types/auth"
+import { JwtPayload } from "@/types/auth/auth"
 
 export async function verifyOTPService(request: NextRequest) {
   const cookieStore = await cookies();

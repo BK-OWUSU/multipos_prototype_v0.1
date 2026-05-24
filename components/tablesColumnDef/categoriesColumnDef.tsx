@@ -8,7 +8,7 @@ import {
 } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import Image from "next/image"
-import { Category } from "@/types/inventory"
+import { Category } from "@/types/schema/inventory"
 import { 
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, 
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger 
@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import { useCategoryStore } from "@/store/categoryStore"
 import { toast } from "sonner"
 import AlertWithDialogue from "@/components/reusables/AlertWithDialogue"
+import { TablePinActions } from "../reusables/table/TablePinActions"
 
 //Category Action Cell
 const CategoryActionCell = ({ category }: { category: Category }) => {
@@ -139,7 +140,15 @@ export const categoriesColumnDef: ColumnDef<Category>[] = [
   {
     accessorKey: "Actions",
     id: "actions",
+    header: () => (
+        <div className="flex items-center justify-end w-full gap-2 px-1">
+          <TablePinActions.HeaderIcon />
+          <span className="font-semibold text-white">Actions</span>
+        </div>
+      ),
+
     cell: ({ row }) => <CategoryActionCell category={row.original} />,
+    enableHiding: false, 
     enableSorting: false,
     enableResizing: false,
     enableColumnFilter: false

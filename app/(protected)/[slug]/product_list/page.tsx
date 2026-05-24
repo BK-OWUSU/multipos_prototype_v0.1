@@ -2,144 +2,132 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { GenericModal } from "@/components/reusables/GenericModal";
-import AddProductForm from "./AddProductForm";
 import CustomButton from "@/components/reusables/CustomButton";
-import { Plus, Package, CheckCircle2, AlertCircle, XCircle, BadgeCent } from "lucide-react";
-import { useCategoryStore } from "@/store/categoryStore";
-import { useBrandStore } from "@/store/brandStore";
+import { Package, CheckCircle2, AlertCircle, XCircle, BadgeCent } from "lucide-react";
 import { useProductStore } from "@/store/productsStore";
 import { productsColumnDef } from "@/components/tablesColumnDef/productsColumnDef";
 import TableMain from "@/components/reusables/table/TableMain";
-import { deleteProductsAction, toggleProductsStatusAction } from "@/lib/actions/business/productsActions";
-import {Upload} from "lucide-react";
+import { Upload } from "lucide-react";
 import GenericBulkImport from "@/components/reusables/GenericBulkImport";
 import { productImportConfig } from "@/lib/configs/product-config";
 import { useAuthStore } from "@/store/useAuthStore";
+import { toggleBulkProductsStatusAction } from "@/lib/actions/business/productsActions";
+import { Product } from "@/types/schema/inventory";
+import ProductVariantsDrawer from "./ProductVariantsDrawer";
 
 export default function ProductList() {
-  const { fetchCategories, categories } = useCategoryStore();
-  const { fetchBrands } = useBrandStore();
   const user = useAuthStore((state) => state.user);
   const { products, fetchProducts, loading } = useProductStore();
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
-  const [width, setWidth] = useState("sm:max-w-137.5")
+  const [width, setWidth] = useState("sm:max-w-137.5");
+  const [selectedProductForVariants, setSelectedProductForVariants] = useState<Product | null>(null);
+  const [isVariantDrawerOpen, setIsVariantDrawerOpen] = useState(false);
 
   useEffect(() => {
-    fetchCategories();
-    fetchBrands();
     fetchProducts();
-  }, [fetchCategories, fetchBrands, fetchProducts]);
+  }, [fetchProducts]);
 
-  // Logic for the Stat Cards
- const stats = useMemo(() => {
-  const initialStats = { 
-    total: 0, 
-    active: 0, 
-    lowStock: 0, 
-    outOfStock: 0, 
-    totalValue: 0 
-  };
-  if (!products) return { ...initialStats, formattedTotalValue: "..." };
 
-  const result = products.reduce((acc, p) => {
-    acc.total++;
-    if (p.isActive) acc.active++;
-    
-    if (p.stock === 0) {
-      acc.outOfStock++;
-    } else if (p.stock <= (p.lowStockAlert || 0)) {
-      acc.lowStock++;
-    }
 
-    acc.totalValue += Number(p.price || 0) * (p.stock || 0);
-    return acc;
-  }, { ...initialStats });
+  // Updated Logic for the Stat Cards to handle relational variant fields
+  const stats = useMemo(() => {
+    const initialStats = { 
+      total: 0, 
+      active: 0, 
+      lowStock: 0, 
+      outOfStock: 0, 
+      totalValue: 0 
+    };
+    if (!products) return { ...initialStats, formattedTotalValue: "..." };
 
-  // Accessing the business data safely
-  const business = user?.business;
-  const symbol = business?.currencySymbol || "GH₵"; 
-  const locale = business?.locale || "en-GH";
+    const result = products.reduce((acc, p) => {
+      acc.total++;
+      if (p.isActive) acc.active++;
+      
+      // Safety guard check: if backend didn't include or map variants array, treat as 0
+      const variants = p.variants || [];
+      
+      // Calculate total aggregated stock across variations for this product line
+      const productTotalStock = variants.reduce((sum, v) => sum + (v.stock || 0), 0);
 
-  return {
-    ...result,
-    formattedTotalValue: `${symbol} ${result.totalValue.toLocaleString(locale, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`
-  };
-}, [products, user?.business]); // Depend on the whole business object for better tracking
+      // Evaluate stock metrics safely using variant thresholds
+      if (productTotalStock === 0) {
+        acc.outOfStock++;
+      } else {
+        // Check if ANY variation under this product line has tripped its low-stock alert threshold
+        const hasLowStockVariant = variants.some(v => (v.stock || 0) <= (v.lowStockAlert || 0));
+        if (hasLowStockVariant) {
+          acc.lowStock++;
+        }
+      }
+
+      // Add financial valuation metrics by mapping variants cost metrics
+      variants.forEach((v) => {
+        acc.totalValue += Number(v.price || 0) * (v.stock || 0);
+      });
+
+      return acc;
+    }, { ...initialStats });
+
+    // Accessing the business data safely
+    const business = user?.business;
+    const symbol = business?.currencySymbol || "GH₵"; 
+    const locale = business?.locale || "en-GH";
+
+    return {
+      ...result,
+      formattedTotalValue: `${symbol} ${result.totalValue.toLocaleString(locale, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`
+    };
+  }, [products, user?.business]);
 
   return (
     <div className="p-6 space-y-6 bg-gray-50/50 min-h-screen">
-      {/* 1. Refined Header */}
+      {/* 1. Header */}
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Products</h1>
-          <p className="text-sm text-gray-500">Manager you products</p>
+          <p className="text-sm text-gray-500">Manage your products</p>
         </div>
-        <div className="flex flex-wrap gap-2 md:gap-4 items-center">
+        <div className="flex flex-wrap gap-2 md:gap-4 items-center">          
+          {/* Bulk Import Modal */}
           <GenericModal
-            header="Add New Product"
-            description="Create a new item in your inventory. Provide details to keep your stock organized."
-            isOpen={isModalOpen}
-            onOpenChange={setIsModalOpen}
+            width={width}
+            header="Bulk Product Import"
+            description="Import multiple products from a CSV file"
+            isOpen={isBulkImportOpen}
+            onOpenChange={() => {
+              setIsBulkImportOpen(prev => !prev);
+              setWidth("sm:max-w-137.5");
+            }}
             triggerBtn={
               <CustomButton
-                text="Add Product"
+                text="Bulk Import"
                 customVariant="primary"
-                icon={<Plus className="h-4 w-4" />}
+                icon={<Upload className="mr-2 h-4 w-4" />}
               />
             }
           >
-            <AddProductForm 
-              categories={categories || []} 
-              brands={[]}
-              onSuccess={() => {
-                setIsModalOpen(false);
+            <GenericBulkImport
+              config={productImportConfig}
+              onSuccess={(result) => {
+                setIsBulkImportOpen(false);
                 fetchProducts();
-              }} 
-              onCancel={() => setIsModalOpen(false)}
-            />
-          </GenericModal>
-          {/* Bulk Import Modal */}
-            <GenericModal
-              width={width}
-              header="Bulk Employee Import"
-              description="Import multiple employees from a CSV file"
-              isOpen={isBulkImportOpen}
-              onOpenChange={()=> {
-                setIsBulkImportOpen(prev => !prev);
-                setWidth("sm:max-w-137.5"); // Reset width when modal is closed
+                setWidth("sm:max-w-137.5");
               }}
-              triggerBtn={
-                <CustomButton
-                  // className="border-green-700 text-green-700 font-bold"
-                  text="Bulk Import"
-                  // variant="outline"
-                  customVariant="primary"
-                  icon={<Upload className="mr-2 h-4 w-4" />}
-                />
-              }
-            >
-              <GenericBulkImport
-                config={productImportConfig}
-                // additionalPayload={{ businessId: user.business.id }}
-                onSuccess={(result) => {
-                  setIsBulkImportOpen(false);
-                  fetchProducts();
-                  setWidth("sm:max-w-137.5");
-                }}
-                onCancel={() => {
-                  setIsBulkImportOpen(false);
-                  setWidth("sm:max-w-137.5");
-                }}
-                onImportParsedSuccess={()=> {
-                  setWidth("sm:max-w-max");                  
-                }}
-              />
-            </GenericModal>          
-        </div>  
+              onCancel={() => {
+                setIsBulkImportOpen(false);
+                setWidth("sm:max-w-137.5");
+              }}
+              onImportParsedSuccess={() => {
+                setWidth("sm:max-w-max");                  
+              }}
+            />
+          </GenericModal>          
+        </div>
+          
       </header>
 
       {/* 2. Stat Cards Section */}
@@ -161,17 +149,30 @@ export default function ProductList() {
             searchKey="name"
             placeholder="Search by name, SKU or barcode..."
             loading={loading}
-            handleMultipleDelete={deleteProductsAction}
-            handleMultipleToggleStatus={toggleProductsStatusAction}
+            handleMultipleDelete={toggleBulkProductsStatusAction} // Passed through class method cleanly now
+            handleMultipleToggleStatus={toggleBulkProductsStatusAction}
             onActionSuccess={() => fetchProducts()}
+            meta={{
+              onViewVariants: (product: Product) => {
+                setSelectedProductForVariants(product);
+                setIsVariantDrawerOpen(true);
+              }
+            }}
           />
         </div>
       </div>
+      <ProductVariantsDrawer
+        product={selectedProductForVariants}
+        isOpen={isVariantDrawerOpen}
+        onClose={() => {
+          setIsVariantDrawerOpen(false);
+          setSelectedProductForVariants(null);
+        }}
+      />
     </div>
   );
 }
 
-// Sub-component for the stats
 function StatCard({ title, value, icon, subtitle }: { title: string, value: string | number, icon: React.ReactNode, subtitle: string }) {
   return (
     <div className="bg-white p-4 rounded-xl border shadow-sm flex items-start justify-between">
@@ -186,3 +187,4 @@ function StatCard({ title, value, icon, subtitle }: { title: string, value: stri
     </div>
   );
 }
+

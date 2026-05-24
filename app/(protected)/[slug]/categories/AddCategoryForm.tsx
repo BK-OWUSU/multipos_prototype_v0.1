@@ -2,7 +2,7 @@
 
 import { useForm, FormProvider, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { categorySchema, CategoryFormValues } from "@/schema/inventory.schema";
+import { categorySchema, CategoryFormValues } from "@/types/schema/inventory.schema";
 import { FormInput } from "@/components/reusables/FormInput";
 import { FieldLabel } from "@/components/ui/field";
 import { Layers, Save } from "lucide-react";
@@ -12,9 +12,9 @@ import { ImageSection } from "@/components/reusables/ImageSection";
 import { useEffect, useState, useRef } from "react";
 import CustomButton from "@/components/reusables/CustomButton";
 import { useCategoryStore } from "@/store/categoryStore";
-import { AppResponse } from "@/types/auth";
+import { AppResponse } from "@/types/auth/auth";
 import { deleteUTFile } from "@/lib/actions/uploadthing";
-import { Category } from "@/types/inventory"; // Make sure you have this type
+import { Category } from "@/types/schema/inventory"; // Make sure you have this type
 
 interface CategoryFormProps {
   initialData?: Category;

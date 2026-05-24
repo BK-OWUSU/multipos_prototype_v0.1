@@ -1,7 +1,7 @@
 import { Prisma, RoleName, RoleType } from "@/lib/generated/prisma/client";
 
 
-export async function seedRoles(businessId:string, transaction: Prisma.TransactionClient) {
+export async function seedRoles(userId:string, businessId:string, transaction: Prisma.TransactionClient) {
     const rolesData = [
         { name: RoleName.MANAGER, permissions: ["*"], access: ["pos", "sales_terminal","transactions","invoices"], isSystem:false,type: RoleType.SYSTEM },
         { name: RoleName.ADMIN, permissions: ["*"], access: ["pos", "sales_terminal","transactions","invoices"], isSystem:false,type: RoleType.SYSTEM },
@@ -20,7 +20,9 @@ export async function seedRoles(businessId:string, transaction: Prisma.Transacti
                 access: roleData.access,
                 businessId: businessId,
                 isSystem: roleData.isSystem,
-                type: roleData.type
+                type: roleData.type,
+                createdById: userId,
+                updatedById: userId
             }
         });
     }

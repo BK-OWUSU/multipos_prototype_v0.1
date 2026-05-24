@@ -1,7 +1,7 @@
-import { OTPResponse } from "@/types/auth";
+import { OTPResponse } from "@/types/auth/auth";
 import { prisma } from "./dbHelper";
 import bcrypt from "bcrypt"
-import { Prisma } from "./generated/prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import crypto from "crypto"
 
 // Generate OTP

@@ -3,13 +3,13 @@
 
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { quickCustomerSchema,QuickCustomerSchema } from "@/schema/auth.schema";
+import { quickCustomerSchema,QuickCustomerSchema } from "@/types/schema/auth.schema";
 import { FormInput } from "@/components/reusables/FormInput";
 import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import CustomButton from "@/components/reusables/CustomButton";
 // import { useCustomerStore } from "@/store/customerStore";
-import { AppResponse } from "@/types/auth";
+import { AppResponse } from "@/types/auth/auth";
 
 interface QuickCustomerFormProps {
   onSuccess?: (customerId: string) => void;

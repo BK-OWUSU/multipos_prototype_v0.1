@@ -1,9 +1,9 @@
 import { create } from "zustand";
 import apiClient from "@/lib/api-client";
 import { AxiosError } from "axios";
-import { AppResponse } from "@/types/auth";
-import { Category } from "@/types/inventory";
-import { CategoryFormValues } from "@/schema/inventory.schema";
+import { AppResponse } from "@/types/auth/auth";
+import { Category } from "@/types/schema/inventory";
+import { CategoryFormValues } from "@/types/schema/inventory.schema";
 import { toast } from "sonner";
 
 type CategoryStore = {

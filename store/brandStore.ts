@@ -1,9 +1,9 @@
 import {create} from "zustand"
 import apiClient from "@/lib/api-client"
 import { AxiosError } from "axios";
-import { AppResponse } from "@/types/auth";
-import { Brand } from "@/types/inventory";
-import { BrandFormValues } from "@/schema/inventory.schema";
+import { AppResponse } from "@/types/auth/auth";
+import { Brand } from "@/types/schema/inventory";
+import { BrandFormValues } from "@/types/schema/inventory.schema";
 import { toast } from "sonner";
 
 type BrandStore = {

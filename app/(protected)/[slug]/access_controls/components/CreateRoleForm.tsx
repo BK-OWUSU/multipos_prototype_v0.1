@@ -19,7 +19,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
-import { CreateRoleFormValues, createRoleSchema } from "@/schema/auth.schema";
+import { CreateRoleFormValues, createRoleSchema } from "@/types/schema/auth.schema";
 import { getAccessOnly } from "@/lib/nav-data";
 import { cn } from "@/lib/utils";
 

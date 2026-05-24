@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { BulkImportConfig } from '@/schema/bulkupload.schema';
+import { BulkImportConfig } from '@/types/schema/bulkupload.schema';
 import { createBulkCustomer } from '../actions/business/customer-actions';
 // import { createBulkCustomers } from '@/lib/actions/business/customerActions';
 

@@ -1,7 +1,7 @@
 // lib/bulk-import/csv-parser.ts
 import Papa from 'papaparse';
 import { z, ZodError } from 'zod';
-import { CSVParseResult, CSVParseError, BulkImportConfig } from '@/schema/bulkupload.schema';
+import { CSVParseResult, CSVParseError, BulkImportConfig } from '@/types/schema/bulkupload.schema';
 
 interface PapaParseError {
   type: string;

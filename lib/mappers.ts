@@ -1,4 +1,4 @@
-import { User, UserWithRelations } from "@/types/auth";
+import { User, UserWithRelations } from "@/types/auth/auth";
 
 export function mapUserToResponse(user: UserWithRelations): User {
   const emp = user.employee;

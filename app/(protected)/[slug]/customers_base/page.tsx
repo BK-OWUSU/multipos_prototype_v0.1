@@ -21,7 +21,7 @@ import { Card, CardHeader, CardDescription, CardContent } from "@/components/ui/
 import CustomButton from "@/components/reusables/CustomButton";
 import { useCustomerStore } from "@/store/customerStore";
 import { customerColumns } from "@/components/tablesColumnDef/customerColumns";
-import { AppResponse } from "@/types/auth";
+import { AppResponse } from "@/types/auth/auth";
 
 export default function CustomerList() {
   const router = useRouter();

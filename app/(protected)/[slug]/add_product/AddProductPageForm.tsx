@@ -1,13 +1,12 @@
+// app/[slug]/add_product/AddProductPageForm.tsx
 "use client";
 
-import { useForm, FormProvider, Controller, useWatch } from "react-hook-form";
+import { useForm, FormProvider, Controller, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { productSchema, ProductFormValues } from "@/schema/inventory.schema";
+import { productSchema, ProductFormValues } from "@/types/schema/inventory.schema";
 import { FormInput } from "@/components/reusables/FormInput";
-import { Field, FieldLabel } from "@/components/ui/field";
-import { Textarea } from "@/components/ui/textarea"
-import { Package, Save, X, Plus, Info, LayoutGrid, DollarSign, Calculator } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Package, Save, X, Plus, Info, Trash2, Wand2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { ImageSection } from "@/components/reusables/ImageSection";
@@ -15,8 +14,19 @@ import { useEffect, useState } from "react";
 import CustomButton from "@/components/reusables/CustomButton";
 import { useProductStore } from "@/store/productsStore";
 import { Badge } from "@/components/ui/badge";
-import { GenericModal } from "@/components/reusables/GenericModal";
-import AddCategoryForm from "../categories/AddCategoryForm";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import Image from "next/image";
+import { deleteUTFile } from "@/lib/actions/uploadthing";
+import { UploadButton } from "@/utils/uploadthing";
 
 interface AddProductPageFormProps {
   categories?: { id: string; name: string }[];
@@ -25,33 +35,96 @@ interface AddProductPageFormProps {
   onCancel?: () => void;
 }
 
-export default function AddProductPageForm({ categories = [], brands = [], onSuccess, onCancel }: AddProductPageFormProps) {
+export default function AddProductPageForm({ 
+  categories = [], 
+  brands = [], 
+  onSuccess, 
+  onCancel 
+}: AddProductPageFormProps) {
   const { createProduct } = useProductStore();
   const [uploadedFileKey, setUploadedFileKey] = useState<string | null>(null);
   const [isSuccessfullySubmitted, setIsSuccessfullySubmitted] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [isBrandModalOpen, setIsBrandModalOpen] = useState(false);
+  
 
+  //FIXED: Default values now precisely match our root-level attribute schema
   const methods = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: "",
       description: "",
-      sku: "",
-      price: 0,
-      costPrice: 0,
-      stock: 0,
-      lowStockAlert: 5,
+      baseSku: "",
       categoryId: "none",
       brandId: "none",
-      imageUrl: "",
+      hasVariant: false,
       isActive: true,
+      attributes: [], // Managed via append button
+      variants: [{
+        sku: "",
+        barcode: "", 
+        costPrice: 0,
+        sortOrder: 0, 
+        price: 0, 
+        stock: 0, 
+        lowStockAlert: 5,
+        length: null, 
+        width: null, 
+        height: null, 
+        weight: null, 
+        isActive: true,
+        imageUrl: "",
+        fileKey: "",
+        options: []
+      }],
     },
   });
+  
+  const { formState: { isSubmitting }, control, handleSubmit, setValue, reset, watch } = methods;
 
-  const { formState: { isSubmitting }, control, handleSubmit, setValue, reset } = methods;
+  const { fields: attributeFields, append: appendAttribute, remove: removeAttribute } = useFieldArray<ProductFormValues>({
+    control,
+    name: "attributes",
+  });
 
-  // Watch values for the real-time Summary Card
-  const watchedValues = useWatch({ control });
+  const { fields: variantFields, append: appendVariant, remove: removeVariant } = useFieldArray<ProductFormValues>({
+    control,
+    name: "variants",
+  });
+
+  const watchedValues = watch();
+  const attributes = watch("attributes") || [];
+  const variants = watch("variants") || [];
+  const hasVariant = watch("hasVariant");
+
+  // Temporary local state array to capture comma-separated token values per row index
+  const [predefinedState, setPredefinedState] = useState<Record<number, string[]>>({});
+
+  // Auto-manage attributes and variants based on configuration toggle
+useEffect(() => {
+  if (!hasVariant) {
+    // If it's a simple product, clear attributes and force exactly one default variant structure
+    setValue("attributes", []);
+    setPredefinedState({});
+    setValue("variants", [{
+      sku: watch("baseSku") || "",
+      barcode: "", 
+      costPrice: 0, 
+      price: 0, 
+      stock: 0,
+      sortOrder: 0,
+      lowStockAlert: 5,
+      length: null, 
+      width: null, 
+      height: null, 
+      weight: null, 
+      isActive: true,
+      imageUrl: "",
+      fileKey: "",
+      options: []
+    }]);
+  }
+}, [hasVariant, setValue, watch]);
 
   useEffect(() => {
     return () => {
@@ -68,11 +141,14 @@ export default function AddProductPageForm({ categories = [], brands = [], onSuc
 
   const onSubmit = async (data: ProductFormValues) => {
     try {
+      console.log(data)
       setIsSuccessfullySubmitted(true);
       const response = await createProduct(data);
+
       if (response.success) {
         toast.success(response.message || "Product added successfully!");
         setUploadedFileKey(null);
+        setPredefinedState({});
         reset();
         if (onSuccess) onSuccess();
       } else {
@@ -85,242 +161,879 @@ export default function AddProductPageForm({ categories = [], brands = [], onSuc
     }
   };
 
+  // Generates variations combining local state map references safely
+  const generateVariants = () => {
+  const currentValues = watch() as ProductFormValues;
+  const rawAttributes = currentValues.attributes || [];
+  const baseSku = currentValues.baseSku || "PROD";
+
+  if (rawAttributes.length === 0) {
+    toast.error("Please add at least one attribute rule first.");
+    return;
+  }
+
+  // 1. Map attribute names by tracking the row context index
+  const validAttributes = rawAttributes
+    .map((attr, idx) => ({ name: attr.name?.trim(), originalIndex: idx }))
+    .filter((attr) => Boolean(attr.name));
+
+  if (validAttributes.length === 0) {
+    toast.error("Attribute names cannot be empty.");
+    return;
+  }
+
+  // 2. Build configuration option matrices using your local tags state
+  const groupedValues: Record<string, string[]> = {};
+  const attributeLists: string[][] = [];
+  const uniqueNames: string[] = [];
+
+validAttributes.forEach((attr) => {
+  const attrName = attr.name!;
+  
+  // Extract values directly from React Hook Form state 
+  const rawValuesString = currentValues.attributes?.[attr.originalIndex]?.matrixSplitValues || "";
+  const localTags = rawValuesString ? rawValuesString.split(",").map(v => v.trim()) : [];
+  
+  groupedValues[attrName] = Array.from(new Set(localTags));
+  
+  if (groupedValues[attrName].length === 0) {
+    groupedValues[attrName] = ["Standard"];
+  }
+
+  attributeLists.push(groupedValues[attrName]);
+  uniqueNames.push(attrName);
+});
+
+  // 3. Mathematical reduction logic computing Cartesian variants
+  const cartesian = (arrays: string[][]) => {
+    return arrays.reduce<string[][]>(
+      (acc, curr) => acc.flatMap((d) => curr.map((e) => [...d, e])),
+      [[]]
+    );
+  };
+
+  const valueCombinations = cartesian(attributeLists);
+
+  // 4. Map back onto your strict productVariantSchema shape arrays
+  const generatedVariants = valueCombinations.map((combo, variantIdx) => {
+    const options = combo.map((value, idx) => ({
+      attributeName: uniqueNames[idx],
+      attributeValueId: null,
+      value: value,
+    }));
+
+    const skuSuffix = combo.join("-").toUpperCase().replace(/\s+/g, "");
+    
+    return {
+      sku: `${baseSku.toUpperCase()}-${skuSuffix}`,
+      barcode: null,
+      price: 0,
+      costPrice: 0,
+      stock: 0,
+      lowStockAlert: 5,
+      weight: null,
+      length: null,
+      width: null,
+      height: null,
+      isActive: true,
+      sortOrder: variantIdx,
+      options,
+      imageUrl: "",
+      fileKey: "",
+    };
+  });
+
+  // 5. Instantly flash onto your grid view
+  setValue("variants", generatedVariants);
+  toast.success(`Successfully generated ${generatedVariants.length} variants!`);
+};
+
+const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+  if (e.key === ',' || e.key === 'Enter') {
+    e.preventDefault();
+    const val = e.currentTarget.value.trim();
+    if (val) {
+      // Get current tag list for this specific attribute row or default to empty array
+      const currentTags = predefinedState[index] || [];     
+      // Prevent duplicate tags within the same attribute row
+      if (!currentTags.includes(val)) {
+        const updatedTags = [...currentTags, val];
+        setPredefinedState((prev) => ({
+          ...prev,
+          [index]: updatedTags,
+        }));
+        //Sync with React Hook Form state 
+        setValue(`attributes.${index}.matrixSplitValues`, updatedTags.join(","));
+      }   
+      // Clear input bar for the next tag entry
+      e.currentTarget.value = ""; 
+    }
+  }
+};
+
+const removeTag = (rowIndex: number, tagValue: string) => {
+  const updatedTags = (predefinedState[rowIndex] || []).filter((t) => t !== tagValue);
+  // 1. Update local UI state
+  setPredefinedState((prev) => ({
+    ...prev,
+    [rowIndex]: updatedTags,
+  }));
+  // 2. Sync with React Hook Form state 
+  setValue(`attributes.${rowIndex}.matrixSplitValues`, updatedTags.join(","));
+};
+
+// Simple helper fallback used by the "Add Manually" button if needed
+const addVariantManually = () => {
+  appendVariant({
+    sku: watch("baseSku") ? `${watch("baseSku").toUpperCase()}-CUSTOM` : "PROD-CUSTOM",
+    barcode: null,
+    price: 0,
+    costPrice: 0,
+    stock: 0,
+    lowStockAlert: 5,
+    weight: null,
+    length: null,
+    width: null,
+    height: null,
+    isActive: true,
+    sortOrder: variantFields.length,
+    options: [],
+    imageUrl: "",
+    fileKey: "",
+  });
+};
+
   return (
     <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)} className="max-w-[80vw] mx-auto space-y-6 pb-10">
+      <form onSubmit={handleSubmit(onSubmit)} className="max-w-[90vw] mx-auto space-y-6 pb-10">
         
-        {/* --- Top Action Bar --- */}
-        <div className="flex items-center justify-between  top-0 z-10">
+        {/* Header */}
+        <div className="flex items-center justify-between sticky top-0 z-10 bg-white py-4">
           <div>
-            <h1 className="text-xl font-bold text-gray-800">Add Product</h1>
-            <p className="text-xs text-muted-foreground">Add a new product</p>
+            <h1 className="text-2xl font-bold text-gray-900">Add Product</h1>
+            <p className="text-sm text-gray-500">Create a new product with variants and attributes</p>
           </div>
           <div className="flex items-center gap-3">
             <CustomButton 
-             text="Cancel" 
-             type="button" 
-             onClick={()=>{
-                 reset()
-                 if (uploadedFileKey){
-                    fetch("/api/uploadthing/delete", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ fileKey: uploadedFileKey }),
-                        keepalive: true,
-                    }).catch(console.error);
-                 }                 
-             }} 
-             customVariant="secondary" 
-             icon={<X size={16}/>} />
-            <CustomButton text="Save Product" type="submit" customVariant="primary" icon={<Save size={16}/>} isLoading={isSubmitting} />
+              text="Cancel"
+              icon={<X className="h-4 w-4 mr-2" />}
+              type="button" 
+              customVariant="primary-outline"
+              onClick={() => {
+                reset();
+                setPredefinedState({});
+                if (uploadedFileKey) {
+                  deleteUTFile(uploadedFileKey)
+                }
+                if (onCancel) onCancel();
+              }}
+            />
+            <CustomButton
+              text="Save Product"
+              type="submit"
+              customVariant="primary"
+              icon={<Save className="h-4 w-4 mr-2" />}
+              isLoading={isSubmitting}
+            />
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          {/* --- LEFT COLUMN: Forms --- */}
+          {/* LEFT COLUMN */}
           <div className="lg:col-span-2 space-y-6">
             
             {/* 1. Basic Information */}
             <section className="bg-white p-6 rounded-xl border shadow-sm space-y-4">
-              <h2 className="flex items-center gap-2 font-bold text-gray-800 pb-3">
-                <span className="bg-indigo-100 text-indigo-600 h-6 w-6 rounded-full flex items-center justify-center text-xs">1</span>
-                Basic Information
+              <h2 className="flex items-center gap-2 font-semibold text-gray-900">
+                <span className="bg-blue-100 text-blue-700 h-6 w-6 rounded-full flex items-center justify-center text-sm">1</span>
+                Product Details
               </h2>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormInput name="name" label="Product Name *" placeholder="Enter product name" />
-                <FormInput name="sku" label="SKU / Barcode" placeholder="Enter SKU or scan barcode" />
+                <div className="space-y-2">
+                  <FormInput name="name" label="Product Name *" type="text" placeholder="Enter product name"/>
+                </div>
+                <div className="space-y-2">
+                  <FormInput 
+                    type="text"
+                    hintText="Used to generate variant SKUs" 
+                    name="baseSku" 
+                    label="SKU (Prefix) *" 
+                    placeholder="e.g., TEE"
+                  />
+                </div>
               </div>
-              <FormInput textArea name="description" label="Description" placeholder="Enter product description (optional)" />
+              <div className="space-y-2">
+                <FormInput textArea name="description" label="Description" placeholder="Enter product description (optional)" />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <FormInput
+                      label="Category"
+                      name="categoryId"
+                      select
+                      options={categories}
+                      selectDefaultValue="Uncategorized"
+                    />
+                    <CustomButton
+                      className="self-baseline-last py-4"
+                      text="Add" 
+                      type="button" 
+                      customVariant="primary" 
+                      icon={<Plus className="h-4 w-4" />}
+                      size="sm"
+                      onClick={() => setIsCategoryModalOpen(true)}
+                    />     
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <FormInput
+                      label="Brand"
+                      name="brandId"
+                      select
+                      options={brands}
+                      selectDefaultValue="No Brand"
+                    />
+                    <CustomButton
+                      className="self-baseline-last py-4"
+                      text="Add" 
+                      type="button" 
+                      customVariant="primary" 
+                      icon={<Plus className="h-4 w-4" />}
+                      size="sm"
+                      onClick={() => setIsBrandModalOpen(true)}
+                    />
+                  </div>
+                </div>
+              </div>
+              {/* ── HAS-VARIANT SWITCH TOGGLE ── */}
+            <div className="pt-4 border-t flex items-center justify-between">
+              <div className="space-y-0.5">
+                <label htmlFor="hasVariant-toggle" className="text-sm font-medium text-gray-900 cursor-pointer">
+                  Product Has Variants
+                </label>
+                <p className="text-xs text-gray-500">
+                  Enable this if your product comes in multiple sizes, colors, or configurations.
+                </p>
+              </div>
+              <Controller
+                control={control}
+                name="hasVariant"
+                render={({ field }) => (
+                  <Switch 
+                    id="hasVariant-toggle"
+                    checked={field.value} 
+                    onCheckedChange={field.onChange} 
+                  />
+                )}
+              />
+            </div>
             </section>
 
-            {/* 2. Category & Organization */}
-            <section className="bg-white p-6 rounded-xl border shadow-sm space-y-4">
-              <h2 className="flex items-center gap-2 font-bold text-gray-800 pb-3">
-                <span className="bg-indigo-100 text-indigo-600 h-6 w-6 rounded-full flex items-center justify-center text-xs">2</span>
-                Category & Organization
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field>
-                  <FieldLabel>Category *</FieldLabel>
-                  <div className="flex gap-2">
-                    <Controller
-                      control={control}
-                      name="categoryId"
-                      render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value ?? "none"}>
-                          <SelectTrigger className="flex-1"><SelectValue placeholder="Select Category" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">Uncategorized</SelectItem>
-                            {categories.map((cat) => (
-                              <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                    {/* <CustomButton icon={<Plus size={16}/>} customVariant="primary" className="px-3" text="Add New Category"/> */}
-                        <GenericModal
-                        header="Add Category"
-                        description="Create a new category to organize your products."
-                        isOpen={isModalOpen}
-                        onOpenChange={setIsModalOpen}
-                        
-                        triggerBtn={
-                            <CustomButton
-                                customVariant="primary"
-                                text="Add Category" 
-                                icon={<Plus className="w-4 h-4 mr-2" />} 
-                            />
-                        }
-                        >
-                            <AddCategoryForm 
-                                onSuccess={() => setIsModalOpen(false)} 
-                                onCancel={()=> setIsModalOpen(false)} 
-                            />
-                        </GenericModal>
-                  </div>
-                </Field>
+          {hasVariant ? (
+            <>      
+            {/* 2. Attributes Section */}
+            <section className="space-y-4">
+              <div className="flex items-center justify-between bg-blue-50 p-3 rounded-lg text-sm text-blue-700">
+                <h3 className="text-sm font-medium">Product Attributes Setup</h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => appendAttribute({ name: "", sortOrder: attributeFields.length, matrixSplitValues: "" })}
+                >
+                  <Plus className="h-4 w-4 mr-2" /> Add Attribute Group
+                </Button>
+              </div>
 
-                <Field>
-                  <FieldLabel>Brand</FieldLabel>
+              {attributeFields.map((field, index) => (
+                <div key={field.id} className="p-4 border rounded-xl space-y-4 bg-white shadow-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    
+                    {/* Attribute Name Group (e.g., Size) */}
+                    <div>
+                      <FormInput
+                       label="Attribute Name"
+                       labelClassName="text-xs font-medium text-gray-500 block mb-1"
+                       name={`attributes.${index}.name`}
+                       placeholder="e.g., Color, Size"
+                      />
+                    </div>
+
+                    {/* Matrix Tag Field Entry */}
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 block mb-1">
+                        Matrix Split Values (Press Enter or Comma)
+                      </label>
+                      
+                      {/* Dynamic Badges Block container */}
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {(predefinedState[index] || []).map((tag) => (
+                          <Badge key={tag} className="flex items-center gap-1 bg-blue-200 text-gray-800 hover:bg-gray-200 border text-xs py-0.5">
+                            {tag}
+                            <button
+                            className="h-3 w-3 cursor-pointer hover:bg-white"
+                             onClick={(e) => {
+                                e.preventDefault();  
+                                e.stopPropagation();
+                                removeTag(index, tag);
+                              }}
+                            >
+                              <X className="h-3 w-3 cursor-pointer text-gray-500 hover:text-red-500"
+                            />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+
+                      <Input
+                        type="text"
+                        placeholder="Type values (e.g. Blue) and press Enter"
+                        onKeyDown={(e) => handleKeyDown(e, index)} 
+                      />
+                    </div>
+
+                    {/* Sort Layout Actions */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <label className="text-xs font-medium text-gray-500 block mb-1">Sort Order</label>
+                        <Controller
+                          control={control}
+                          name={`attributes.${index}.sortOrder`}
+                          render={({ field }) => (
+                            <Input 
+                              type="number" 
+                              value={field.value} 
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} 
+                            />
+                          )}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          removeAttribute(index);
+                          // Clean up state references if row is cleared
+                          setPredefinedState((prev) => {
+                            const updated = { ...prev };
+                            delete updated[index];
+                            return updated;
+                          });
+                        }}
+                        className="text-red-500 hover:text-red-600 self-end"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                  </div>
+                </div>
+              ))}
+            </section>
+
+            {/* 4. Variants Matrix */}
+            <section className="bg-white p-6 rounded-xl border shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="flex items-center gap-2 font-semibold text-gray-900">
+                  <span className="bg-blue-100 text-blue-700 h-6 w-6 rounded-full flex items-center justify-center text-sm">4</span>
+                  Variants SKU Matrix
+                </h2>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={generateVariants}
+                    disabled={attributes.length === 0}
+                  >
+                    <Wand2 className="h-4 w-4 mr-2" />
+                    Generate Variants
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addVariantManually}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Manually
+                  </Button>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 p-3 rounded-lg text-sm text-blue-700">
+                <Info className="h-4 w-4 inline mr-2" />
+                Configure unique SKUs, retail pricing points, barcodes, dimensions, and tracking logic per variation.
+              </div>
+
+              {variantFields.length === 0 ? (
+                <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                  <Package className="h-12 w-12 mx-auto text-gray-400 mb-3" />
+                  <p className="text-sm font-medium text-gray-900">No variants generated yet</p>
+                </div>
+              ) : (
+                <div className="border rounded-lg overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        {/* TODO: Update Currency symbol from database */}
+                        <TableHead className="w-24">Image</TableHead>
+                        <TableHead>SKU *</TableHead>
+                        <TableHead>Barcode</TableHead>
+                        <TableHead>Options</TableHead>
+                        <TableHead>Price (€)</TableHead>
+                        <TableHead>Cost (€)</TableHead>
+                        <TableHead>Stock</TableHead>
+                        <TableHead>Alert Limit</TableHead>
+                        <TableHead>Weight (kg)</TableHead>
+                        <TableHead className="w-48">Dimensions (L x W x H cm)</TableHead>
+                        <TableHead className="w-12">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {variantFields.map((field, index) => (
+                        <TableRow key={field.id}>
+                          {/* 1. Variant Image Drop/Upload */}
+                          <TableCell>
+                            <div className="relative w-16 h-16 bg-gray-50 border border-dashed rounded flex flex-col items-center justify-center cursor-pointer group hover:bg-gray-100 overflow-hidden">
+                              {watch(`variants.${index}.imageUrl`) ? (
+                                <>
+                                  <Image 
+                                    src={watch(`variants.${index}.imageUrl`) || ""} 
+                                    alt="Variant" 
+                                    className="w-full h-full object-cover"
+                                    width={56}
+                                    height={56}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      const currentKey = watch(`variants.${index}.fileKey`);
+                                      
+                                      // Proactively remove the file from your UploadThing server
+                                      if (currentKey) {
+                                        deleteUTFile(currentKey)
+                                      }
+                                      setValue(`variants.${index}.imageUrl`, "");
+                                      setValue(`variants.${index}.fileKey`, "");
+                                    }}
+                                    className="absolute inset-0 bg-black/50 text-blue-950 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-medium"
+                                  >
+                                    Remove
+                                  </button>
+                                </>
+                              ) : (
+                                <div className="absolute inset-0 flex items-center justify-center scale-75 transform origin-center">
+                                  <UploadButton
+                                    endpoint="imageUploader" // 🚀 Match your exact core.ts route key name
+                                    onClientUploadComplete={(res) => {
+                                      if (res?.[0]) {
+                                        setValue(`variants.${index}.imageUrl`, res[0].ufsUrl);
+                                        setValue(`variants.${index}.fileKey`, res[0].key);
+                                        toast.success("Variant image linked!");
+                                      }
+                                    }}
+                                    onUploadError={(error: Error) => {
+                                      toast.error(`Upload Failed: ${error.message}`);
+                                    }}
+                                    appearance={{
+                                      button: "bg-primary hover:bg-primary/90 font-medium text-[16px] w-full h-full p-1 transition-all shadow-sm border-none after:content-none before:content-none text-center disabled:bg-gray-400",
+                                      container: "w-full h-full flex items-center justify-center m-0 p-0",
+                                      allowedContent: "hidden" // Hides text descriptions to protect table sizing
+                                    }}
+                                    content={{
+                                      button({ ready }) {
+                                        if (ready) return "+ Image";
+                                        return "Loading...";
+                                      }
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+
+                          {/* 2. SKU */}
+                          <TableCell>
+                            <Controller
+                              control={control}
+                              name={`variants.${index}.sku`}
+                              render={({ field }) => (
+                                <Input {...field} placeholder="SKU" className="w-32 text-xs" />
+                              )}
+                            />
+                          </TableCell>
+
+                          {/* 3. Barcode */}
+                          <TableCell>
+                            <FormInput
+                              className="w-28 text-xs"
+                              name={`variants.${index}.barcode`}
+                              placeholder="Barcode/UPC"
+                              />
+                          </TableCell>
+
+                          {/* 4. Variant Attributes/Options */}
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1 max-w-37.5">
+                              {watch(`variants.${index}.options`)?.map((opt, optIdx) => (
+                                <Badge key={optIdx} variant="outline" className="text-[10px] whitespace-nowrap">
+                                  {opt.attributeName}: {opt.value}
+                                </Badge>
+                              ))}
+                            </div>
+                          </TableCell>
+
+                          {/* 5. Price */}
+                          <TableCell>
+                            <Controller
+                              control={control}
+                              name={`variants.${index}.price`}
+                              render={({ field }) => (
+                                <Input 
+                                  {...field} 
+                                  type="number" 
+                                  step="0.01"
+                                  className="w-20 text-xs"
+                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                />
+                              )}
+                            />
+                          </TableCell>
+
+                          {/* 6. Cost Price */}
+                          <TableCell>
+                            <Controller
+                              control={control}
+                              name={`variants.${index}.costPrice`}
+                              render={({ field }) => (
+                                <Input 
+                                  {...field} 
+                                  type="number" 
+                                  step="0.01"
+                                  className="w-20 text-xs"
+                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                />
+                              )}
+                            />
+                          </TableCell>
+
+                          {/* 7. Stock Quantity */}
+                          <TableCell>
+                            <Controller
+                              control={control}
+                              name={`variants.${index}.stock`}
+                              render={({ field }) => (
+                                <Input 
+                                  {...field} 
+                                  type="number"
+                                  className="w-16 text-xs"
+                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                />
+                              )}
+                            />
+                          </TableCell>
+
+                          {/* 8. Low Stock Alert Limit */}
+                          <TableCell>
+                            <Controller
+                              control={control}
+                              name={`variants.${index}.lowStockAlert`}
+                              render={({ field }) => (
+                                <Input 
+                                  {...field} 
+                                  type="number"
+                                  className="w-16 text-xs"
+                                  placeholder="5"
+                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                />
+                              )}
+                            />
+                          </TableCell>
+
+                          {/* 9. Weight */}
+                          <TableCell>
+                            <Controller
+                              control={control}
+                              name={`variants.${index}.weight`}
+                              render={({ field }) => (
+                                <Input 
+                                  value={field.value ?? ""} 
+                                  type="number"
+                                  step="0.01"
+                                  placeholder="0.00"
+                                  className="w-20 text-xs"
+                                  onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                                />
+                              )}
+                            />
+                          </TableCell>
+
+                          {/* 10. Dimensions Bundle (Length, Width, Height) */}
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Controller
+                                control={control}
+                                name={`variants.${index}.length`}
+                                render={({ field }) => (
+                                  <Input 
+                                    value={field.value ?? ""} 
+                                    type="number"
+                                    placeholder="L" 
+                                    className="w-12 text-xs px-1 text-center" 
+                                    onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                                  />
+                                )}
+                              />
+                              <span className="text-gray-400 text-xs">×</span>
+                              <Controller
+                                control={control}
+                                name={`variants.${index}.width`}
+                                render={({ field }) => (
+                                  <Input 
+                                    value={field.value ?? ""} 
+                                    type="number"
+                                    placeholder="W" 
+                                    className="w-12 text-xs px-1 text-center" 
+                                    onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                                  />
+                                )}
+                              />
+                              <span className="text-gray-400 text-xs">×</span>
+                              <Controller
+                                control={control}
+                                name={`variants.${index}.height`}
+                                render={({ field }) => (
+                                  <Input 
+                                    value={field.value ?? ""} 
+                                    type="number"
+                                    placeholder="H" 
+                                    className="w-12 text-xs px-1 text-center" 
+                                    onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                                  />
+                                )}
+                              />
+                            </div>
+                          </TableCell>
+
+                          {/* Actions */}
+                          <TableCell>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeVariant(index)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </section>
+            </>
+            ) : (
+        /* ── NEW DESIGN FOR SINGLE VARIANT (Simple Product View) ── */
+            <section className="bg-white p-6 rounded-xl border shadow-sm space-y-6 animate-in fade-in duration-200">
+              <h2 className="flex items-center gap-2 font-semibold text-gray-900">
+                <span className="bg-emerald-100 text-emerald-700 h-6 w-6 rounded-full flex items-center justify-center text-sm">2</span>
+                Inventory & Pricing
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="text-xs font-medium text-gray-600 block mb-1">Product SKU *</label>
                   <Controller
                     control={control}
-                    name="brandId"
+                    name="variants.0.sku"
+                    render={({ field }) => <Input {...field} placeholder="e.g., TEE-BLK-MD" />}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600 block mb-1">Barcode / EAN</label>
+                  <Controller
+                    control={control}
+                    name="variants.0.barcode"
+                    render={({ field }) => <Input {...field} value={field.value ?? ""} placeholder="Scan or type barcode" />}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600 block mb-1">Stock Quantity</label>
+                  <Controller
+                    control={control}
+                    name="variants.0.stock"
                     render={({ field }) => (
-                      <Select onValueChange={field.onChange} value={field.value ?? "none"}>
-                        <SelectTrigger><SelectValue placeholder="Select Brand" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">No Brand</SelectItem>
-                          {brands.map((brand) => (
-                            <SelectItem key={brand.id} value={brand.id}>{brand.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Input type="number" {...field} onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} />
                     )}
                   />
-                </Field>
+                </div>
               </div>
-            </section>
 
-            {/* 3. Pricing */}
-            <section className="bg-white p-6 rounded-xl border shadow-sm space-y-4">
-              <h2 className="flex items-center gap-2 font-bold text-gray-800 pb-3">
-                <span className="bg-indigo-100 text-indigo-600 h-6 w-6 rounded-full flex items-center justify-center text-xs">3</span>
-                Pricing
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormInput name="costPrice" label="Cost Price" type="number" placeholder="0.00" />
-                <FormInput name="price" label="Selling Price *" type="number" placeholder="0.00" />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-4">
+                <div>
+                  <label className="text-xs font-medium text-gray-600 block mb-1">Retail Price (€) *</label>
+                  <Controller
+                    control={control}
+                    name="variants.0.price"
+                    render={({ field }) => (
+                      <Input type="number" step="0.01" {...field} onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} />
+                    )}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600 block mb-1">Cost Price (€)</label>
+                  <Controller
+                    control={control}
+                    name="variants.0.costPrice"
+                    render={({ field }) => (
+                      <Input type="number" step="0.01" {...field} onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} />
+                    )}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600 block mb-1">Low Stock Alert Limit</label>
+                  <Controller
+                    control={control}
+                    name="variants.0.lowStockAlert"
+                    render={({ field }) => (
+                      <Input type="number" {...field} onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} />
+                    )}
+                  />
+                </div>
               </div>
-              <div className="bg-indigo-50/50 p-4 rounded-lg flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                   <div>
-                      <p className="text-[10px] uppercase text-gray-500 font-semibold tracking-wider">Profit</p>
-                      <p className="font-bold text-green-600">${(Number(watchedValues.price || 0) - Number(watchedValues.costPrice || 0)).toFixed(2)}</p>
-                   </div>
-                   <div className="h-8 w-px bg-gray-200" />
-                   <div>
-                      <p className="text-[10px] uppercase text-gray-500 font-semibold tracking-wider">Margin</p>
-                      <p className="font-bold text-indigo-600">
-                        {watchedValues.price ? (((Number(watchedValues.price) - Number(watchedValues.costPrice)) / Number(watchedValues.price)) * 100).toFixed(0) : 0}%
-                      </p>
-                   </div>
+
+              <div className="space-y-3 border-t pt-4">
+                <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Shipping & Dimensions</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 block mb-1">Weight (kg)</label>
+                    <Controller
+                      control={control}
+                      name="variants.0.weight"
+                      render={({ field }) => (
+                        <Input type="number" step="0.01" value={field.value ?? ""} placeholder="0.00" onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)} />
+                      )}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 block mb-1">Length (cm)</label>
+                    <Controller
+                      control={control}
+                      name="variants.0.length"
+                      render={({ field }) => (
+                        <Input type="number" value={field.value ?? ""} placeholder="L" onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)} />
+                      )}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 block mb-1">Width (cm)</label>
+                    <Controller
+                      control={control}
+                      name="variants.0.width"
+                      render={({ field }) => (
+                        <Input type="number" value={field.value ?? ""} placeholder="W" onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)} />
+                      )}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 block mb-1">Height (cm)</label>
+                    <Controller
+                      control={control}
+                      name="variants.0.height"
+                      render={({ field }) => (
+                        <Input type="number" value={field.value ?? ""} placeholder="H" onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)} />
+                      )}
+                    />
+                  </div>
                 </div>
               </div>
             </section>
-
-            {/* 4. Inventory */}
-            <section className="bg-white p-6 rounded-xl border shadow-sm space-y-4">
-              <h2 className="flex items-center gap-2 font-bold text-gray-800 pb-3">
-                <span className="bg-indigo-100 text-indigo-600 h-6 w-6 rounded-full flex items-center justify-center text-xs">4</span>
-                Inventory
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormInput name="stock" label="Stock Quantity *" type="number" placeholder="0" />
-                <FormInput name="lowStockAlert" label="Low Stock Alert" type="number" placeholder="5" />
-              </div>
-            </section>
+            )}          
           </div>
 
-          {/* --- RIGHT COLUMN: Image & Summary --- */}
+          {/* RIGHT COLUMN */}
           <div className="space-y-6">
-            {/* Product Image Section */}
+            {!hasVariant &&
             <section className="bg-white p-6 rounded-xl border shadow-sm space-y-4">
-              <h2 className="font-bold text-gray-800">Product Image</h2>
+              <h2 className="font-semibold text-gray-900">Product Image</h2>
               <ImageSection 
                 control={control} 
                 setValue={setValue} 
-                name="imageUrl" 
+                name={`variants.${0}.imageUrl`}
                 endpoint="imageUploader" 
                 label="" 
                 onImageUpload={(key) => {
                   setUploadedFileKey(key);
-                  setValue("fileKey", key);
+                  setValue(`variants.${0}.fileKey`, key);
                 }}
                 onImageRemove={() => {
                   setUploadedFileKey(null);
-                  setValue("fileKey", "");
+                   setValue(`variants.${0}.fileKey`, "");
                 }}
               />
             </section>
+            }
 
-            {/* Summary Card */}
             <section className="bg-white p-6 rounded-xl border shadow-sm space-y-4">
-              <h2 className="font-bold text-gray-800">Summary</h2>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between  pb-2"><span className="text-gray-500">Product Name</span> <span className="font-medium">{watchedValues.name || "-"}</span></div>
-                <div className="flex justify-between  pb-2"><span className="text-gray-500">SKU</span> <span className="font-medium">{watchedValues.sku || "-"}</span></div>
-                <div className="flex justify-between  pb-2"><span className="text-gray-500">Category</span> <span className="font-medium text-indigo-600">
-                  {categories.find(c => c.id === watchedValues.categoryId)?.name || "Uncategorized"}
-                </span></div>
-                <div className="flex justify-between pb-2"><span className="text-gray-500">Selling Price</span> <span className="font-bold text-gray-900">${Number(watchedValues.price || 0).toFixed(2)}</span></div>
-                <div className="flex justify-between pb-2"><span className="text-gray-500">Stock</span> <span className="font-medium">{watchedValues.stock || 0}</span></div>
-                <div className="flex justify-between items-center"><span className="text-gray-500">Status</span> 
-                  <Badge className={watchedValues.isActive ? "bg-green-100 text-green-700 hover:bg-green-100" : "bg-red-100 text-red-700 hover:bg-red-100"}>
-                    {watchedValues.isActive ? "Active" : "Inactive"}
-                  </Badge>
+              <h2 className="font-semibold text-gray-900">Summary</h2>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between py-2 border-b">
+                  <span className="text-gray-600">Product Name</span>
+                  <span className="font-medium">{watchedValues.name || "-"}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b">
+                  <span className="text-gray-600">Base SKU</span>
+                  <span className="font-medium">{watchedValues.baseSku || "-"}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b">
+                  <span className="text-gray-600">Total Variants</span>
+                  <span className="font-medium">{variants.length}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b">
+                  <span className="text-gray-600">Total Stock</span>
+                  <span className="font-medium">
+                    {variants.reduce((sum, v) => sum + (v.stock || 0), 0)}
+                  </span>
                 </div>
               </div>
             </section>
 
-            {/* Status Selector */}
             <section className="bg-white p-6 rounded-xl border shadow-sm space-y-4">
-              <h2 className="font-bold text-gray-800">Status</h2>
+              <h2 className="font-semibold text-gray-900">Status</h2>
               <Controller
                 control={control}
                 name="isActive"
                 render={({ field }) => (
-                  <RadioGroup onValueChange={(val) => field.onChange(val === "active")} value={field.value ? "active" : "inactive"} className="space-y-3">
-                    <div className="flex items-center space-x-3 space-y-0 border p-3 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <RadioGroup 
+                    onValueChange={(val) => field.onChange(val === "active")} 
+                    value={field.value ? "active" : "inactive"}
+                  >
+                    <div className="flex items-center space-x-3 border p-3 rounded-lg">
                       <RadioGroupItem value="active" id="active" />
-                      <label htmlFor="active" className="flex-1 cursor-pointer">
-                        <p className="text-sm font-semibold text-gray-900">Active</p>
-                        <p className="text-[10px] text-gray-500">Product will be available for sale</p>
-                      </label>
+                      <label htmlFor="active" className="flex-1 cursor-pointer text-sm font-medium">Active</label>
                     </div>
-                    <div className="flex items-center space-x-3 space-y-0 border p-3 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center space-x-3 border p-3 rounded-lg">
                       <RadioGroupItem value="inactive" id="inactive" />
-                      <label htmlFor="inactive" className="flex-1 cursor-pointer">
-                        <p className="text-sm font-semibold text-gray-900">Inactive</p>
-                        <p className="text-[10px] text-gray-500">Product will be hidden from sales</p>
-                      </label>
+                      <label htmlFor="inactive" className="flex-1 cursor-pointer text-sm font-medium">Inactive</label>
                     </div>
                   </RadioGroup>
                 )}
               />
             </section>
-
-            {/* Tips Card */}
-            <div className="bg-indigo-50 p-6 rounded-xl border border-indigo-100 space-y-3">
-              <h3 className="flex items-center gap-2 font-bold text-indigo-900 text-sm"><Info size={16}/> Tips</h3>
-              <ul className="text-xs text-indigo-700 space-y-2 list-disc pl-4">
-                <li>Use a unique SKU or barcode for easy tracking.</li>
-                <li>Set low stock alert to avoid running out of stock.</li>
-                <li>High quality images increase sales by 40%.</li>
-              </ul>
-            </div>
           </div>
+
         </div>
       </form>
     </FormProvider>

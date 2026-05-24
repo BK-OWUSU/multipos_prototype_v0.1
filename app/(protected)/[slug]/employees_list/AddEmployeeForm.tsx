@@ -2,7 +2,7 @@
 
 import { useForm, FormProvider, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CreateEmployeeSchema, createEmployeeSchema } from "@/schema/auth.schema";
+import { CreateEmployeeSchema, createEmployeeSchema } from "@/types/schema/auth.schema";
 import { FormInput } from "@/components/reusables/FormInput";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Plus, ShieldCheck, Save } from "lucide-react";
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useEmployeeStore } from "@/store/employeeStore";
-import { AppResponse, Employee } from "@/types/auth";
+import { AppResponse, Employee } from "@/types/auth/auth";
 import CustomButton from "@/components/reusables/CustomButton";
 import { ImageSection } from "@/components/reusables/ImageSection";
 import { useEffect, useRef, useState } from "react";

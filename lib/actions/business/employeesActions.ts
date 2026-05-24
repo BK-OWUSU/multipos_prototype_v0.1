@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auths";
-import { AppResponse } from "@/types/auth";
+import { AppResponse } from "@/types/auth/auth";
 import { softDeleteMultipleUserService, toggleBulkEmployeeStatusService, createBulkEmployeesService, grantEmployeeSystemAccess, revokeEmployeeSystemAccess } from "@/lib/services/business/employee-services";
 import { EmployeeImportPayload } from '@/lib/configs/employee-config';
-import { BulkImportResult } from '@/schema/bulkupload.schema';
+import { BulkImportResult } from '@/types/schema/bulkupload.schema';
 
 
 

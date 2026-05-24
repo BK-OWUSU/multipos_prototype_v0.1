@@ -1,13 +1,13 @@
 import { generateEmailVerificationToken, hashPassword, VERIFY_COOKIE_NAME } from "@/lib/auths";
 import { prisma } from "@/lib/dbHelper";
 import { sendOTPEmail } from "@/lib/email";
-import { AccountType, RoleName, RoleType } from "@/lib/generated/prisma/enums";
+import { AccountType, RoleName, RoleType } from "@/generated/prisma/enums";
 import { generateOTP, saveOTP } from "@/lib/otp";
 import { generateUniqueSlug } from "@/lib/slugGenerator";
 import { NextResponse } from "next/server";
 import { seedRoles } from "@/lib/services/seed/roles.seed";
 import { getAllInfoByISO } from 'iso-country-currency';
-import { SignUpFormSchema, signupSchema } from "@/schema/auth.schema";
+import { SignUpFormSchema, signupSchema } from "@/types/schema/auth.schema";
 
 export async function signUp(rawData: SignUpFormSchema) {
     try {
@@ -38,7 +38,7 @@ export async function signUp(rawData: SignUpFormSchema) {
         }
 
         //using transactions to register the new tenant
-        const {user, otpCode, ownerEmployee} = await prisma.$transaction(async(transact)=> {
+        const {user, otpCode, ownerEmployee, ownerRole,business } = await prisma.$transaction(async(transact)=> {
             // 1️ Creating Business
             const business = await transact.business.create({
                 data : {
@@ -62,12 +62,11 @@ export async function signUp(rawData: SignUpFormSchema) {
                     access: ["*"],
                     businessId: business.id,
                     isSystem: true,
-                    type: RoleType.SYSTEM
+                    type: RoleType.SYSTEM,
+                    createdById: null, 
+                    updatedById: null
                 }
             }); 
-
-            // 3 Creating Other Roles for the new Business
-            await seedRoles(business.id, transact);
 
             //Creating OWNER Employee Account
             const ownerEmployee = await transact.employee.create({
@@ -91,11 +90,23 @@ export async function signUp(rawData: SignUpFormSchema) {
                 },
             });
 
+            //Creating Other Roles for the new Business
+            await seedRoles(user.id, business.id, transact,);
+
             // 5 Generating OPT
             const otpCode = generateOTP();
             await saveOTP(user.id, otpCode, transact);
-            return { user, otpCode, ownerEmployee };
+            return { user, otpCode, ownerEmployee, ownerRole, business };
         })
+
+        await prisma.role.update({
+            where: {id: ownerRole.id, businessId: business.id},
+            data: {
+            createdById: user.id, 
+            updatedById: user.id  
+        }
+        })
+
         const ownerEmail = ownerEmployee.email;
         const userID = user.id;
         const userName = ownerEmployee.firstName;

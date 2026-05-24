@@ -1,15 +1,17 @@
 import { create } from "zustand";
 import apiClient from "@/lib/api-client";
 import { AxiosError } from "axios";
-import { AppResponse } from "@/types/auth";
-import { Product } from "@/types/inventory";
-import { ProductFormValues } from "@/schema/inventory.schema";
+import { AppResponse } from "@/types/auth/auth";
+import { Product } from "@/types/schema/inventory";
+import { ProductFormValues } from "@/types/schema/inventory.schema";
 import { toast } from "sonner";
 
 type ProductStore = {
     products: Product[] | null;
     loading: boolean;
     fetchProducts: () => Promise<void>;
+    // fetchProductById: (productId: string) => Promise<Product | null>;
+    fetchProductsVariant: () => Promise<void>;
     createProduct: (data: ProductFormValues) => Promise<AppResponse>;
     updateProduct: (productId: string, data: ProductFormValues) => Promise<AppResponse>;
     toggleProductStatus: (productId: string, currentStatus: boolean) => Promise<void>;
@@ -26,6 +28,22 @@ export const useProductStore = create<ProductStore>((set, get) => ({
             const response = await apiClient.get("/business/products");
             set({
                 products: response.data.products as Product[],
+                loading: false
+            });
+        
+        } catch (error) {
+            console.log("Error fetching products: ", error);
+            set({ products: null, loading: false });
+        }
+    },
+
+    fetchProductsVariant: async () => {
+        try {
+            set({ loading: true });
+            const response = await apiClient.get("/business/products/variants");
+            console.log(response.data.productsVariants);
+            set({
+                products: response.data.productsVariants,
                 loading: false
             });
         } catch (error) {

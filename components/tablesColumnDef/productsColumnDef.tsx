@@ -1,15 +1,14 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { Product } from "@/types/inventory"
+import { Product } from "@/types/schema/inventory";
 import { Badge } from "@/components/ui/badge"
 import {
   Package, Hash, Archive,
-  Tag, Building, Percent, Calendar,
-  MoreHorizontal, Eye, Edit, Trash2,
+  Tag, Building,MoreHorizontal, Eye, Trash2,
   AlertTriangle, Image as ImageIcon,
 } from "lucide-react"
-import { formatBusinessCurrency, formatDate } from "@/lib/utils"
+import { formatBusinessCurrency } from "@/lib/utils"
 import Image from "next/image"
 import {
   DropdownMenu,
@@ -23,25 +22,14 @@ import { Button } from "@/components/ui/button"
 import { useProductStore } from "@/store/productsStore"
 import { toast } from "sonner"
 import AlertWithDialogue from "@/components/reusables/AlertWithDialogue"
-import { GenericModal } from "@/components/reusables/GenericModal"
-import CustomButton from "../reusables/CustomButton"
-import { useState } from "react"
-import { useCategoryStore } from "@/store/categoryStore"
-import { useBrandStore } from "@/store/brandStore"
-import AddProductForm from "@/app/(protected)/[slug]/product_list/AddProductForm"
+// import AddProductForm from "@/app/(protected)/[slug]/product_list/components/AddProductForm"
 import { useAuthStore } from "@/store/useAuthStore"
 import { TablePinActions } from "../reusables/table/TablePinActions"
 
 // --- Sub-component for Actions ---
 const ActionCell = ({ product }: { product: Product }) => {
-  //STORES
   const { toggleProductStatus, deleteProduct } = useProductStore();
-  const {fetchProducts} = useProductStore();
-  const {fetchCategories, categories} = useCategoryStore();
-  const {fetchBrands, brands} = useBrandStore()
 
-  //USE STATES
-  const [isModalOpen, setIsModalOpen] = useState(false);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -54,33 +42,8 @@ const ActionCell = ({ product }: { product: Product }) => {
         <DropdownMenuItem onClick={() => toast.info("View product details - feature coming soon")}>
           <Eye className="mr-2 h-4 w-4" /> View Details
         </DropdownMenuItem>
-         <GenericModal
-                  header="Edit Product"
-                  description="Update product in your inventory"
-                  isOpen={isModalOpen}
-                  onOpenChange={setIsModalOpen}
-                  triggerBtn={
-                    <DropdownMenuItem
-                     onSelect={(e) => {
-                        e.preventDefault(); // Prevent dropdown from closing
-                        setIsModalOpen(true);
-                      }}
-                    >
-                      <Edit className="mr-2 h-4 w-4" /> Edit
-                    </DropdownMenuItem>
-                  }
-                >
-                  <AddProductForm
-                    initialData={product}
-                    categories={categories || []} 
-                    brands={brands || []}
-                    onSuccess={() => {
-                      setIsModalOpen(false);
-                      fetchProducts();
-                    }} 
-                    onCancel={() => setIsModalOpen(false)}
-                  />
-          </GenericModal>
+        
+        {/* OTHER PRODUCT FUNCTIONS CAN BE ADDED LATTER */}
 
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => toggleProductStatus(product.id, product.isActive)}>
@@ -90,6 +53,7 @@ const ActionCell = ({ product }: { product: Product }) => {
             <span className="flex items-center text-green-600"><Package className="mr-2 h-4 w-4" /> Activate</span>
           )}
         </DropdownMenuItem>
+        
         <AlertWithDialogue
           button={
             <DropdownMenuItem
@@ -110,11 +74,11 @@ const ActionCell = ({ product }: { product: Product }) => {
         />
       </DropdownMenuContent>
     </DropdownMenu>
-  )
-}
+  );
+};
 
 // Header sub-component to show currency code in the title
-const CurrencyHeader = ({ title}: { title: string}) => {
+const CurrencyHeader = ({ title }: { title: string }) => {
   const user = useAuthStore((state) => state.user);
   const currencySymbol = user?.business?.currencySymbol || "";
   return (
@@ -126,7 +90,7 @@ const CurrencyHeader = ({ title}: { title: string}) => {
 };
 
 // Cell sub-component to handle currency logic
-const CurrencyCell = ({ amount }: { amount: number }) => {
+export const CurrencyCell = ({ amount }: { amount: number }) => {
   const user = useAuthStore((state) => state.user);
   return (
     <span>
@@ -149,16 +113,20 @@ export const productsColumnDef: ColumnDef<Product>[] = [
     accessorKey: "imageUrl",
     header: () => (<span className='flex items-center'><ImageIcon className="mr-2" size={16} />Image</span>),
     cell: ({ row }) => {
-      const imageUrl = row.original.imageUrl;
-      console.log("Url Image: ",imageUrl)
+      // Find the primary variant image or fall back to the first available variant's image
+      const firstVariant = row.original.variants?.[0];
+      const imageUrl = firstVariant?.imageUrl;
+
       return imageUrl ? (
-        <Image
-          src={imageUrl}
-          alt={row.original.name}
-          width={4}
-          height={4}
-          className="w-10 h-10 object-cover rounded"
-        />
+        <div className="relative w-10 h-10">
+          <Image
+            src={imageUrl}
+            alt={row.original.name}
+            fill
+            sizes="40px"
+            className="object-cover rounded"
+          />
+        </div>
       ) : (
         <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
           <ImageIcon className="w-5 h-5 text-gray-400" />
@@ -168,32 +136,88 @@ export const productsColumnDef: ColumnDef<Product>[] = [
     enableSorting: false,
     enableColumnFilter: false
   },
-  {
-    accessorKey: "sku",
-    header: () => (<span className='flex items-center'><Hash className="mr-2" size={16} />SKU</span>),
-    cell: ({ row }) => row.original.sku || "N/A"
+ {
+  accessorKey: "sku",
+  header: () => (<span className='flex items-center'><Hash className="mr-2" size={16} />SKU / Base SKU</span>),
+  cell: ({ row, table }) => {
+    const variants = row.original.variants || [];
+    const hasVariants = variants.length > 1;
+
+    if (hasVariants) {
+      return (
+        <button 
+          type="button"
+          onClick={() => {
+            // Safe, structural type assertion instead of 'any'
+            const meta = table.options.meta as { onViewVariants?: (product: Product) => void } | undefined;
+            if (meta?.onViewVariants) {
+              meta.onViewVariants(row.original);
+            }
+          }}
+          className="text-left font-semibold text-indigo-600 hover:text-indigo-800 underline  hover:decoration-solid transition-all cursor-pointer block"
+        >
+          {`${row.original.baseSku || "N/A"} (${variants.length} Variants)`}
+        </button>
+      );
+    }
+    return variants[0]?.sku || row.original.baseSku || "N/A";
+    }
   },
   {
     accessorKey: "price",
     header: () => <CurrencyHeader title="Price" />,
-    cell: ({ row }) => <CurrencyCell amount={Number(row.original.price)} />
+    cell: ({ row }) => {
+      const prices = (row.original.variants || []).map(v => Number(v.price || 0));
+      if (prices.length === 0) return <CurrencyCell amount={0} />;
+      
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+
+      // Display a beautiful range layout if options vary in value configurations
+      if (minPrice !== maxPrice) {
+        return (
+          <span className="text-xs font-medium">
+            <CurrencyCell amount={minPrice} /> - <CurrencyCell amount={maxPrice} />
+          </span>
+        );
+      }
+      return <CurrencyCell amount={minPrice} />;
+    }
   },
   {
     accessorKey: "costPrice",
     header: () => <CurrencyHeader title="Cost" />,
-    cell: ({ row }) => <CurrencyCell amount={Number(row.original.costPrice)} />
+    cell: ({ row }) => {
+      const costs = (row.original.variants || []).map(v => Number(v.costPrice || 0));
+      if (costs.length === 0) return <CurrencyCell amount={0} />;
+      
+      const minCost = Math.min(...costs);
+      const maxCost = Math.max(...costs);
+
+      if (minCost !== maxCost) {
+        return (
+          <span className="text-xs text-muted-foreground">
+            <CurrencyCell amount={minCost} /> - <CurrencyCell amount={maxCost} />
+          </span>
+        );
+      }
+      return <CurrencyCell amount={minCost} />;
+    }
   },
   { 
     accessorKey: "stock",
     header: "Stock",
     cell: ({ row }) => {
-      const stock = row.original.stock;
-      const lowAlert = row.original.lowStockAlert;
-      const isLow = stock <= lowAlert;
+      const variants = row.original.variants || [];
+      
+      // Compute global aggregates across the nested rows
+      const totalStock = variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+      const isAnyLow = variants.some(v => (v.stock || 0) <= (v.lowStockAlert || 0));
+
       return (
         <div className="flex items-center gap-2">
-          <span className={isLow ? "text-red-600 font-semibold" : ""}>{stock}</span>
-          {isLow && <AlertTriangle className="h-4 w-4 text-red-500" />}
+          <span className={isAnyLow ? "text-red-600 font-semibold" : ""}>{totalStock}</span>
+          {isAnyLow && <AlertTriangle className="h-4 w-4 text-red-500" />}
         </div>
       );
     }
@@ -217,19 +241,6 @@ export const productsColumnDef: ColumnDef<Product>[] = [
     )
   },
   {
-    accessorKey: "discount",
-    header: () => (<span className='flex items-center'><Percent className="mr-2" size={16} />Discount</span>),
-    cell: ({ row }) => {
-      const discount = row.original.discount;
-      if (!discount) return "No Discount";
-      return (
-        <Badge variant="secondary">
-          {discount.name} ({discount.type === "PERCENTAGE" ? `${Number(discount.value)}%` : `$${Number(discount.value)}`})
-        </Badge>
-      );
-    }
-  },
-  {
     accessorKey: "isActive",
     header: "Status",
     filterFn: "equals",
@@ -241,40 +252,25 @@ export const productsColumnDef: ColumnDef<Product>[] = [
     cell: ({ row }) => {
       const active = row.original.isActive;
       return (
-        <Badge className={active ? "bg-green-100 text-green-700 hover:bg-green-100" : "bg-red-100 text-red-700"}>
+        <Badge className={active ? "bg-green-100 text-green-700 hover:bg-green-100" : "bg-red-100 text-red-700 hover:bg-red-100"}>
           {active ? "Active" : "Inactive"}
         </Badge>
       );
     }
   },
   {
-    accessorKey: "createdAt",
-    header: () => (<span className='flex items-center'><Calendar className="mr-2" size={16} />Created</span>),
-    cell: ({ row }) => formatDate(new Date(row.original.createdAt))
-  },
-  // {
-  //   accessorKey: "Actions",
-  //   id: "actions",
-  //   cell: ({ row }) => <ActionCell product={row.original} />,
-  //   enableSorting: false,
-  //   enableResizing: false,
-  //   enableColumnFilter: false
-  // }
-
-  {
     accessorKey: "Actions",
     id: "actions",
     header: () => (
-        <div className="flex items-center justify-end w-full gap-2 px-1">
-          <TablePinActions.HeaderIcon />
-          <span className="font-semibold text-white">Actions</span>
-        </div>
-      ),
-
+      <div className="flex items-center justify-end w-full gap-2 px-1">
+        <TablePinActions.HeaderIcon />
+        <span className="font-semibold text-white">Actions</span>
+      </div>
+    ),
     cell: ({ row }) => <ActionCell product={row.original} />,
     enableHiding: false, 
     enableSorting: false,
     enableResizing: false,
     enableColumnFilter: false
   }
-]
+];

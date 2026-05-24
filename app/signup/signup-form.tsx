@@ -3,14 +3,14 @@ import Link from "next/link"
 import {Card,CardContent,CardHeader,CardTitle} from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {Field,FieldDescription,FieldGroup,FieldContent} from "@/components/ui/field"
-import { SignUpFormSchema, signupSchema } from "@/schema/auth.schema"
+import { SignUpFormSchema, signupSchema } from "@/types/schema/auth.schema"
 import { Checkbox } from "@/components/ui/checkbox"
 import {SubmitHandler, useForm, FormProvider } from "react-hook-form"
 import {zodResolver} from "@hookform/resolvers/zod";
 import { FormInput } from "@/components/reusables/FormInput" 
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/store/useAuthStore"
-import { SignUpResponse } from "@/types/auth"
+import { SignUpResponse } from "@/types/auth/auth"
 import CustomButton from "@/components/reusables/CustomButton"
 import { getAllISOCodes } from 'iso-country-currency';
 

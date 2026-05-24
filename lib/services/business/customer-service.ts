@@ -1,7 +1,7 @@
 import { CustomerImportPayload, CustomerValidatedArray } from "@/lib/configs/customer-config";
 import { prisma } from "@/lib/dbHelper";
-import { CreateCustomerSchema, createCustomerSchema } from "@/schema/auth.schema";
-import { AppResponse } from "@/types/auth";
+import { CreateCustomerSchema, createCustomerSchema } from "@/types/schema/auth.schema";
+import { AppResponse } from "@/types/auth/auth";
 
 
 export async function createCustomer(data: CreateCustomerSchema, userId: string, businessId: string, businessSlug: string) {

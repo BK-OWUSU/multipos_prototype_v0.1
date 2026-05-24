@@ -1,4 +1,4 @@
-import { User } from "@/types/auth";
+import { User } from "@/types/auth/auth";
 
 export default function hasAccess(user: User | null, key: string): boolean { 
     if (!user) return false;

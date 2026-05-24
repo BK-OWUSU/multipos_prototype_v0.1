@@ -1,5 +1,5 @@
 import { formatSessionDate, parseUserAgent, formatIP } from "@/lib/utils";
-import { Session } from "@/types/auth";
+import { Session } from "@/types/auth/auth";
 import { Monitor, Globe } from "lucide-react";
 
 export function SessionInfo({ 

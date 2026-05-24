@@ -2,7 +2,7 @@ import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 import {  getSession } from "@/lib/auths";
 import { NextRequest } from "next/server";
-import { JwtPayload } from "@/types/auth";
+import { JwtPayload } from "@/types/auth/auth";
 
 const auth = async (request: NextRequest ) => {
     //Get Current user session

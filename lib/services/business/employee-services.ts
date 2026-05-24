@@ -1,14 +1,14 @@
-import { AppResponse } from "@/types/auth";
+import { AppResponse } from "@/types/auth/auth";
 import { prisma } from "@/lib/dbHelper";
 import { deleteUTFile } from "@/lib/actions/uploadthing";
-import { AccountType } from "@/lib/generated/prisma/enums";
+import { AccountType } from "@/generated/prisma/enums";
 import { NextRequest } from "next/server";
-import { createEmployeeSchema } from "@/schema/auth.schema";
+import { createEmployeeSchema } from "@/types/schema/auth.schema";
 import { generateRandomPassword } from "@/lib/utils";
 import { hashPassword } from "@/lib/auths";
 import { sendTempPasswordEmail } from "@/lib/email";
 import { EmployeeValidatedArray, EmployeeImportPayload } from "@/lib/configs/employee-config";
-import { UserCreateManyInput } from "@/lib/generated/prisma/models";
+import { UserCreateManyInput } from "@/generated/prisma/models";
 
 export async function createEmployee(request: NextRequest, userId: string, employeeId: string, businessId: string) {
     try {

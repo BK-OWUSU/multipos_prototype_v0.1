@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/dbHelper";
-import { AppResponse } from "@/types/auth";
+import { AppResponse } from "@/types/auth/auth";
 import { deleteUTFile } from "@/lib/actions/uploadthing";
-import { BrandFormValues, brandSchema } from "@/schema/inventory.schema";
+import { BrandFormValues, brandSchema } from "@/types/schema/inventory.schema";
 
 
 /**

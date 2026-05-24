@@ -5,13 +5,13 @@ import { useRouter } from "next/navigation"
 import { FormInput } from "@/components/reusables/FormInput" 
 import { useForm, SubmitHandler, FormProvider } from "react-hook-form"
 // import Link from "next/link"
-import { passwordSchema, PasswordSchema } from "@/schema/auth.schema"
+import { passwordSchema, PasswordSchema } from "@/types/schema/auth.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useAuthStore } from "@/store/useAuthStore"
 import CustomButton from "@/components/reusables/CustomButton"
 import { SquareAsterisk } from "lucide-react";
 import Link from "next/link"
-import { SignUpResponse } from "@/types/auth"
+import { SignUpResponse } from "@/types/auth/auth"
 
 
 

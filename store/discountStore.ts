@@ -1,9 +1,9 @@
 import {create} from "zustand"
 import apiClient from "@/lib/api-client"
 import { AxiosError } from "axios";
-import { AppResponse } from "@/types/auth";
-import { Discount } from "@/types/inventory";
-import { CreateDiscountSchema } from "@/schema/auth.schema";
+import { AppResponse } from "@/types/auth/auth";
+import { Discount } from "@/types/schema/inventory";
+import { CreateDiscountSchema } from "@/types/schema/auth.schema";
 import { toast } from "sonner";
 
 type DiscountStore = {

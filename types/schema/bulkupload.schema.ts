@@ -10,10 +10,12 @@ export interface BulkImportConfig<TSchema extends z.ZodType, TOutput = z.infer<T
   entityNamePlural: string;
   schema: TSchema;
   templateHeaders: string[];
-  templateExample: string[];
+  // templateExample: string[] | string[][] | unknown;
+  templateExample: string[] | string[][];
   apiEndpoint: ImportHandler<TOutput>;
   
-  transformData?: (data: z.infer<TSchema>) => TOutput | Record<string, unknown>;
+  // transformData?: (data: z.infer<TSchema>) => TOutput | Record<string, unknown>;
+  transformData?: (data: z.infer<TSchema>) => TOutput;
   validateRow?: (row: z.infer<TSchema>, index: number) => { valid: boolean; error?: string };
   generateTemplate?: () => string;
 }

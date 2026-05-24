@@ -1,5 +1,5 @@
 // lib/nav-data.ts
-import { User } from "@/types/auth";
+import { User } from "@/types/auth/auth";
 import { NavGroup } from "@/types/types";
 import hasAccess from "./accessPermissionSecurity";
 

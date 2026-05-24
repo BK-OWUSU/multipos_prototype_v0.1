@@ -2,10 +2,10 @@
 "use no memo"
 import React, { useMemo } from "react";
 import {DropdownMenu,DropdownMenuContent,DropdownMenuLabel,DropdownMenuSeparator,DropdownMenuCheckboxItem,DropdownMenuTrigger,DropdownMenuItem} from "@/components/ui/dropdown-menu"
-import {Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "../../ui/table";
-import {flexRender, getCoreRowModel,getSortedRowModel,getFilteredRowModel,getPaginationRowModel,useReactTable,type SortingState,type ColumnFiltersState, type ColumnDef, type ColumnPinningState} from "@tanstack/react-table"
-import { Input } from "../../ui/input";
-import { Button } from "../../ui/button";
+import {Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
+import {TableMeta, flexRender, getCoreRowModel,getSortedRowModel,getFilteredRowModel,getPaginationRowModel,useReactTable,type SortingState,type ColumnFiltersState, type ColumnDef, type ColumnPinningState} from "@tanstack/react-table"
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 // Change icons for Pin/Unpin
 import {Trash2,Ellipsis,ArrowDownUp,ArrowDownAZ,ArrowUpZA,ChevronDown,ChevronsLeft,ChevronsRight,ListFilter,RefreshCw, Pin, PinOff} from "lucide-react"
@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { formatDateTime, humanize } from "@/lib/utils";
 import {Select,SelectContent,SelectItem,SelectTrigger,SelectValue} from "@/components/ui/select"
 import AlertWithDialogue from "../AlertWithDialogue";
-import { AppResponse } from "@/types/auth";
+import { AppResponse } from "@/types/auth/auth";
 import { cn } from "@/lib/utils";
 import { TablePinActions } from "./TablePinActions";
 
@@ -40,9 +40,10 @@ interface TableProps<TData, TValue> {
     handleMultipleDelete?: (ids: string[])=> Promise<AppResponse>;
     handleMultipleToggleStatus?: (ids: string[]) => Promise<AppResponse>;
     onActionSuccess?: () => void;
+    meta?: TableMeta<TData>;
 }
 
-export default function TableMain<TData, TValue>({columns, data, searchKey, placeholder, columnVisibilityFilter, loading,handleMultipleDelete,handleMultipleToggleStatus, onActionSuccess}:TableProps<TData, TValue>) {
+export default function TableMain<TData, TValue>({columns, data, searchKey, placeholder, columnVisibilityFilter, loading,handleMultipleDelete,handleMultipleToggleStatus, onActionSuccess,meta}:TableProps<TData, TValue>) {
     const [globalFilter, setGlobalFilter] = useState("");
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -58,6 +59,7 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
     const table = useReactTable({
         data,
         columns: finalColumns,
+        meta,
         columnResizeMode: "onChange",
         state: {
             sorting,
@@ -362,7 +364,7 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
                             // 10. HELPER CSS: Pinned header must have opaque bg matching header color (bg-blue-950)
                             className={cn(
                                 `border relative text-white first:rounded-tl-md font-semibold last:rounded-tr-md group ${isSelect ? "p-2" : "px-4"}`,
-                                isPinnedRightHeader ? 'bg-blue-950' : '' // Ensures bleu background is solid
+                                isPinnedRightHeader ? 'bg-blue-950' : '' // Ensures blue background is solid
                             )}
                             style={{ 
                                 width: header.getSize(),
@@ -510,7 +512,7 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
                         <TableRow
                         key={row.id}
                         // 13. HELPER CSS: Need group/row to handle hover logic for sticky cells
-                        className="hover:bg-blue-50 border transition-colors group/row" 
+                        className="hover:bg-blue-50 z-0 border transition-colors group/row" 
                         >
                         {row.getVisibleCells().map((cell) => {
                         const isSelect = cell.column.id === "select";
@@ -525,7 +527,7 @@ export default function TableMain<TData, TValue>({columns, data, searchKey, plac
                             // 15. HELPER CSS: Body cells must have White background normally, 
                             // but must match the hover color (bg-blue-50) when the row is hovered.
                             className={cn(
-                                `py-3 border bg-white ${isSelect ? "p-1" : "px-4"} transition-colors`,
+                                `py-3 border bg-white ${isSelect ? "p-1 " : "px-4"} transition-colors`,
                                 // Logic: Standard White, but Row Hover overrides White
                                 isPinnedRightBodyCell ? 'group-hover/row:bg-blue-50 bg-white' : ''
                             )}

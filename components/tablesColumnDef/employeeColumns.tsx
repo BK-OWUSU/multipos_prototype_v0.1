@@ -1,7 +1,7 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { Employee } from "@/types/auth"
+import { Employee } from "@/types/auth/auth"
 import { Badge } from "@/components/ui/badge"
 import { 
   Users, Mail, Phone, ShieldCheck, 
@@ -24,6 +24,7 @@ import { toast } from "sonner"
 import AlertWithDialogue from "../reusables/AlertWithDialogue"
 import Image from "next/image"
 import { grantEmployeeAccess, revokeEmployeeAccess } from "@/lib/actions/business/employeesActions"
+import { TablePinActions } from "../reusables/table/TablePinActions"
 
 const ActionCell = ({ employee }: { employee: Employee }) => {
   // Ensure these functions are exported from your store!
@@ -275,10 +276,18 @@ export const employeeColumns: ColumnDef<Employee>[] = [
     header: "Joined",
     cell: ({ row }) => <span className="text-xs text-muted-foreground">{formatDate(new Date(row.original.createdAt))}</span>
   },
- {
+  {
     accessorKey: "Actions",
     id: "actions",
+    header: () => (
+        <div className="flex items-center justify-end w-full gap-2 px-1">
+          <TablePinActions.HeaderIcon />
+          <span className="font-semibold text-white">Actions</span>
+        </div>
+      ),
+
     cell: ({ row }) => <ActionCell employee={row.original} />,
+    enableHiding: false, 
     enableSorting: false,
     enableResizing: false,
     enableColumnFilter: false
