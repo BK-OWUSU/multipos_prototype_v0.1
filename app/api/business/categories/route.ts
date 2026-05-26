@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/auths";
 import { NextRequest, NextResponse } from "next/server";
-import { createCategoryService, getAllCategoriesService } from "@/lib/services/business/category-service";
+import { CategoryService } from "@/lib/services/business/category-service";
 
 
 
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
         }
         const { userId, businessId, businessSlug } = session;
         const body = await request.json();
-        const response = await createCategoryService(body, userId, businessId, businessSlug);
+        const response = await CategoryService.createCategoryService(body, userId, businessId, businessSlug);
   
         if (response.success && response.message) {
             return NextResponse.json({success: response.success, message: response.message}, {status: response.status})
@@ -32,10 +32,10 @@ export async function GET(request: NextRequest) {
 
         const { businessId } = session;
 
-        const response =  await getAllCategoriesService(businessId);
+        const response =  await CategoryService.getAllCategoriesService(businessId);
 
-        if (response.success && response.categories) {
-            return NextResponse.json({success: response.success, categories: response.categories}, {status: 200})
+        if (response.success && response.data) {
+            return NextResponse.json({success: response.success, categories: response.data}, {status: 200})
         }else {
             return NextResponse.json({success: response.success, error: response.error}, {status: 500})
         }

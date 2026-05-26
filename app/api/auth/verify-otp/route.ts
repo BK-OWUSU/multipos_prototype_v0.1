@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server"
-import { verifyOTPService } from "@/lib/services/auth/verify-otp-service"
+import { VerifyOTPService } from "@/lib/services/auth/verify-otp-service"
 
 export async function POST(request: NextRequest) {
-  const response = await verifyOTPService(request);
+  const response = await VerifyOTPService.verifyOTP(request);
   return response
 }

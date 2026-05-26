@@ -5,7 +5,8 @@ import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { generateEmailVerificationToken, VERIFY_COOKIE_NAME, verifyEmailVerificationToken } from "@/lib/auths"
 
-export async function resendOTPService() {
+export class ResendOTPService {
+static async resendOTPService() {
   try {
     const cookieStore = await cookies();
     const verify_token = cookieStore.get(VERIFY_COOKIE_NAME)?.value;
@@ -82,4 +83,5 @@ export async function resendOTPService() {
     console.error("Resend OTP error:", error)
     return NextResponse.json({ error: "Internal Server Error", success: false },{ status: 500 })
   }
+}
 }

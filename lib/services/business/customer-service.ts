@@ -4,9 +4,10 @@ import { CreateCustomerSchema, createCustomerSchema } from "@/types/schema/auth.
 import { AppResponse } from "@/types/auth/auth";
 
 
-export async function createCustomer(data: CreateCustomerSchema, userId: string, businessId: string, businessSlug: string) {
-    try {
-        const validatedData = createCustomerSchema.parse(data);
+export class CustomerService {
+    static async createCustomer(data: CreateCustomerSchema, userId: string, businessId: string, businessSlug: string) {
+        try {
+            const validatedData = createCustomerSchema.parse(data);
 
         // 1. Check for duplicates (Phone or Email) within this business
         const existingCustomer = await prisma.customer.findFirst({
@@ -70,7 +71,7 @@ export async function createCustomer(data: CreateCustomerSchema, userId: string,
 }
 
 //CREATE BULK CUSTOMERS 
-export async function createBulkCustomersService(
+static async createBulkCustomersService(
     payload: { data: CustomerImportPayload[]; [key: string]: unknown },
     userId: string,
     businessId: string,
@@ -179,7 +180,7 @@ export async function createBulkCustomersService(
 }
 
 //FETCH ALL CUSTOMERS
-export async function getCustomers(businessId: string) {
+static async getCustomers(businessId: string) {
   try {
     const customers = await prisma.customer.findMany({
       where: {
@@ -206,17 +207,72 @@ export async function getCustomers(businessId: string) {
 
     return { 
       success: true, 
-      customers: customers, 
+      data: customers, 
       status: 200 
-    };
+    } as AppResponse;
   } catch (error) {
     console.error("GET_CUSTOMERS_ERROR:", error);
-    return { error: "Failed to fetch customers", success: false, status: 500 };
+    return { error: "Failed to fetch customers", success: false, status: 500 } as AppResponse;
+  }
+}
+
+// FETCH SINGLE CUSTOMER BY ID
+static async getCustomerById(customerId: string, businessId: string) {
+  try {
+    if (!customerId || !businessId) {
+      return { 
+        success: false, 
+        error: "Customer ID and Business ID are required.", 
+        status: 400 
+      } as AppResponse;
+    }
+
+    const customer = await prisma.customer.findFirst({
+      where: {
+        id: customerId,
+        businessId: businessId, // 🔒 Crucial for tenant boundary security
+        isDeleted: false,
+      },
+      include: {
+        registeredAtShop: {
+          select: {
+            id: true,
+            name: true,
+          }
+        },
+        loyalty: true,
+        _count: {
+          select: { sales: true }
+        }
+      }
+    });
+
+    if (!customer) {
+      return { 
+        success: false, 
+        error: "Customer not found.", 
+        status: 404 
+      } as AppResponse;
+    }
+
+    return { 
+      success: true, 
+      data: customer, 
+      status: 200 
+    } as AppResponse;
+
+  } catch (error) {
+    console.error(`GET_CUSTOMER_BY_ID_ERROR [ID: ${customerId}]:`, error);
+    return { 
+      success: false, 
+      error: "Failed to fetch customer details", 
+      status: 500 
+    } as AppResponse;
   }
 }
 
 //UPDATE CUSTOMER
-export async function updateCustomer(
+static async  updateCustomer(
   data: Partial<CustomerImportPayload>,
   customerId: string, 
   businessId: string, 
@@ -250,15 +306,77 @@ export async function updateCustomer(
       return customer;
     });
 
-    return { success: true, data: updatedCustomer, status: 200 };
+    return { success: true, message: `Customer ${updatedCustomer.firstName} ${updatedCustomer.lastName} updated successfully`, data: updatedCustomer, status: 200 } as AppResponse;
   } catch (error) {
     console.error("UPDATE_CUSTOMER_ERROR:", error);
-    return { error: "Failed to update customer", success: false, status: 500 };
+    return { error: "Failed to update customer", success: false, status: 500 } as AppResponse;
+  }
+}
+
+// SOFT DELETE SINGLE CUSTOMER
+static async softDeleteCustomer(
+  customerId: string, 
+  userId: string,
+  businessId: string, 
+  businessSlug: string
+) {
+  try {
+    if (!customerId) {
+      return { error: "Customer ID is required", success: false, status: 400 } as AppResponse;
+    }
+
+    // First check if the customer exists and belongs to this business
+    const existingCustomer = await prisma.customer.findFirst({
+      where: {
+        id: customerId,
+        businessId: businessId,
+        isDeleted: false
+      }
+    });
+
+    if (!existingCustomer) {
+      return { error: "Customer not found or already deleted", success: false, status: 404 };
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Perform Soft Delete
+      await tx.customer.update({
+        where: {
+          id: customerId,
+        },
+        data: {
+          isDeleted: true,
+          deletedAt: new Date()
+        }
+      });
+
+      // 2. Create Audit Log for the single entity action
+      await tx.auditLog.create({
+        data: {
+          action: "SOFT_DELETE_CUSTOMER",
+          entity: "CUSTOMER",
+          entityId: customerId,
+          userId: userId,
+          businessId: businessId,
+          newValue: `Customer (${existingCustomer.firstName + " " + existingCustomer.lastName || customerId}) moved to trash/deleted.`
+        }
+      });
+    });
+
+    return { 
+      success: true, 
+      message: `Successfully deleted customer.`, 
+      redirectTo: `/${businessSlug}/customer_base`,
+      status: 200, 
+    } as AppResponse;
+  } catch (error) {
+    console.error(`SOFT_DELETE_CUSTOMER_ERROR [ID: ${customerId}]:`, error);
+    return { error: "Failed to delete customer", success: false, status: 500 } as AppResponse;
   }
 }
 
 //SOFT DELETE MULTIPLE CUSTOMERS
-export async function softDeleteCustomers(
+static async  softDeleteBulkCustomers(
   customerIds: string[], 
   businessId: string, 
   userId: string,
@@ -307,4 +425,5 @@ export async function softDeleteCustomers(
     console.error("SOFT_DELETE_CUSTOMERS_ERROR:", error);
     return { error: "Failed to delete customers", success: false, status: 500 };
   }
+ }
 }

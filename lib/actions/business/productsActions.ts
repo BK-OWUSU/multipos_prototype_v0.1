@@ -4,9 +4,9 @@ import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auths";
 import { AppResponse } from "@/types/auth/auth";
 // import { createBulkProductService, performBulkProductDeleteService, toggleBulkProductsStatusService } from "@/lib/services/business/product-service";
-import { BulkImportResult } from "@/types/schema/bulkupload.schema";
-import { ProductImportPayload } from "@/lib/configs/product-config";
+import { BulkImportResult } from "@/types/schema/bulkImport";
 import { ProductService } from "@/lib/services/business/product-service";
+import { GroupedProductImportPayload } from "@/lib/configs/product-config";
 
 
 
@@ -141,54 +141,66 @@ export async function softDeleteSingleVariantAction(id: string) {
   }  
 
 
-export async function createBulkProductsAction(payload: { data: ProductImportPayload[]; [key: string]: unknown }) {
-    //     const session = await getSession();
+export async function createBulkProductsAction(payload: { data: GroupedProductImportPayload[][]; [key: string]: unknown }) {
+  // 1. Flatten the data out from the importer's nested structure matrix
 
-    //     // 1. Check Session
-    //     if(!session || typeof session === "string") {
-    //         return { 
-    //             success: false, 
-    //             total: 0, 
-    //             success_count: 0, 
-    //             failed_count: 0, 
-    //             error: "Unauthorized session" 
-    //         } as BulkImportResult;
-    //     }
+  const flatProductItems = payload.data.flat();
+  console.log("Received Payload for Bulk Product Creation:");
+  console.dir({ flatProductItems }, { depth: null });
+  
+  // Safely extract optional tracking keys if your base bulk structure sends them
+  const trackingKey = typeof payload.key === 'string' ? payload.key : undefined;
+  const finalData = { data: flatProductItems, key: trackingKey };
 
-    //     const { userId, employeeId, businessId, businessSlug } = session;
-        
-    //     // 2. Call your existing service
-    //     const response = await createBulkProductService(
-    //         payload, 
-    //         userId,
-    //         employeeId || "", 
-    //         businessId, 
-    //         businessSlug
-    //     );
+  const session = await getSession();
 
-    //     // 3. Transform AppResponse to BulkImportResult
-    //     if (response.success) {
-    //         if (response.redirectTo) revalidatePath(response.redirectTo);
-            
-    //         return {
-    //             success: true,
-    //             total: payload.data.length,
-    //             success_count: payload.data.length, 
-    //             failed_count: 0,
-    //             message: response.message
-    //         } as BulkImportResult;
-    //     }
+  // 2. Validate Session Authenticity
+  if (!session || typeof session === "string") {
+    return { 
+      success: false, 
+      total: flatProductItems.length, 
+      success_count: 0, 
+      failed_count: flatProductItems.length, 
+      error: "Unauthorized session" 
+    } as BulkImportResult;
+  }
 
-    //     // 4. Handle Failure
-    //     return {
-    //         success: false,
-    //         total: payload.data.length,
-    //         success_count: 0,
-    //         failed_count: payload.data.length,
-    //         error: response.error
-    //     } as BulkImportResult;
-    // }
+  const { userId, employeeId, businessId, businessSlug } = session;
+  
+  // 3. Fire database transaction execution layer 
+  const response = await ProductService.createBulkProductsService(
+    finalData, 
+    userId,
+    employeeId || "", 
+    businessId,
+    businessSlug,
+  );
 
+  // 4. Calculate proper item metric balances
+  const totalItemsCount = flatProductItems.length;
+
+  // 5. Build and send responses back to the importer engine
+  if (response.success) {
+    if (response.redirectTo) revalidatePath(response.redirectTo);
+    
+    return {
+      success: true,
+      total: totalItemsCount,
+      success_count: totalItemsCount, 
+      failed_count: 0,
+      message: response.message
+    } as BulkImportResult;
+  }
+
+  // 6. Handle failure outcomes accurately
+  return {
+    success: false,
+    total: totalItemsCount,
+    success_count: 0,
+    failed_count: totalItemsCount,
+    error: response.error
+  } as BulkImportResult;
+}
 
     // export async function deleteProductsAction(ids: string[]) {
     //   const session = await getSession();
@@ -204,5 +216,7 @@ export async function createBulkProductsAction(payload: { data: ProductImportPay
     //     return response;
     //   }else {
     //     return response;
-    //   } 
-    }
+    //   }
+    
+    // return { success: false, error: "Bulk product creation not implemented." } as BulkImportResult;
+    // }

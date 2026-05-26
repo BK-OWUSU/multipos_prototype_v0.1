@@ -4,11 +4,14 @@ import { deleteUTFile } from "@/lib/actions/uploadthing";
 import { BrandFormValues, brandSchema } from "@/types/schema/inventory.schema";
 
 
+
+export class BrandService {
 /**
  * Creates a new brand and records the action in the audit log.
  */
 //POST
-export async function createBrandService(
+//CREATE BRAND
+static async createBrandService(
   data: BrandFormValues, 
   userId: string,
   businessId: string,
@@ -70,8 +73,8 @@ export async function createBrandService(
 /**
  * Updates an existing brand, logs changes, and handles old file cleanup if the icon changed.
  */
-
-export async function getAllBrandsService(businessId: string) {
+//GET ALL BRANDS FOR A BUSINESS
+static async getAllBrandsService(businessId: string) {
     try {
         const brands = await prisma.brand.findMany({
             where: {
@@ -95,16 +98,17 @@ export async function getAllBrandsService(businessId: string) {
 
         return { 
             success: true, 
-            brands: brands 
-        };
+            data: brands 
+        } as AppResponse;
 
     } catch (error) {
         console.error("GET_BRANDS_ERROR:", error);
-        return { success: false, error: "Failed to fetch brands.", status: 500 };
+        return { success: false, error: "Failed to fetch brands.", status: 500 } as AppResponse;
     }
 }
 
-export async function getBrandByIdService(brandId: string, businessId: string) {
+//GET SINGLE BRAND BY ID
+static async getBrandByIdService(brandId: string, businessId: string): Promise<AppResponse> {
     try {
          const brand = await prisma.brand.findFirst({
             where: { id: brandId, businessId: businessId },
@@ -116,23 +120,23 @@ export async function getBrandByIdService(brandId: string, businessId: string) {
         });
 
         if (!brand) {
-            return { error: "Brand not found", success: false, status: 404 };
+            return { error: "Brand not found", success: false, status: 404 } as AppResponse;
          }
 
         return { 
             success: true, 
-            brands: brand 
-        };
+            data: brand 
+        } as AppResponse;
 
     } catch (error) {
         console.error("GET_BRAND_ERROR:", error);
-        return { success: false, error: "Failed to fetch brand.", status: 500 };
+        return { success: false, error: "Failed to fetch brand.", status: 500 } as AppResponse;
     }
 }
 
 
-
-export async function updateBrandService(
+//UPDATE BRAND
+static async updateBrandService(
   id: string,
   data: BrandFormValues,
   userId: string,
@@ -207,7 +211,9 @@ export async function updateBrandService(
 /**
  * Deletes a single brand and its associated icon.
  */
-export async function deleteBrandService(
+
+//DELETE BRAND
+static async deleteBrandService(
   id: string,
   userId: string,
   businessId: string,
@@ -261,8 +267,8 @@ export async function deleteBrandService(
   }
 }
 
-
-export async function performBulkBrandDeleteService(
+//BULK DELETE BRANDS
+static async performBulkBrandDeleteService(
   ids: string[], 
   userId: string, 
   businessId: string, 
@@ -320,7 +326,8 @@ export async function performBulkBrandDeleteService(
 /**
  * Toggles the isActive status for multiple brands and logs the change.
  */
-export async function toggleBulkBrandStatusService(
+//TOGGLE BULK BRAND STATUS
+static async toggleBulkBrandStatusService(
   ids: string[], 
   userId: string, 
   businessId: string, 
@@ -369,4 +376,5 @@ export async function toggleBulkBrandStatusService(
     console.error("BULK_BRAND_STATUS_TOGGLE_ERROR:", error);
     return { success: false, error: "Failed to update brand statuses." } as AppResponse;
   }
+}
 }

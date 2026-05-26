@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import hasAccess from "@/lib/accessPermissionSecurity";
 import { GenericModal } from "@/components/reusables/GenericModal";
 import CustomerForm from "./customerForm"; // You'll need to create this
-import GenericBulkImport from "@/components/reusables/GenericBulkImport";
+import GenericExcelBulkImport from "@/components/reusables/GenericExcelBulkImport";
 import { customerImportConfig } from "@/lib/configs/customer-config"; // Create this config
 import { 
   Plus, 
@@ -136,7 +136,7 @@ export default function CustomerList() {
                 />
               }
             >
-              <GenericBulkImport
+              <GenericExcelBulkImport
                 config={customerImportConfig}
                 additionalPayload={{ businessId: user.business.id }}
                 onSuccess={() => {

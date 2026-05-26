@@ -199,7 +199,7 @@ export type ProductGroupByOutputType = {
   id: string
   name: string
   description: string | null
-  baseSku: string | null
+  baseSku: string
   hasVariant: boolean
   isActive: boolean
   isDeleted: boolean
@@ -236,7 +236,7 @@ export type ProductWhereInput = {
   id?: Prisma.StringFilter<"Product"> | string
   name?: Prisma.StringFilter<"Product"> | string
   description?: Prisma.StringNullableFilter<"Product"> | string | null
-  baseSku?: Prisma.StringNullableFilter<"Product"> | string | null
+  baseSku?: Prisma.StringFilter<"Product"> | string
   hasVariant?: Prisma.BoolFilter<"Product"> | boolean
   isActive?: Prisma.BoolFilter<"Product"> | boolean
   isDeleted?: Prisma.BoolFilter<"Product"> | boolean
@@ -256,7 +256,7 @@ export type ProductOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
-  baseSku?: Prisma.SortOrderInput | Prisma.SortOrder
+  baseSku?: Prisma.SortOrder
   hasVariant?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   isDeleted?: Prisma.SortOrder
@@ -274,12 +274,13 @@ export type ProductOrderByWithRelationInput = {
 
 export type ProductWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  businessId_baseSku?: Prisma.ProductBusinessIdBaseSkuCompoundUniqueInput
   AND?: Prisma.ProductWhereInput | Prisma.ProductWhereInput[]
   OR?: Prisma.ProductWhereInput[]
   NOT?: Prisma.ProductWhereInput | Prisma.ProductWhereInput[]
   name?: Prisma.StringFilter<"Product"> | string
   description?: Prisma.StringNullableFilter<"Product"> | string | null
-  baseSku?: Prisma.StringNullableFilter<"Product"> | string | null
+  baseSku?: Prisma.StringFilter<"Product"> | string
   hasVariant?: Prisma.BoolFilter<"Product"> | boolean
   isActive?: Prisma.BoolFilter<"Product"> | boolean
   isDeleted?: Prisma.BoolFilter<"Product"> | boolean
@@ -293,13 +294,13 @@ export type ProductWhereUniqueInput = Prisma.AtLeast<{
   business?: Prisma.XOR<Prisma.BusinessScalarRelationFilter, Prisma.BusinessWhereInput>
   category?: Prisma.XOR<Prisma.CategoryNullableScalarRelationFilter, Prisma.CategoryWhereInput> | null
   brand?: Prisma.XOR<Prisma.BrandNullableScalarRelationFilter, Prisma.BrandWhereInput> | null
-}, "id">
+}, "id" | "businessId_baseSku">
 
 export type ProductOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
-  baseSku?: Prisma.SortOrderInput | Prisma.SortOrder
+  baseSku?: Prisma.SortOrder
   hasVariant?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   isDeleted?: Prisma.SortOrder
@@ -321,7 +322,7 @@ export type ProductScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Product"> | string
   name?: Prisma.StringWithAggregatesFilter<"Product"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"Product"> | string | null
-  baseSku?: Prisma.StringNullableWithAggregatesFilter<"Product"> | string | null
+  baseSku?: Prisma.StringWithAggregatesFilter<"Product"> | string
   hasVariant?: Prisma.BoolWithAggregatesFilter<"Product"> | boolean
   isActive?: Prisma.BoolWithAggregatesFilter<"Product"> | boolean
   isDeleted?: Prisma.BoolWithAggregatesFilter<"Product"> | boolean
@@ -337,7 +338,7 @@ export type ProductCreateInput = {
   id?: string
   name: string
   description?: string | null
-  baseSku?: string | null
+  baseSku: string
   hasVariant?: boolean
   isActive?: boolean
   isDeleted?: boolean
@@ -354,7 +355,7 @@ export type ProductUncheckedCreateInput = {
   id?: string
   name: string
   description?: string | null
-  baseSku?: string | null
+  baseSku: string
   hasVariant?: boolean
   isActive?: boolean
   isDeleted?: boolean
@@ -371,7 +372,7 @@ export type ProductUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  baseSku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseSku?: Prisma.StringFieldUpdateOperationsInput | string
   hasVariant?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -388,7 +389,7 @@ export type ProductUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  baseSku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseSku?: Prisma.StringFieldUpdateOperationsInput | string
   hasVariant?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -405,7 +406,7 @@ export type ProductCreateManyInput = {
   id?: string
   name: string
   description?: string | null
-  baseSku?: string | null
+  baseSku: string
   hasVariant?: boolean
   isActive?: boolean
   isDeleted?: boolean
@@ -421,7 +422,7 @@ export type ProductUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  baseSku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseSku?: Prisma.StringFieldUpdateOperationsInput | string
   hasVariant?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -434,7 +435,7 @@ export type ProductUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  baseSku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseSku?: Prisma.StringFieldUpdateOperationsInput | string
   hasVariant?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -454,6 +455,11 @@ export type ProductListRelationFilter = {
 
 export type ProductOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type ProductBusinessIdBaseSkuCompoundUniqueInput = {
+  businessId: string
+  baseSku: string
 }
 
 export type ProductCountOrderByAggregateInput = {
@@ -653,7 +659,7 @@ export type ProductCreateWithoutBusinessInput = {
   id?: string
   name: string
   description?: string | null
-  baseSku?: string | null
+  baseSku: string
   hasVariant?: boolean
   isActive?: boolean
   isDeleted?: boolean
@@ -669,7 +675,7 @@ export type ProductUncheckedCreateWithoutBusinessInput = {
   id?: string
   name: string
   description?: string | null
-  baseSku?: string | null
+  baseSku: string
   hasVariant?: boolean
   isActive?: boolean
   isDeleted?: boolean
@@ -714,7 +720,7 @@ export type ProductScalarWhereInput = {
   id?: Prisma.StringFilter<"Product"> | string
   name?: Prisma.StringFilter<"Product"> | string
   description?: Prisma.StringNullableFilter<"Product"> | string | null
-  baseSku?: Prisma.StringNullableFilter<"Product"> | string | null
+  baseSku?: Prisma.StringFilter<"Product"> | string
   hasVariant?: Prisma.BoolFilter<"Product"> | boolean
   isActive?: Prisma.BoolFilter<"Product"> | boolean
   isDeleted?: Prisma.BoolFilter<"Product"> | boolean
@@ -730,7 +736,7 @@ export type ProductCreateWithoutCategoryInput = {
   id?: string
   name: string
   description?: string | null
-  baseSku?: string | null
+  baseSku: string
   hasVariant?: boolean
   isActive?: boolean
   isDeleted?: boolean
@@ -746,7 +752,7 @@ export type ProductUncheckedCreateWithoutCategoryInput = {
   id?: string
   name: string
   description?: string | null
-  baseSku?: string | null
+  baseSku: string
   hasVariant?: boolean
   isActive?: boolean
   isDeleted?: boolean
@@ -788,7 +794,7 @@ export type ProductCreateWithoutBrandInput = {
   id?: string
   name: string
   description?: string | null
-  baseSku?: string | null
+  baseSku: string
   hasVariant?: boolean
   isActive?: boolean
   isDeleted?: boolean
@@ -804,7 +810,7 @@ export type ProductUncheckedCreateWithoutBrandInput = {
   id?: string
   name: string
   description?: string | null
-  baseSku?: string | null
+  baseSku: string
   hasVariant?: boolean
   isActive?: boolean
   isDeleted?: boolean
@@ -846,7 +852,7 @@ export type ProductCreateWithoutVariantsInput = {
   id?: string
   name: string
   description?: string | null
-  baseSku?: string | null
+  baseSku: string
   hasVariant?: boolean
   isActive?: boolean
   isDeleted?: boolean
@@ -862,7 +868,7 @@ export type ProductUncheckedCreateWithoutVariantsInput = {
   id?: string
   name: string
   description?: string | null
-  baseSku?: string | null
+  baseSku: string
   hasVariant?: boolean
   isActive?: boolean
   isDeleted?: boolean
@@ -894,7 +900,7 @@ export type ProductUpdateWithoutVariantsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  baseSku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseSku?: Prisma.StringFieldUpdateOperationsInput | string
   hasVariant?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -910,7 +916,7 @@ export type ProductUncheckedUpdateWithoutVariantsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  baseSku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseSku?: Prisma.StringFieldUpdateOperationsInput | string
   hasVariant?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -926,7 +932,7 @@ export type ProductCreateManyBusinessInput = {
   id?: string
   name: string
   description?: string | null
-  baseSku?: string | null
+  baseSku: string
   hasVariant?: boolean
   isActive?: boolean
   isDeleted?: boolean
@@ -941,7 +947,7 @@ export type ProductUpdateWithoutBusinessInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  baseSku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseSku?: Prisma.StringFieldUpdateOperationsInput | string
   hasVariant?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -957,7 +963,7 @@ export type ProductUncheckedUpdateWithoutBusinessInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  baseSku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseSku?: Prisma.StringFieldUpdateOperationsInput | string
   hasVariant?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -973,7 +979,7 @@ export type ProductUncheckedUpdateManyWithoutBusinessInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  baseSku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseSku?: Prisma.StringFieldUpdateOperationsInput | string
   hasVariant?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -988,7 +994,7 @@ export type ProductCreateManyCategoryInput = {
   id?: string
   name: string
   description?: string | null
-  baseSku?: string | null
+  baseSku: string
   hasVariant?: boolean
   isActive?: boolean
   isDeleted?: boolean
@@ -1003,7 +1009,7 @@ export type ProductUpdateWithoutCategoryInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  baseSku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseSku?: Prisma.StringFieldUpdateOperationsInput | string
   hasVariant?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1019,7 +1025,7 @@ export type ProductUncheckedUpdateWithoutCategoryInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  baseSku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseSku?: Prisma.StringFieldUpdateOperationsInput | string
   hasVariant?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1035,7 +1041,7 @@ export type ProductUncheckedUpdateManyWithoutCategoryInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  baseSku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseSku?: Prisma.StringFieldUpdateOperationsInput | string
   hasVariant?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1050,7 +1056,7 @@ export type ProductCreateManyBrandInput = {
   id?: string
   name: string
   description?: string | null
-  baseSku?: string | null
+  baseSku: string
   hasVariant?: boolean
   isActive?: boolean
   isDeleted?: boolean
@@ -1065,7 +1071,7 @@ export type ProductUpdateWithoutBrandInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  baseSku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseSku?: Prisma.StringFieldUpdateOperationsInput | string
   hasVariant?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1081,7 +1087,7 @@ export type ProductUncheckedUpdateWithoutBrandInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  baseSku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseSku?: Prisma.StringFieldUpdateOperationsInput | string
   hasVariant?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1097,7 +1103,7 @@ export type ProductUncheckedUpdateManyWithoutBrandInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  baseSku?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  baseSku?: Prisma.StringFieldUpdateOperationsInput | string
   hasVariant?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1245,7 +1251,7 @@ export type $ProductPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     id: string
     name: string
     description: string | null
-    baseSku: string | null
+    baseSku: string
     hasVariant: boolean
     isActive: boolean
     isDeleted: boolean

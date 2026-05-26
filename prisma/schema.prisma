@@ -302,7 +302,7 @@ model Product {
   description String? @db.Text
   
   // Base SKU prefix (e.g., "TEE" for T-shirts)
-  baseSku       String?
+  baseSku       String
   hasVariant    Boolean @default(false)
 
   isActive  Boolean   @default(true)
@@ -322,6 +322,8 @@ model Product {
   category Category?        @relation(fields: [categoryId], references: [id])
   brand    Brand?           @relation(fields: [brandId], references: [id])
 
+  
+  @@unique([businessId, baseSku]) // 💥ADD THIS UNIQUE COMPOUND CONSTRAINT HERE
   @@index([businessId, name])
   @@index([businessId, categoryId])
   @@index([businessId, brandId])
@@ -635,6 +637,7 @@ model AuditLog {
   userId     String
   businessId String
   createdAt  DateTime @default(now())
+  details    String?  @db.Text
 
   user     User     @relation(fields: [userId], references: [id])
   business Business @relation(fields: [businessId], references: [id])
@@ -653,7 +656,8 @@ enum AccountType {
 enum PaymentType {
   CASH
   MOBILE_MONEY
-  BOTH
+  CARD
+  SPLIT
 }
 
 enum SaleStatus {

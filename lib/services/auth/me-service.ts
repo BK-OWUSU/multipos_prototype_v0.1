@@ -2,7 +2,8 @@ import { prisma } from "@/lib/dbHelper";
 import { mapUserToResponse } from "@/lib/mappers";
 import { UserWithRelations } from "@/types/auth/auth";
 
-export async function getCurrentUser(userId: string, businessId: string) {
+export class MeService {
+static async getCurrentUser(userId: string, businessId: string) {
     try {
         // Change findUnique to findFirst
         const dbUser = await prisma.user.findFirst({
@@ -44,4 +45,5 @@ export async function getCurrentUser(userId: string, businessId: string) {
         console.error("Auth me error:", error);
         return { success: false, error: "Internal Server Error", status: 500 };
     }
+}
 }

@@ -1,5 +1,5 @@
 import { getSession } from "@/lib/auths";
-import { getCurrentUser } from "@/lib/services/auth/me-service";
+import { MeService } from "@/lib/services/auth/me-service";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -8,7 +8,7 @@ export async function GET() {
             return NextResponse.json({ error: "Unauthorized",success: false }, { status: 401 });
         }
         const { userId, businessId } = session;
-        const response = await getCurrentUser(userId, businessId);
+        const response = await  MeService.getCurrentUser(userId, businessId);
         if (response.success && response.user) {
             const user = response.user;
             return NextResponse.json({ success: true, user }, { status: 200 });

@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { BulkImportConfig } from '@/types/schema/bulkupload.schema';
+import {BulkImportConfig} from '@/types/schema/bulkImport';
 import { createBulkCustomer } from '../actions/business/customer-actions';
-// import { createBulkCustomers } from '@/lib/actions/business/customerActions';
+import * as XLSX from 'xlsx';;
 
 // 1. Schema for parsing the raw CSV string data
 export const customerCSVSchema = z.object({
@@ -31,14 +31,52 @@ export const customerCSVSchema = z.object({
   .or(z.literal("")),
   address: z.string().optional().nullable(),
   shop: z.string().optional().nullable(),
-  firstVisit: z.preprocess((arg) => {
-    if (arg instanceof Date) return arg.toISOString();
-    return arg;
-  }, z.string().optional().nullable()),
-  lastVisit: z.preprocess((arg) => {
-    if (arg instanceof Date) return arg.toISOString();
-    return arg;
-  }, z.string().optional().nullable()),
+  firstVisit: z
+      .union([z.date(), z.string(), z.number()])
+      .optional()
+      .nullable()
+      .transform((val) => {
+        if (!val || val === "") return null;
+        
+        // Case 1: Already safely extracted as an instance of JavaScript Date objects
+        if (val instanceof Date) return val;
+        
+        // Case 2: Extracted as an Excel structural serial number integer (e.g. 46166)
+        if (typeof val === 'number') {
+          try {
+            const parsed = XLSX.SSF.parse_date_code(val);
+            return new Date(parsed.y, parsed.m - 1, parsed.d);
+          } catch {
+            return null;
+          }
+        }
+        
+        const parsedDate = new Date(val);
+        return isNaN(parsedDate.getTime()) ? null : parsedDate;
+  }),  
+      lastVisit: z
+      .union([z.date(), z.string(), z.number()])
+      .optional()
+      .nullable()
+      .transform((val) => {
+        if (!val || val === "") return null;
+        
+        // Case 1: Already safely extracted as an instance of JavaScript Date objects
+        if (val instanceof Date) return val;
+        
+        // Case 2: Extracted as an Excel structural serial number integer (e.g. 46166)
+        if (typeof val === 'number') {
+          try {
+            const parsed = XLSX.SSF.parse_date_code(val);
+            return new Date(parsed.y, parsed.m - 1, parsed.d);
+          } catch {
+            return null;
+          }
+        }
+        
+        const parsedDate = new Date(val);
+        return isNaN(parsedDate.getTime()) ? null : parsedDate;
+  }),
 
   totalVisit: z
     .union([z.string(), z.number()])
@@ -82,36 +120,10 @@ export const customerImportConfig: BulkImportConfig<typeof customerCSVSchema, Cu
   entityNamePlural: 'Customers',
   schema: customerCSVSchema,
 //   apiEndpoint: createBulkCustomers,
-  apiEndpoint: createBulkCustomer,
-  
-  templateHeaders: [
-    'firstName',
-    'lastName',
-    'email',
-    'phone',
-    'address',
-    'shop',
-    'firstVisit',
-    'lastVisit',
-    'totalVisit',
-    'isCreditCustomer',
-    'creditLimit',
-  ],
-  
-  templateExample: [
-    'Isaac',
-    'Newton',
-    'isaac@example.com',
-    "'0240000000",
-    'Accra-Ghana',
-    'null',
-    '2023-01-01',
-    '2024-05-01',
-    '10',
-    'true',
-    '5000.00',
-  ],
-  
+  apiEndpoint: createBulkCustomer,  
+  customTemplatePath: 'customers',
+
+
   transformData: (row: CustomerCSVRow): CustomerImportPayload => ({
     firstName: row.firstName,
     lastName: row.lastName,

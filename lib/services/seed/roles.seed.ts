@@ -1,4 +1,4 @@
-import { Prisma, RoleName, RoleType } from "@/lib/generated/prisma/client";
+import { Prisma, RoleName, RoleType } from "@/generated/prisma/client";
 
 
 export async function seedRoles(userId:string, businessId:string, transaction: Prisma.TransactionClient) {

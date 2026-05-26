@@ -7,7 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import hasAccess from "@/lib/accessPermissionSecurity";
 import { GenericModal } from "@/components/reusables/GenericModal";
 import AddEmployeeForm from "./AddEmployeeForm";
-import GenericBulkImport from "@/components/reusables/GenericBulkImport";
+import GenericExcelBulkImport from "@/components/reusables/GenericExcelBulkImport";
 import { employeeImportConfig } from "@/lib/configs/employee-config";
 import { Plus, Users2, PersonStanding, UserCheck, ShieldAlert, Upload, Shield } from "lucide-react";
 import { Card, CardHeader, CardDescription, CardContent } from "@/components/ui/card";
@@ -130,7 +130,7 @@ export default function EmployeeList() {
                 />
               }
             >
-              <GenericBulkImport
+              <GenericExcelBulkImport
                 config={employeeImportConfig}
                 additionalPayload={{ businessId: user.business.id }}
                 onSuccess={(result) => {

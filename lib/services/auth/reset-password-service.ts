@@ -3,8 +3,9 @@ import { POS_COOKIE_NAME, hashPassword, PASSWORD_RESET_COOKIE_NAME, verifyEmailV
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function resetPasswordService(request: NextRequest) {
-  try {
+export class ResetPasswordService {
+  static async resetPasswordService(request: NextRequest) {
+    try {
     const cookieStore = await cookies();
     const token = cookieStore.get(PASSWORD_RESET_COOKIE_NAME)?.value;
 
@@ -106,4 +107,5 @@ export async function resetPasswordService(request: NextRequest) {
       { status:500 }
     );
   }
+}
 }

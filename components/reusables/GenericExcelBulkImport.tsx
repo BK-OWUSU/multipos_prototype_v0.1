@@ -1,21 +1,22 @@
 // components/bulk-import/GenericBulkImport.tsx
 "use client";
 
-import { useState, ChangeEvent, useTransition } from 'react';
-import { Upload, Download, FileSpreadsheet, AlertCircle, CheckCircle, X } from 'lucide-react';
+import { useState, ChangeEvent } from 'react';
+import { Upload, Download, FileSpreadsheet, AlertCircle, CheckCircle } from 'lucide-react';
 import CustomButton from '@/components/reusables/CustomButton';
 import { toast } from 'sonner';
-import { parseCSV, downloadTemplate } from '@/lib/bulk-import/csv-parser';
-import { BulkImportConfig, CSVParseResult, BulkImportResult } from '@/types/schema/bulkupload.schema';
+// Swapped out CSV parser for Excel parser
+import { parseExcel, downloadTemplate } from '@/lib/bulk-import/excel-parser';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { z } from 'zod';
+import { BulkImportConfig, CSVParseResult, BulkImportResult } from '@/types/schema/bulkImport';
 
 interface GenericBulkImportProps<TSchema extends z.ZodType, TOutput = z.infer<TSchema>> {
   config: BulkImportConfig<TSchema, TOutput>;
   additionalPayload?: Record<string, unknown>;
   onSuccess?: (result: BulkImportResult) => void;
-  onImportParsedSuccess?: ()=> void;
+  onImportParsedSuccess?: () => void;
   onCancel?: () => void;
   renderPreview?: (data: TOutput[]) => React.ReactNode;
 }
@@ -26,7 +27,7 @@ interface UploadProgress {
   failed: number;
 }
 
-export default function GenericBulkImport<TSchema extends z.ZodType, TOutput>({
+export default function GenericExcelBulkImport<TSchema extends z.ZodType, TOutput>({
   config,
   additionalPayload = {},
   onSuccess,
@@ -42,32 +43,32 @@ export default function GenericBulkImport<TSchema extends z.ZodType, TOutput>({
     success: 0,
     failed: 0,
   });
-//   const [isPending, startTransition] = useTransition()
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>): Promise<void> => {
     const selectedFile = e.target.files?.[0];
     
     if (!selectedFile) return;
 
-    if (!selectedFile.name.endsWith('.csv')) {
-      toast.error('Please upload a CSV file');
+    // Updated validation targeting .xlsx extensions
+    if (!selectedFile.name.endsWith('.xlsx')) {
+      toast.error('Please upload an Excel (.xlsx) file');
       return;
     }
 
     setFile(selectedFile);
     
-    toast.info('Parsing CSV file...');
-    const result = await parseCSV(selectedFile, config);
+    toast.info('Parsing Excel file...');
+    // Utilizing the new excelParser utility execution
+    const result = await parseExcel(selectedFile, config);
     setParseResult(result);
 
     if (result.success) {
       toast.success(`Successfully parsed ${result.data.length} ${config.entityNamePlural.toLowerCase()}`);
       if (onImportParsedSuccess) onImportParsedSuccess();
     } else {
-      toast.error(`Found ${result.errors.length} errors in CSV`);
+      toast.error(`Found ${result.errors.length} errors in Excel file`);
     }
   };
-
 
   const handleUpload = async (): Promise<void> => {
     if (!parseResult || !parseResult.success || parseResult.data.length === 0) {
@@ -77,11 +78,28 @@ export default function GenericBulkImport<TSchema extends z.ZodType, TOutput>({
 
     setIsUploading(true);
     
-    const transformedData =( 
-    config.transformData
-      ? parseResult.data.map(config.transformData)
-      : parseResult.data
-    ) as TOutput[];
+  let transformedData: TOutput[] = [];
+
+  if (config.transformData) {
+    // 💡 If the transformer returns an array, it's a batch aggregator (like our Products config)
+    // Otherwise, we fall back to mapping row-by-row for simple entities (Customers/Employees)
+    const testTransform = config.transformData(parseResult.data[0]);
+    
+    if (Array.isArray(testTransform)) {
+      // It's a batch aggregator! Pass the whole array at once.
+      transformedData = config.transformData(parseResult.data) as unknown as TOutput[];
+      console.log("Transformed Data (Batch Aggregator):");
+    } else {
+      // It's a standard row-by-row transformer. Map it like before.
+      transformedData = parseResult.data.map(config.transformData) as unknown as TOutput[];
+      console.log("Transformed Data (Row-by-Row):");
+    }
+  } else {
+    transformedData = parseResult.data as unknown as TOutput[];
+  }
+
+    console.log("Transformed Data to be Uploaded:");
+    console.dir({ transformedData }, { depth: null });
     
     setUploadProgress({
       total: transformedData.length,
@@ -89,18 +107,15 @@ export default function GenericBulkImport<TSchema extends z.ZodType, TOutput>({
       failed: 0,
     });
 
-    // 2. Prepare the payload
     const payload = {
       data: transformedData,
       ...additionalPayload,
     } as { data: TOutput[]; [key: string]: unknown };
 
-try {
+    try {
       let result: BulkImportResult;
 
-      // 3. Handle based on type of apiEndpoint
       if (typeof config.apiEndpoint === 'string') {
-        // Handle API Route (String)
         const response = await fetch(config.apiEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -110,18 +125,16 @@ try {
         if (!response.ok) throw new Error('Network response was not ok');
         result = await response.json();
       } else {
-        // Handle Server Action (Function) with startTransition because Server Actions impact app state
         result = await config.apiEndpoint(payload);
         if (result.success && result.message) {
           toast.success(result.message);
-        }else if (!result.success && result.error) {
+        } else if (!result.success && result.error) {
           toast.error(result.error);
-        }else {
+        } else {
           toast.error('Bulk import failed');
         } 
       }
 
-      // 4. Handle the result
       if (result.success) {
         setUploadProgress({
           total: result.total,
@@ -155,14 +168,9 @@ try {
         <div>
           <h3 className="text-lg font-semibold">Bulk {config.entityName} Import</h3>
           <p className="text-sm text-gray-500">
-            Upload a CSV file to import multiple {config.entityNamePlural.toLowerCase()}
+            Upload an Excel file to import multiple {config.entityNamePlural.toLowerCase()}
           </p>
         </div>
-        {/* {onCancel && (
-          <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">
-            <X className="h-5 w-5" />
-          </button>
-        )} */}
       </div>
 
       {/* Download Template */}
@@ -172,7 +180,7 @@ try {
           <div className="flex-1">
             <h4 className="font-medium text-blue-900">First time importing?</h4>
             <p className="text-sm text-blue-700 mt-1">
-              Download our CSV template with the correct format and example data.
+              Download our Excel template. Ensure your data matches the schema layout on the <strong>Import Data</strong> sheet tab.
             </p>
             <CustomButton
               text="Download Template"
@@ -189,16 +197,16 @@ try {
       <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors">
         <input
           type="file"
-          accept=".csv"
+          accept=".xlsx"
           onChange={handleFileChange}
           className="hidden"
-          id="csv-upload"
+          id="excel-upload"
           disabled={isUploading}
         />
-        <label htmlFor="csv-upload" className="cursor-pointer">
+        <label htmlFor="excel-upload" className="cursor-pointer">
           <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-lg font-medium text-gray-700">
-            {file ? file.name : 'Click to upload CSV file'}
+            {file ? file.name : 'Click to upload Excel (.xlsx) file'}
           </p>
           <p className="text-sm text-gray-500 mt-1">or drag and drop</p>
         </label>
@@ -222,7 +230,7 @@ try {
             <Alert className="bg-red-50 border-red-200">
               <AlertCircle className="h-4 w-4 text-red-600" />
               <AlertDescription className="text-red-800">
-                <strong>{parseResult.errors.length} errors</strong> found in CSV
+                <strong>{parseResult.errors.length} errors</strong> found in workbook
                 <div className="mt-3 max-h-60 overflow-y-auto space-y-2">
                   {parseResult.errors.map((error, index) => (
                     <div key={index} className="text-xs bg-white p-2 rounded border border-red-200">

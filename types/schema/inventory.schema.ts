@@ -1,15 +1,5 @@
 import { z } from "zod";
 
-import {
-  Brand as PrismaBrand,
-  Category as PrismaCategory,
-  Product as PrismaProduct,
-  ProductVariant,
-  VariantImage,
-  ProductVariantOption,
-  VariantAttribute,
-} from "@/generated/prisma/client"
-
 // ── 1. INDIVIDUAL OPTION VALUE SELECTION ───────────────────
 // Maps to: VariantAttributeValue linked through ProductVariantOption
 export const variantOptionSchema = z.object({

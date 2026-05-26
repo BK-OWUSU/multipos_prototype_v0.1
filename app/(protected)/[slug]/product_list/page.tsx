@@ -8,8 +8,8 @@ import { useProductStore } from "@/store/productsStore";
 import { productsColumnDef } from "@/components/tablesColumnDef/productsColumnDef";
 import TableMain from "@/components/reusables/table/TableMain";
 import { Upload } from "lucide-react";
-import GenericBulkImport from "@/components/reusables/GenericBulkImport";
-import { productImportConfig } from "@/lib/configs/product-config";
+import GenericExcelBulkImport from "@/components/reusables/GenericExcelBulkImport";
+import { productExcelImportConfig } from "@/lib/configs/product-config";
 import { useAuthStore } from "@/store/useAuthStore";
 import { toggleBulkProductsStatusAction } from "@/lib/actions/business/productsActions";
 import { Product } from "@/types/schema/inventory";
@@ -96,7 +96,7 @@ export default function ProductList() {
           <GenericModal
             width={width}
             header="Bulk Product Import"
-            description="Import multiple products from a CSV file"
+            description="Import multiple products from a Excel file"
             isOpen={isBulkImportOpen}
             onOpenChange={() => {
               setIsBulkImportOpen(prev => !prev);
@@ -104,14 +104,14 @@ export default function ProductList() {
             }}
             triggerBtn={
               <CustomButton
-                text="Bulk Import"
+                text="Create Bulk Products"
                 customVariant="primary"
                 icon={<Upload className="mr-2 h-4 w-4" />}
               />
             }
           >
-            <GenericBulkImport
-              config={productImportConfig}
+            <GenericExcelBulkImport
+              config={productExcelImportConfig}
               onSuccess={(result) => {
                 setIsBulkImportOpen(false);
                 fetchProducts();

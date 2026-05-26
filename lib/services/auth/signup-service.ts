@@ -9,7 +9,8 @@ import { seedRoles } from "@/lib/services/seed/roles.seed";
 import { getAllInfoByISO } from 'iso-country-currency';
 import { SignUpFormSchema, signupSchema } from "@/types/schema/auth.schema";
 
-export async function signUp(rawData: SignUpFormSchema) {
+export class SignUpService {
+static async signUp(rawData: SignUpFormSchema) {
     try {
 
         const validatedData = signupSchema.parse(rawData);
@@ -143,4 +144,5 @@ export async function signUp(rawData: SignUpFormSchema) {
         console.log("Error registration: ", error)
         return NextResponse.json({error: "Error registering", success: false}, {status: 500})
     }
+}
 }

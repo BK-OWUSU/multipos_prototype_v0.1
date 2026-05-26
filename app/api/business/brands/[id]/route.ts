@@ -1,6 +1,6 @@
 import { getSession} from "@/lib/auths";
 import { NextRequest, NextResponse } from "next/server";
-import { deleteBrandService, getBrandByIdService, updateBrandService } from "@/lib/services/business/brand-service";
+import { BrandService } from "@/lib/services/business/brand-service";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
         //Get Current user session
@@ -12,14 +12,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         }
 
         const { businessId } = session;
-        const response = await getBrandByIdService(id, businessId);
+        const response = await BrandService.getBrandByIdService(id, businessId);
 
-        if (!response.success || !response.brands) {
+        if (!response.success || !response.data) {
             return NextResponse.json({ success: false, error: response.error }, { status: response.status });
         }
 
-        const brandsData = response.brands;
-        return NextResponse.json({ success: true, brands: brandsData }, { status: 200 });        
+        const brandsData = response.data ;
+        return NextResponse.json({ success: true, brand: brandsData }, { status: 200 });        
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -33,7 +33,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
         const { userId, businessId } = session;
         const body = await request.json();
-        const response = await updateBrandService(id, body, userId, businessId, session.businessSlug);
+        const response = await BrandService.updateBrandService(id, body, userId, businessId, session.businessSlug);
         if (response.success && response.message) {
            return NextResponse.json({success: response.success, message: response.message}, {status: response.status})
         }else {
@@ -52,7 +52,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         } 
 
         const { userId, businessId } = session;
-        const response = await deleteBrandService(id, userId, businessId, session.businessSlug);
+        const response = await BrandService.deleteBrandService(id, userId, businessId, session.businessSlug);
         if (response.success && response.message) {
             return NextResponse.json({success: response.success, message: response.message}, {status: response.status})
         }else {

@@ -500,7 +500,8 @@ export const AuditLogScalarFieldEnum = {
   newValue: 'newValue',
   userId: 'userId',
   businessId: 'businessId',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  details: 'details'
 } as const
 
 export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]

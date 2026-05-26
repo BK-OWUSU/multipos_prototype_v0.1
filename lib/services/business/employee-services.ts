@@ -10,7 +10,9 @@ import { sendTempPasswordEmail } from "@/lib/email";
 import { EmployeeValidatedArray, EmployeeImportPayload } from "@/lib/configs/employee-config";
 import { UserCreateManyInput } from "@/generated/prisma/models";
 
-export async function createEmployee(request: NextRequest, userId: string, employeeId: string, businessId: string) {
+export class EmployeeService { 
+
+static async createEmployee(request: NextRequest, userId: string, employeeId: string, businessId: string) {
     try {
         const body = await request.json();
         const validatedData = createEmployeeSchema.parse(body);
@@ -122,7 +124,7 @@ export async function createEmployee(request: NextRequest, userId: string, emplo
 }
 
 //CREATE BULK EMPLOYEES
-export async function createBulkEmployeesService(
+static async createBulkEmployeesService(
   payload: { data: EmployeeImportPayload[]; [key: string]: unknown },
   userId: string,
   employeeId: string,
@@ -137,34 +139,22 @@ export async function createBulkEmployeesService(
       return { error: "No employee data provided.", success: false, status: 400 } as AppResponse;
     }
 
-    // 1. Collecting unique Role and Shop names from the CSV data
+    // 1. Collecting unique Role names from the CSV data
     const roleNamesToLookup = [...new Set(validatedData.map((emp) => emp.role))];
-    const shopNamesToLookup = [...new Set(validatedData.map(e => e.shop).filter(Boolean))];
 
-    // 2. Batch fetch Roles AND Shops using Names
-    const [rolesInDb, shopsInDb] = await Promise.all([
-    prisma.role.findMany({
+    // 2. Batch fetch Roles (Shops database lookup has been removed since we have raw IDs)
+    const rolesInDb = await prisma.role.findMany({
         where: { 
             businessId, 
             name: { in: roleNamesToLookup as string[] } 
         },
         select: { id: true, name: true },
-    }),
-    prisma.shop.findMany({
-        where: { 
-            businessId, 
-            name: { in: shopNamesToLookup as string[] } // Looking up by NAME
-        },
-        select: { id: true, name: true },
-    })
-    ]);
+    });
     
-    
-    // 3. Create Lookup Maps
+    // 3. Create Role Lookup Map
     const roleMap = new Map(rolesInDb.map((r) => [r.name, r.id]));
-    const shopMap = new Map(shopsInDb.map((s) => [s.name, s.id]));
     
-    // 5. Check for existing emails in this business to prevent unique constraint errors
+    // 4. Check for existing emails in this business to prevent unique constraint errors
     const existingEmails = await prisma.employee.findMany({
       where: {
         businessId: businessId,
@@ -174,37 +164,32 @@ export async function createBulkEmployeesService(
     });
 
     const existingEmailSet = new Set(existingEmails.map((e) => e.email));
-  
 
-    // 4. Transform validated data
+    // 5. Transform validated data
     const newEmployeesData = validatedData
     .filter((emp) => !existingEmailSet.has(emp.email))
     .map((emp) => {
         const roleIdFromName = roleMap.get(emp.role);
-        // Find the Shop ID based on the Name provided in the CSV
-        // We use .get(emp.shop) to find the UUID linked to that name
-        const shopIdFromName = (emp.shop && emp.shop !== "" && emp.shop !== "null") ? shopMap.get(emp.shop) : null;
+        
         if (!roleIdFromName) {
-        throw new Error(`Role "${emp.role}" does not exist in this business.`);
+          throw new Error(`Role "${emp.role}" does not exist in this business.`);
         }
-        // Optional: Throw error if shop name was provided but not found in DB
-        // if (emp.shop && !shopIdFromName) {
-        //     console.log(`Shop "${emp.shop}" not found. Please check the spelling.`);
-        //     throw new Error(`Shop "${emp.shop}" not found. Please check the spelling.`);
-        // }
+
+        // ✅ FIX: Extract the raw Shop ID value directly from the payload row safely
+        const directShopId = (emp.shopId && emp.shopId !== "" && emp.shopId !== "null") ? emp.shopId.trim() : null;
 
         return {
-        firstName: emp.firstName,
-        lastName: emp.lastName,
-        email: emp.email,
-        phone: emp.phone || null,
-        designation: emp.designation || null,
-        address: emp.address || null,
-        dateOfBirth: emp.dateOfBirth ? new Date(emp.dateOfBirth) : null,
-        businessId: businessId,
-        roleId: roleIdFromName,
-        shopId: shopIdFromName,
-        hasSystemAccess: emp.hasSystemAccess || false, 
+          firstName: emp.firstName,
+          lastName: emp.lastName,
+          email: emp.email,
+          phone: emp.phone || null,
+          designation: emp.designation || null,
+          address: emp.address || null,
+          dateOfBirth: emp.dateOfBirth ? new Date(emp.dateOfBirth) : null,
+          businessId: businessId,
+          roleId: roleIdFromName,
+          shopId: directShopId,
+          hasSystemAccess: emp.hasSystemAccess || false, 
         };
     });
 
@@ -228,7 +213,7 @@ export async function createBulkEmployeesService(
         };
     }));
 
-    // 5. Execute Transaction: Insert Employees and Create Audit Logs
+    // 6. Execute Transaction: Insert Employees and Create Audit Logs
     const result = await prisma.$transaction(async (tx) => {
       // Bulk Insert
       const createdEmployees = await tx.employee.createManyAndReturn({
@@ -244,82 +229,80 @@ export async function createBulkEmployeesService(
           entityId: emp.id,
           userId: userId,
           businessId: businessId,
-          newValue: `Bulk imported: ${emp.firstName} ${emp.lastName} as ${emp.roleId}`,
+          newValue: `Bulk imported: ${emp.firstName} ${emp.lastName} under role reference ${emp.roleId}`,
         })),
       });
 
-        // Create a Map of Email -> EmployeeID for reliable lookup
-        const emailToIdMap = new Map(createdEmployees.map(e => [e.email, e.id]));
-        // Standard Audit Logs for the import
-        await tx.auditLog.createMany({
-            data: createdEmployees.map((emp) => ({
+      // Create a Map of Email -> EmployeeID for reliable lookup
+      const emailToIdMap = new Map(createdEmployees.map(e => [e.email, e.id]));
+      
+      // Standard Audit Logs for the import batch wrapper summary
+      await tx.auditLog.createMany({
+          data: createdEmployees.map((emp) => ({
             action: "CREATE_EMPLOYEE",
             entity: "EMPLOYEE",
             entityId: emp.id,
             userId: userId, 
             businessId: businessId,
-            newValue: `Bulk imported staff`,
-            })),
-        });
+            newValue: `Bulk imported staff parameters`,
+          })),
+      });
 
-    
     type UserCreateManyInputWithoutID = Omit<UserCreateManyInput, "id">;
 
     if (UserAccountsRequests.length > 0) {
-    // 6. Create User records using the Email-to-ID Map (SAFE)
-    const userData = UserAccountsRequests.map((req) => {
-      const empId = emailToIdMap.get(req.email);
-      if (!empId) return null;
+      // Create User records using the Email-to-ID Map (SAFE)
+      const userData = UserAccountsRequests.map((req) => {
+        const empId = emailToIdMap.get(req.email);
+        if (!empId) return null;
 
-      return {
-        employeeId: empId,
-        password: req.password,
-        needsPasswordChange: true,
-        isVerified: false,
-        accessGrantedBy: employeeId, 
-        accessGrantedAt: new Date(),
-      };
-    }).filter(Boolean) as UserCreateManyInputWithoutID[];
+        return {
+          employeeId: empId,
+          password: req.password,
+          needsPasswordChange: true,
+          isVerified: false,
+          accessGrantedBy: employeeId, 
+          accessGrantedAt: new Date(),
+        };
+      }).filter(Boolean) as UserCreateManyInputWithoutID[];
 
+      await tx.user.createMany({ data: userData });
 
-    await tx.user.createMany({ data: userData });
+      // Updating Employee hasSystemAccess status
+      const employeeIdsToUpdate = userData.map(u => u.employeeId);
+      await tx.employee.updateMany({
+        where: { id: { in: employeeIdsToUpdate } },
+        data: { hasSystemAccess: true }
+      });
 
-    // 7. Updating Employee hasSystemAccess status
-    const employeeIdsToUpdate = userData.map(u => u.employeeId);
-    await tx.employee.updateMany({
-      where: { id: { in: employeeIdsToUpdate } },
-      data: { hasSystemAccess: true }
-    });
+      // Log Access Grants
+      await tx.auditLog.createMany({
+        data: employeeIdsToUpdate.map(id => ({
+          action: "GRANT_ACCESS_BULK",
+          entity: "USER",
+          entityId: id,
+          userId: userId,
+          businessId: businessId,
+          newValue: `System access granted via bulk import.`
+        }))
+      });
+    }
 
-    // 8. Log Access Grants
-    await tx.auditLog.createMany({
-      data: employeeIdsToUpdate.map(id => ({
-        action: "GRANT_ACCESS_BULK",
-        entity: "USER",
-        entityId: id,
-        userId: userId,
-        businessId: businessId,
-        newValue: `System access granted via bulk import.`
-      }))
-    });
-  }
-   //     // 4. Send Emails (Asynchronous)
-    //     // In a real production app, you'd use a Queue (like BullMQ)
     return createdEmployees;
-});
+  });
 
-    Promise.allSettled(UserAccountsRequests.map(req => 
-        sendTempPasswordEmail(req.email, req.tempPassword, req.firstName, businessSlug)
-    )).catch(err => console.error("Bulk Email Error:", err));
+  Promise.allSettled(UserAccountsRequests.map(req => 
+      sendTempPasswordEmail(req.email, req.tempPassword, req.firstName, businessSlug)
+  )).catch(err => console.error("Bulk Email Error:", err));
 
-    return {
-      success: true,
-      message: UserAccountsRequests.length > 0 ? 
-        `Successfully imported ${result.length} employees. Accounts created and emails sent to ${UserAccountsRequests.length} employees.` :
-        `Successfully imported ${result.length} employees.`,
-      status: 200,
-      redirectTo: `/${businessSlug}/employees_list`,
-    } as AppResponse;
+  return {
+    success: true,
+    message: UserAccountsRequests.length > 0 ? 
+      `Successfully imported ${result.length} employees. Accounts created and emails sent to ${UserAccountsRequests.length} employees.` :
+      `Successfully imported ${result.length} employees.`,
+    status: 200,
+    redirectTo: `/${businessSlug}/employees_list`,
+  } as AppResponse;
 
   } catch (error: unknown) {
     console.error("BULK_EMPLOYEE_IMPORT_ERROR:", error);
@@ -331,7 +314,7 @@ export async function createBulkEmployeesService(
 }
 
 //GET EMPLOYEES SERVICE
-export async function getAllEmployeesService(businessId: string, userId: string, employeeId: string) {
+static async getAllEmployees(businessId: string, userId: string, employeeId: string) {
     try {
         const employees = await prisma.employee.findMany({
             where: {
@@ -392,7 +375,7 @@ export async function getAllEmployeesService(businessId: string, userId: string,
 }
 
 
-export async function hardDeleteMultipleUserService(ids: string[], userId: string, businessId: string, businessSlug: string) {
+static async hardDeleteMultipleUserService(ids: string[], userId: string, businessId: string, businessSlug: string) {
   
     try {
         //Using Transaction
@@ -439,8 +422,78 @@ export async function hardDeleteMultipleUserService(ids: string[], userId: strin
     }
 }
 
-//Soft Delete
-export async function softDeleteMultipleUserService(ids: string[], userId: string, businessId: string, businessSlug: string) {
+// SOFT DELETE SINGLE EMPLOYEE
+static async softDeleteSingleEmployee(
+  employeeId: string, 
+  userId: string, 
+  businessId: string, 
+  businessSlug: string
+) {
+  try {
+    if (!employeeId) {
+      return { success: false, error: "Employee ID is required", status: 400 } as AppResponse;
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Fetch the target employee record first to get a state snapshot
+      const employee = await tx.employee.findFirst({
+        where: { 
+          id: employeeId, 
+          businessId: businessId,
+          isDeleted: false 
+        }
+      });
+
+      if (!employee) {
+        throw new Error("Employee not found.");
+      }
+
+      // 2. Create Audit Log capturing the snapshot in oldValue
+      await tx.auditLog.create({
+        data: {
+          action: "DELETE",
+          entity: "EMPLOYEE",
+          entityId: employeeId,
+          oldValue: JSON.stringify(employee),
+          userId: userId,
+          businessId: businessId,
+        },
+      });
+
+      // 3. Update Employee to mark as soft-deleted
+      await tx.employee.update({
+        where: { id: employeeId },
+        data: {
+          isDeleted: true,
+          deletedAt: new Date(),
+        },
+      });
+    });
+
+    return {
+      success: true,
+      message: "Employee successfully deleted.",
+      redirectTo: `/${businessSlug}/employees_list`,
+      status: 200
+    } as AppResponse;
+
+  } catch (error) {
+    console.error(`EMPLOYEE_SOFT_DELETION_ERROR [ID: ${employeeId}]:`, error);
+
+    if ((error as Error).message === "Employee not found.") {
+      return { success: false, error: "Employee not found or already deleted.", status: 404 } as AppResponse;
+    }
+
+    return { 
+      success: false, 
+      error: "Could not delete the employee. They may have active transaction records.", 
+      status: 500 
+    } as AppResponse;
+  }
+}
+
+//SOFT DELETE MULTIPLE EMPLOYEES 
+static async softDeleteMultipleUserService(ids: string[], userId: string, businessId: string, businessSlug: string) {
   
     try {
         //Using Transaction
@@ -488,8 +541,83 @@ export async function softDeleteMultipleUserService(ids: string[], userId: strin
     }
 }
 
+// TOGGLE SINGLE EMPLOYEE STATUS
+static async toggleSingleEmployeeStatus(
+  employeeId: string, 
+  userId: string, 
+  businessId: string, 
+  businessSlug: string
+) {
+  try {
+    if (!employeeId) {
+      return { success: false, error: "Employee ID is required", status: 400 } as AppResponse;
+    }
 
-export async function toggleBulkEmployeeStatusService(ids: string[], userId: string, businessId: string, businessSlug:string ) {
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Fetch current status of the target employee
+      const employee = await tx.employee.findFirst({
+        where: { 
+          id: employeeId, 
+          businessId: businessId, 
+          user: { accountType: AccountType.EMPLOYEE } 
+        },
+        select: { 
+          id: true, 
+          isActive: true,
+          firstName: true,
+          lastName: true,
+        }
+      });
+
+      if (!employee) {
+        throw new Error("Employee not found.");
+      }
+
+      const nextStatus = !employee.isActive;
+
+      // 2. Update employee status record
+      await tx.employee.update({
+        where: { id: employeeId },
+        data: { isActive: nextStatus },
+      });
+
+      // 3. Create Audit Log entry
+      await tx.auditLog.create({
+        data: {
+          action: "UPDATE",
+          entity: "EMPLOYEE",
+          entityId: employeeId,
+          oldValue: JSON.stringify({ isActive: employee.isActive }),
+          newValue: JSON.stringify({ isActive: nextStatus }),
+          userId: userId,
+          businessId: businessId,
+          details: `Toggled status for employee ${employee.firstName + " " + employee.lastName || employeeId} to ${nextStatus ? 'Active' : 'Inactive'}.`
+        },
+      });
+      return nextStatus;
+    });
+
+    return {
+      success: true,
+      message: `Successfully changed employee status to ${result ? 'Active' : 'Inactive'}.`,
+      redirectTo: `/${businessSlug}/employees_list`,
+      status: 200
+    } as AppResponse;
+
+  } catch (error) {
+    console.error(`TOGGLE_EMPLOYEE_STATUS_ERROR [ID: ${employeeId}]:`, error);
+    
+    // Explicitly handle our thrown missing employee error variant safely
+    if ((error as Error).message === "Employee not found.") {
+      return { success: false, error: "Employee not found.", status: 404 } as AppResponse;
+    }
+    
+    return { success: false, error: "Failed to update employee status.", status: 500 } as AppResponse;
+  }
+}
+
+
+static async toggleBulkEmployeeStatusService(ids: string[], userId: string, businessId: string, businessSlug:string ) {
   try {
 
     await prisma.$transaction(async (tx) => {
@@ -524,8 +652,6 @@ export async function toggleBulkEmployeeStatusService(ids: string[], userId: str
       });
     });
 
-
-
     return {
       success: true,
       message: `Successfully updated status for ${ids.length} employees.`,
@@ -539,7 +665,7 @@ export async function toggleBulkEmployeeStatusService(ids: string[], userId: str
 
 
 
-export async function grantEmployeeSystemAccess(empId: string, userId: string, employeeId: string, businessId: string, businessSlug: string) {
+static async grantEmployeeSystemAccess(empId: string, userId: string, employeeId: string, businessId: string, businessSlug: string) {
     try {
         const tempPassword = generateRandomPassword();
         const hashTempPassword = await hashPassword(tempPassword);
@@ -617,7 +743,7 @@ export async function grantEmployeeSystemAccess(empId: string, userId: string, e
 }
 
 
-export async function revokeEmployeeSystemAccess(empId: string, userId: string, businessId: string, businessSlug: string) {
+static async revokeEmployeeSystemAccess(empId: string, userId: string, businessId: string, businessSlug: string) {
     try {
         await prisma.$transaction(async (tx) => {
             // 1. Verify employee exists and has a user account
@@ -667,7 +793,7 @@ export async function revokeEmployeeSystemAccess(empId: string, userId: string, 
 }
 
 
-export async function grantBulkEmployeesSystemAccess(employeeIds: string[], userId: string, employeeId: string, businessId: string) {
+static async grantBulkEmployeesSystemAccess(employeeIds: string[], userId: string, employeeId: string, businessId: string) {
     try {
         if (!employeeIds || employeeIds.length === 0) {
             return { error: "No employees selected.", success: false, status: 400 } as AppResponse;
@@ -755,7 +881,7 @@ export async function grantBulkEmployeesSystemAccess(employeeIds: string[], user
     }
 }
 
-export async function revokeBulkEmployeesSystemAccess(employeeIds: string[], userId: string, businessId: string) {
+static async revokeBulkEmployeesSystemAccess(employeeIds: string[], userId: string, businessId: string) {
     try {
         if (!employeeIds || employeeIds.length === 0) {
             return { error: "No employees selected.", success: false, status: 400 } as AppResponse;
@@ -817,4 +943,5 @@ export async function revokeBulkEmployeesSystemAccess(employeeIds: string[], use
             status: 400 
         } as AppResponse;
     }
+ }
 }

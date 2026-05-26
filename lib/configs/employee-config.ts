@@ -1,7 +1,8 @@
 // lib/bulk-import/configs/employee-config.ts
 import { z } from 'zod';
-import { BulkImportConfig } from '@/types/schema/bulkupload.schema';
+import {BulkImportConfig} from '@/types/schema/bulkImport';
 import { createBulkEmployees } from '@/lib/actions/business/employeesActions';
+import * as XLSX from 'xlsx';
 
 export const employeeCSVSchema = z.object({
   firstName: z.string().min(2, "First name is required"),
@@ -10,9 +11,32 @@ export const employeeCSVSchema = z.object({
   phone: z.string().optional().nullable(),
   designation: z.string().optional().nullable(),
   address: z.string().optional().nullable(),
-  dateOfBirth: z.string().optional().nullable(),
+
+  dateOfBirth: z
+    .union([z.date(), z.string(), z.number()])
+    .optional()
+    .nullable()
+    .transform((val) => {
+      if (!val || val === "") return null;
+      
+      // Case 1: Already safely extracted as an instance of JavaScript Date objects
+      if (val instanceof Date) return val;
+      
+      // Case 2: Extracted as an Excel structural serial number integer (e.g. 46166)
+      if (typeof val === 'number') {
+        try {
+          const parsed = XLSX.SSF.parse_date_code(val);
+          return new Date(parsed.y, parsed.m - 1, parsed.d);
+        } catch {
+          return null;
+        }
+      }     
+      // Case 3: Read as a plain string text format block (e.g. "1995-12-25")
+      const parsedDate = new Date(val);
+      return isNaN(parsedDate.getTime()) ? null : parsedDate;
+    }),
   role: z.string().min(1, "Role is required"),
-  shop: z.string().optional().nullable(),
+  shopId: z.string().optional().nullable(),
   hasSystemAccess: z
     .union([z.string(), z.boolean()])
     .transform((val) => {
@@ -32,7 +56,7 @@ export interface EmployeeImportPayload {
   address: string | null;
   dateOfBirth: Date | null;
   role: string;
-  shop: string | null;
+  shopId: string | null;
   hasSystemAccess: boolean;
 }
 
@@ -42,32 +66,7 @@ export const employeeImportConfig: BulkImportConfig<typeof employeeCSVSchema, Em
   schema: employeeCSVSchema,
   apiEndpoint: createBulkEmployees,
   // apiEndpoint: '/api/employees/bulk-import',
-  
-  templateHeaders: [
-    'firstName',
-    'lastName',
-    'email',
-    'phone',
-    'designation',
-    'address',
-    'dateOfBirth',
-    'role',
-    'shopId',
-    'hasSystemAccess',
-  ],
-  
-  templateExample: [
-    'John',
-    'Doe',
-    'john.doe@example.com',
-    '0241234567',
-    'Sales Manager',
-    '123 Main St',
-    '1990-01-15',
-    'CASHIER',
-    'null',
-    'true',
-  ],
+  customTemplatePath: 'employees',
   
   transformData: (row: EmployeeCSVRow): EmployeeImportPayload => ({
     firstName: row.firstName,
@@ -78,7 +77,7 @@ export const employeeImportConfig: BulkImportConfig<typeof employeeCSVSchema, Em
     address: row.address || null,
     dateOfBirth: row.dateOfBirth ? new Date(row.dateOfBirth) : null,
     role: row.role,
-    shop: row.shop && row.shop !== '' ? row.shop : null,
+    shopId: row.shopId && row.shopId !== '' ? row.shopId : null,
     hasSystemAccess: row.hasSystemAccess,
   }),
 };
@@ -96,7 +95,7 @@ export const EmployeeValidatedSchema = z.object({
   dateOfBirth: z.date().optional().nullable(), 
   
   role: z.string().min(1), 
-  shop: z.string().optional().nullable(),
+  shopId: z.string().optional().nullable(),
   hasSystemAccess: z.boolean(),
 });
 

@@ -1,6 +1,6 @@
 import { getSession} from "@/lib/auths";
 import { NextRequest, NextResponse } from "next/server";
-import { deleteCategoryService, getCategoryByIdService, updateCategoryService } from "@/lib/services/business/category-service";
+import { CategoryService} from "@/lib/services/business/category-service";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
 
@@ -12,13 +12,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         }
 
         const { businessId } = session;
-        const response = await getCategoryByIdService(id, businessId);
+        const response = await CategoryService.getCategoryByIdService(id, businessId);
 
-        if (!response.success || !response.categories) {
+        if (!response.success || !response.data) {
             return NextResponse.json({ success: false, error: response.error }, { status: response.status });
         }
 
-        const category = response.categories;
+        const category = response.data;
         return NextResponse.json({ success: true, category }, { status: 200 });
 }
 
@@ -32,7 +32,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
         const { userId, businessId } = session;
         const body = await request.json();
-        const response = await updateCategoryService(id, body, userId, businessId, session.businessSlug);
+        const response = await CategoryService.updateCategoryService(id, body, userId, businessId, session.businessSlug);
         if (response.success && response.message) {
             return NextResponse.json({success: response.success, message: response.message}, {status: response.status})
         }else {
@@ -49,7 +49,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
         }
 
         const { userId, businessId, businessSlug } = session;
-        const response = await deleteCategoryService(id, userId, businessId, businessSlug);
+        const response = await CategoryService.deleteCategoryService(id, userId, businessId, businessSlug);
         
         if (response.success && response.message) {
             return NextResponse.json({success: response.success, message: response.message}, {status: response.status})

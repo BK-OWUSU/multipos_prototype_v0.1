@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/auths";
 import { NextRequest, NextResponse } from "next/server";
-import { createBrandService, getAllBrandsService } from "@/lib/services/business/brand-service";
+import { BrandService } from "@/lib/services/business/brand-service";
 
 
 
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
         }
         const { userId, businessId, businessSlug } = session;
         const body = await request.json();
-        const response = await createBrandService(body, userId, businessId, businessSlug);
+        const response = await BrandService.createBrandService(body, userId, businessId, businessSlug);
   
         if (response.success && response.message) {
             return NextResponse.json({success: response.success, message: response.message}, {status: response.status})
@@ -32,10 +32,10 @@ export async function GET(request: NextRequest) {
 
         const { businessId } = session;
 
-        const response =  await getAllBrandsService(businessId);
+        const response =  await BrandService.getAllBrandsService(businessId);
 
-        if (response.success && response.categories) {
-            return NextResponse.json({success: response.success, categories: response.categories}, {status: 200})
+        if (response.success && response.data) {
+            return NextResponse.json({success: response.success, brands: response.data}, {status: 200})
         }else {
             return NextResponse.json({success: response.success, error: response.error}, {status: 500})
         }

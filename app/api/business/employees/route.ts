@@ -1,10 +1,5 @@
-import { getSession, hashPassword } from "@/lib/auths";
-import { prisma } from "@/lib/dbHelper";
-// import { sendTempPasswordEmail } from "@/lib/email";
-import { AccountType } from "@/lib/generated/prisma/enums";
-import { createEmployee, getAllEmployeesService } from "@/lib/services/business/employee-services";
-// import { generateRandomPassword } from "@/lib/utils";
-// import { createEmployeeSchema } from "@/schema/auth.schema";
+import { getSession } from "@/lib/auths";
+import { EmployeeService,  } from "@/lib/services/business/employee-services";
 import { NextRequest, NextResponse } from "next/server";
 
 
@@ -16,9 +11,9 @@ export async function POST(request: NextRequest) {
         if (!session || typeof session === "string") {
             return NextResponse.json({ error: "Invalid or expired session", success: false }, { status: 401 });
         }
-        const { userId, businessId } = session;
+        const { userId,employeeId, businessId } = session;
         
-        const response = await createEmployee(request, userId, businessId)
+        const response = await EmployeeService.createEmployee(request, userId,employeeId || "", businessId)
 
         if (response.success && response.message) {
             return NextResponse.json({success: response.success, message: response.message}, {status: response.status})
@@ -37,7 +32,7 @@ export async function GET(request: NextRequest) {
     const {businessId, userId, employeeId} = session;
 
     // Call the service with params from session
-    const result = await getAllEmployeesService(businessId, userId, employeeId || "");
+    const result = await EmployeeService.getAllEmployees(businessId, userId, employeeId || "");
 
     if (!result.success) {
         return NextResponse.json({ error: result.error }, { status: 500 });

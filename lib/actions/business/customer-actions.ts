@@ -3,10 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auths";
 import { AppResponse } from "@/types/auth/auth";
-import { BulkImportResult } from '@/types/schema/bulkupload.schema';
+import { BulkImportResult } from "@/types/schema/bulkImport";
 import { CustomerImportPayload } from "@/lib/configs/customer-config";
-import { createBulkCustomersService, createCustomer, softDeleteCustomers } from "@/lib/services/business/customer-service";
 import { CreateCustomerSchema } from "@/types/schema/auth.schema";
+import { CustomerService } from "@/lib/services/business/customer-service";
 
 
 
@@ -26,7 +26,7 @@ export async function createSingleCustomer(data: CreateCustomerSchema) {
 
     const {businessId, userId, businessSlug} = session;
 
-    const response = await createCustomer(data, userId,businessId, businessSlug);
+    const response = await CustomerService.createCustomer(data, userId,businessId, businessSlug);
 
     if (response.success && response.message && response.redirectTo) {
         revalidatePath(response.redirectTo)
@@ -53,7 +53,7 @@ export async function createBulkCustomer(payload: { data: CustomerImportPayload[
     const { userId, businessId, businessSlug } = session;
     
     // 2. Call your existing service
-    const response = await createBulkCustomersService(payload,userId,businessId, businessSlug);
+    const response = await CustomerService.createBulkCustomersService(payload,userId,businessId, businessSlug);
 
     // 3. Transform AppResponse to BulkImportResult
     if (response.success) {
@@ -88,7 +88,7 @@ export async function deleteMultipleUser(ids: string[]) {
 
     const {userId, businessId, businessSlug} = session;
     
-    const response = await softDeleteCustomers(ids, userId, businessId, businessSlug);
+    const response = await CustomerService.softDeleteBulkCustomers(ids, userId, businessId, businessSlug);
 
     if (response.success && response.message && response.redirectTo) {
         revalidatePath(response.redirectTo)

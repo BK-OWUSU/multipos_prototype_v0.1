@@ -12,7 +12,8 @@ import { generateOTP, saveOTP } from "@/lib/otp";
 import { JwtPayload } from "@/types/auth/auth";
 import { NextResponse } from "next/server";
 
-export async function login(email: string, password: string, ipAddress?: string, userAgent?: string ) {
+export class LoginService {
+static async login(email: string, password: string, ipAddress?: string, userAgent?: string ) {
     try {
         if (!email || !password) {
             return NextResponse.json({ success: false, error: "Email and password are required" }, { status: 400 });
@@ -173,4 +174,5 @@ export async function login(email: string, password: string, ipAddress?: string,
         console.error("Login Error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
+}
 }

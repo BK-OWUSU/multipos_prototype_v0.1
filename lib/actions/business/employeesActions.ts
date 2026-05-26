@@ -3,9 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auths";
 import { AppResponse } from "@/types/auth/auth";
-import { softDeleteMultipleUserService, toggleBulkEmployeeStatusService, createBulkEmployeesService, grantEmployeeSystemAccess, revokeEmployeeSystemAccess } from "@/lib/services/business/employee-services";
 import { EmployeeImportPayload } from '@/lib/configs/employee-config';
-import { BulkImportResult } from '@/types/schema/bulkupload.schema';
+import { EmployeeService } from "@/lib/services/business/employee-services";
+import { BulkImportResult } from "@/types/schema/bulkImport";
 
 
 
@@ -18,7 +18,7 @@ export async function deleteMultipleUser(ids: string[]) {
 
     const {userId, businessId, businessSlug} = session;
     
-    const response = await softDeleteMultipleUserService(ids, userId, businessId, businessSlug);
+    const response = await EmployeeService.softDeleteMultipleUserService(ids, userId, businessId, businessSlug);
 
     if (response.success && response.message && response.redirectTo) {
         revalidatePath(response.redirectTo)
@@ -37,7 +37,7 @@ export async function toggleMultipleUser(ids: string[]) {
 
     const {userId, businessId, businessSlug} = session;
     
-    const response = await toggleBulkEmployeeStatusService(ids, userId, businessId, businessSlug);
+    const response = await EmployeeService.toggleBulkEmployeeStatusService(ids, userId, businessId, businessSlug);
 
     if (response.success && response.message && response.redirectTo) {
         revalidatePath(response.redirectTo)
@@ -64,7 +64,7 @@ export async function createBulkEmployees(payload: { data: EmployeeImportPayload
     const { userId, employeeId, businessId, businessSlug } = session;
     
     // 2. Call your existing service
-    const response = await createBulkEmployeesService(
+    const response = await EmployeeService.createBulkEmployeesService(
         payload, 
         userId,
         employeeId || "", 
@@ -106,7 +106,7 @@ export async function grantEmployeeAccess(empId: string) {
     const { userId, businessId, employeeId,businessSlug } = session;
 
     // 2. Call your existing service
-    const response = await grantEmployeeSystemAccess(empId, userId, employeeId || "", businessId, businessSlug);
+    const response = await EmployeeService.grantEmployeeSystemAccess(empId, userId, employeeId || "", businessId, businessSlug);
 
     // 3. Handle Response
     if (response.success && response.message && response.redirectTo) {
@@ -129,7 +129,7 @@ export async function revokeEmployeeAccess(employeeId: string) {
     const { userId, businessId, businessSlug } = session;
 
     // 2. Call your existing service
-    const response = await revokeEmployeeSystemAccess(employeeId, userId, businessId, businessSlug);
+    const response = await EmployeeService.revokeEmployeeSystemAccess(employeeId, userId, businessId, businessSlug);
 
     // 3. Handle Response
     if (response.success && response.message && response.redirectTo) {

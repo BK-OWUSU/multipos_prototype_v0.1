@@ -20,7 +20,8 @@ export type AccountType = (typeof AccountType)[keyof typeof AccountType]
 export const PaymentType = {
   CASH: 'CASH',
   MOBILE_MONEY: 'MOBILE_MONEY',
-  BOTH: 'BOTH'
+  CARD: 'CARD',
+  SPLIT: 'SPLIT'
 } as const
 
 export type PaymentType = (typeof PaymentType)[keyof typeof PaymentType]

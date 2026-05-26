@@ -1,35 +1,40 @@
 // lib/bulk-import/configs/product-config.ts
 import { z } from 'zod';
-import { BulkImportConfig } from '@/types/schema/bulkImport';
+import {BulkImportConfig} from '@/types/schema/bulkImport';
 import { createBulkProductsAction } from '../actions/business/productsActions';
 
-// ── 1. DEFINE THE FLAT EXCEL ROW ZOD SCHEMA ───────────────────────────────────
+// 1. Define the flat Excel Row Zod Schema
+// This represents exactly how columns look on the raw "Import Data" Excel tab
 export const productExcelRowSchema = z.object({
+  // Parent Container Info
   name: z.string().min(2, "Product name is required"),
   baseSku: z.string().min(2, "Base SKU prefix is required").toUpperCase(),
   description: z.string().optional().nullable(),
   categoryId: z.string().optional().nullable(),
   brandId: z.string().optional().nullable(),
   
+  // Unique Variant Parameters
   sku: z.string().min(3, "Variant SKU must be at least 3 characters"),
   barcode: z
-    .union([z.string(), z.number()])
-    .optional()
-    .nullable()
-    .transform((val) => {
-      if (val === undefined || val === null || val === "" || String(val).trim().toLowerCase() === "blank") return null;
-      return String(val).trim();
-    }),
+  .union([z.string(), z.number()])
+  .optional()
+  .nullable()
+  .transform((val) => {
+    if (val === undefined || val === null || val === "") return null;
+    return String(val).trim(); // Coerces Excel numbers into strings safely!
+  }),
   price: z.coerce.number().min(0, "Price cannot be negative"),
   costPrice: z.coerce.number().min(0, "Cost Price cannot be negative"),
   stock: z.coerce.number().int().nonnegative(),
   lowStockAlert: z.coerce.number().int().nonnegative().default(5),
   
+  // Dimensions
   weight: z.coerce.number().nonnegative().optional().nullable(),
   length: z.coerce.number().nonnegative().optional().nullable(),
   width: z.coerce.number().nonnegative().optional().nullable(),
   height: z.coerce.number().nonnegative().optional().nullable(),
 
+  // Flattened Attributes columns (Blank strings if the product has no variants)
   color: z.string().optional().nullable(),
   size: z.string().optional().nullable(),
   material: z.string().optional().nullable(),
@@ -37,7 +42,8 @@ export const productExcelRowSchema = z.object({
 
 export type ProductExcelRow = z.infer<typeof productExcelRowSchema>;
 
-// ── 2. DEFINE THE OUTPUT FORMAT MATCHING YOUR INTERFACE ───────────────────────
+// 2. Define the output format your backend/server action expects
+// It perfectly matches your structured `ProductFormValues` type!
 export interface GroupedProductImportPayload {
   name: string;
   baseSku: string;
@@ -66,43 +72,42 @@ export interface GroupedProductImportPayload {
     sortOrder: number;
     options: {
       attributeName: string;
-      attributeValueId: string | null;
       value: string;
     }[];
-    imageUrl: string;
-    fileKey: string;
   }[];
 }
 
-// ── 3. BUILD THE MASTER CONFIGURATION BLUEPRINT ───────────────────────────────
+// 3. Build the Master Configuration Blueprint
 export const productExcelImportConfig: BulkImportConfig<typeof productExcelRowSchema, GroupedProductImportPayload[]> = {
   entityName: 'Product',
   entityNamePlural: 'Products',
   schema: productExcelRowSchema,
   apiEndpoint: createBulkProductsAction,
+
   customTemplatePath: 'products',
 
   /**
-   * Safe aggregator transformation. Groups same baseSku rows under one parent variants array.
-   * Single standalone products safely get 1 variant element inside the array seamlessly.
+   * Transforms flat uploaded rows into a grouped, relational, variant-nested array model.
+   * Eliminates duplicate parent overhead transactions safely before hitting your database layers!
    */
   transformData: (rows: ProductExcelRow[] | ProductExcelRow): GroupedProductImportPayload[] => {
+    // Standardize input into an array to ensure stable processing loops
     const flatRows = Array.isArray(rows) ? rows : [rows];
     const groupedMap = new Map<string, GroupedProductImportPayload>();
 
     flatRows.forEach((row) => {
       const key = row.baseSku.trim().toUpperCase();
 
-      // 1. Initialize Parent Container once per baseSku grouping
+      // If the parent product object doesn't exist in our group tracking map yet, initialize it
       if (!groupedMap.has(key)) {
         groupedMap.set(key, {
           name: row.name.trim(),
           baseSku: key,
-          description: row.description && row.description.trim().toLowerCase() !== "blank" ? row.description.trim() : null,
-          hasVariant: false, // Defaulting to false, toggles true if attribute metrics exist
+          description: row.description || null,
+          hasVariant: false, // Will toggle to true if multi-attributes are found
           isActive: true,
-          categoryId: (row.categoryId === "" || row.categoryId === "none" || row.categoryId === undefined || row.categoryId === null || String(row.categoryId).trim().toLowerCase() === "blank") ? null : String(row.categoryId).trim(),
-          brandId: (row.brandId === "" || row.brandId === "none" || row.brandId === undefined || row.brandId === null || String(row.brandId).trim().toLowerCase() === "blank") ? null : String(row.brandId).trim(),
+          categoryId: (row.categoryId === "" || row.categoryId === "none" ||  row.categoryId === undefined || row.categoryId === "blank") ? null : row.categoryId,
+          brandId: (row.brandId === "" || row.brandId === "none" || row.brandId === undefined || row.brandId === "blank") ? null : row.brandId,
           attributes: [],
           variants: []
         });
@@ -110,46 +115,27 @@ export const productExcelImportConfig: BulkImportConfig<typeof productExcelRowSc
 
       const parentProduct = groupedMap.get(key)!;
 
-      // 2. Map structural options
-      const variantOptions: { attributeName: string; attributeValueId: string | null; value: string }[] = [];
-      
-      if (row.color && row.color.trim() !== "" && row.color.trim().toLowerCase() !== "blank") {
-        variantOptions.push({ attributeName: "Color", attributeValueId: null, value: row.color.trim() });
-      }
-      if (row.size && row.size.trim() !== "" && row.size.trim().toLowerCase() !== "blank") {
-        variantOptions.push({ attributeName: "Size", attributeValueId: null, value: row.size.trim() });
-      }
-      if (row.material && row.material.trim() !== "" && row.material.trim().toLowerCase() !== "blank") {
-        variantOptions.push({ attributeName: "Material", attributeValueId: null, value: row.material.trim() });
-      }
+      // Map inline structural variant option values
+      const variantOptions: { attributeName: string; value: string }[] = [];
+      if (row.color && row.color.trim() !== "") variantOptions.push({ attributeName: "Color", value: row.color.trim() });
+      if (row.size && row.size.trim() !== "") variantOptions.push({ attributeName: "Size", value: row.size.trim() });
+      if (row.material && row.material.trim() !== "") variantOptions.push({ attributeName: "Material", value: row.material.trim() });
 
-      // 3. Update global attributes matrix strings
+      // Update parent configuration metadata rules based on options found
       if (variantOptions.length > 0) {
         parentProduct.hasVariant = true;
-        
         variantOptions.forEach((opt) => {
-          let existingAttr = parentProduct.attributes.find(
-            attr => attr.name.toLowerCase() === opt.attributeName.toLowerCase()
-          );
-
-          if (!existingAttr) {
-            existingAttr = {
+          if (!parentProduct.attributes.some(attr => attr.name === opt.attributeName)) {
+            parentProduct.attributes.push({
               name: opt.attributeName,
               sortOrder: parentProduct.attributes.length,
               matrixSplitValues: ""
-            };
-            parentProduct.attributes.push(existingAttr);
-          }
-
-          const valuesArray = existingAttr.matrixSplitValues ? existingAttr.matrixSplitValues.split(",") : [];
-          if (!valuesArray.includes(opt.value)) {
-            valuesArray.push(opt.value);
-            existingAttr.matrixSplitValues = valuesArray.join(",");
+            });
           }
         });
       }
 
-      // 4. Safely push this row variant configuration into the shared array bucket
+      // Append clean variant entries straight into the parent data container object
       parentProduct.variants.push({
         sku: row.sku.trim(),
         barcode: row.barcode || null,
@@ -157,15 +143,13 @@ export const productExcelImportConfig: BulkImportConfig<typeof productExcelRowSc
         costPrice: row.costPrice,
         stock: row.stock,
         lowStockAlert: row.lowStockAlert,
-        weight: !row.weight || String(row.weight).toLowerCase() === "blank" ? null : row.weight,
-        length: !row.length || String(row.length).toLowerCase() === "blank" ? null : row.length,
-        width: !row.width || String(row.width).toLowerCase() === "blank" ? null : row.width,
-        height: !row.height || String(row.height).toLowerCase() === "blank" ? null : row.height,
+        weight: row.weight || null,
+        length: row.length || null,
+        width: row.width || null,
+        height: row.height || null,
         isActive: true,
-        sortOrder: parentProduct.variants.length, // Keeps auto-increment index orders clean
-        options: variantOptions,
-        imageUrl: "",
-        fileKey: ""
+        sortOrder: parentProduct.variants.length,
+        options: variantOptions
       });
     });
 
@@ -188,3 +172,6 @@ export const productExcelImportConfig: BulkImportConfig<typeof productExcelRowSc
     return { valid: true };
   }
 };
+
+
+

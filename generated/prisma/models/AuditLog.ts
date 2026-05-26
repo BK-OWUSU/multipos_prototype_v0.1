@@ -34,6 +34,7 @@ export type AuditLogMinAggregateOutputType = {
   userId: string | null
   businessId: string | null
   createdAt: Date | null
+  details: string | null
 }
 
 export type AuditLogMaxAggregateOutputType = {
@@ -46,6 +47,7 @@ export type AuditLogMaxAggregateOutputType = {
   userId: string | null
   businessId: string | null
   createdAt: Date | null
+  details: string | null
 }
 
 export type AuditLogCountAggregateOutputType = {
@@ -58,6 +60,7 @@ export type AuditLogCountAggregateOutputType = {
   userId: number
   businessId: number
   createdAt: number
+  details: number
   _all: number
 }
 
@@ -72,6 +75,7 @@ export type AuditLogMinAggregateInputType = {
   userId?: true
   businessId?: true
   createdAt?: true
+  details?: true
 }
 
 export type AuditLogMaxAggregateInputType = {
@@ -84,6 +88,7 @@ export type AuditLogMaxAggregateInputType = {
   userId?: true
   businessId?: true
   createdAt?: true
+  details?: true
 }
 
 export type AuditLogCountAggregateInputType = {
@@ -96,6 +101,7 @@ export type AuditLogCountAggregateInputType = {
   userId?: true
   businessId?: true
   createdAt?: true
+  details?: true
   _all?: true
 }
 
@@ -181,6 +187,7 @@ export type AuditLogGroupByOutputType = {
   userId: string
   businessId: string
   createdAt: Date
+  details: string | null
   _count: AuditLogCountAggregateOutputType | null
   _min: AuditLogMinAggregateOutputType | null
   _max: AuditLogMaxAggregateOutputType | null
@@ -214,6 +221,7 @@ export type AuditLogWhereInput = {
   userId?: Prisma.StringFilter<"AuditLog"> | string
   businessId?: Prisma.StringFilter<"AuditLog"> | string
   createdAt?: Prisma.DateTimeFilter<"AuditLog"> | Date | string
+  details?: Prisma.StringNullableFilter<"AuditLog"> | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   business?: Prisma.XOR<Prisma.BusinessScalarRelationFilter, Prisma.BusinessWhereInput>
 }
@@ -228,6 +236,7 @@ export type AuditLogOrderByWithRelationInput = {
   userId?: Prisma.SortOrder
   businessId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  details?: Prisma.SortOrderInput | Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
   business?: Prisma.BusinessOrderByWithRelationInput
 }
@@ -245,6 +254,7 @@ export type AuditLogWhereUniqueInput = Prisma.AtLeast<{
   userId?: Prisma.StringFilter<"AuditLog"> | string
   businessId?: Prisma.StringFilter<"AuditLog"> | string
   createdAt?: Prisma.DateTimeFilter<"AuditLog"> | Date | string
+  details?: Prisma.StringNullableFilter<"AuditLog"> | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   business?: Prisma.XOR<Prisma.BusinessScalarRelationFilter, Prisma.BusinessWhereInput>
 }, "id">
@@ -259,6 +269,7 @@ export type AuditLogOrderByWithAggregationInput = {
   userId?: Prisma.SortOrder
   businessId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  details?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.AuditLogCountOrderByAggregateInput
   _max?: Prisma.AuditLogMaxOrderByAggregateInput
   _min?: Prisma.AuditLogMinOrderByAggregateInput
@@ -277,6 +288,7 @@ export type AuditLogScalarWhereWithAggregatesInput = {
   userId?: Prisma.StringWithAggregatesFilter<"AuditLog"> | string
   businessId?: Prisma.StringWithAggregatesFilter<"AuditLog"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"AuditLog"> | Date | string
+  details?: Prisma.StringNullableWithAggregatesFilter<"AuditLog"> | string | null
 }
 
 export type AuditLogCreateInput = {
@@ -287,6 +299,7 @@ export type AuditLogCreateInput = {
   oldValue?: string | null
   newValue?: string | null
   createdAt?: Date | string
+  details?: string | null
   user: Prisma.UserCreateNestedOneWithoutAuditLogsInput
   business: Prisma.BusinessCreateNestedOneWithoutAuditLogsInput
 }
@@ -301,6 +314,7 @@ export type AuditLogUncheckedCreateInput = {
   userId: string
   businessId: string
   createdAt?: Date | string
+  details?: string | null
 }
 
 export type AuditLogUpdateInput = {
@@ -311,6 +325,7 @@ export type AuditLogUpdateInput = {
   oldValue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   newValue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  details?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutAuditLogsNestedInput
   business?: Prisma.BusinessUpdateOneRequiredWithoutAuditLogsNestedInput
 }
@@ -325,6 +340,7 @@ export type AuditLogUncheckedUpdateInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   businessId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  details?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type AuditLogCreateManyInput = {
@@ -337,6 +353,7 @@ export type AuditLogCreateManyInput = {
   userId: string
   businessId: string
   createdAt?: Date | string
+  details?: string | null
 }
 
 export type AuditLogUpdateManyMutationInput = {
@@ -347,6 +364,7 @@ export type AuditLogUpdateManyMutationInput = {
   oldValue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   newValue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  details?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type AuditLogUncheckedUpdateManyInput = {
@@ -359,6 +377,7 @@ export type AuditLogUncheckedUpdateManyInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   businessId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  details?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type AuditLogListRelationFilter = {
@@ -381,6 +400,7 @@ export type AuditLogCountOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   businessId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  details?: Prisma.SortOrder
 }
 
 export type AuditLogMaxOrderByAggregateInput = {
@@ -393,6 +413,7 @@ export type AuditLogMaxOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   businessId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  details?: Prisma.SortOrder
 }
 
 export type AuditLogMinOrderByAggregateInput = {
@@ -405,6 +426,7 @@ export type AuditLogMinOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   businessId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  details?: Prisma.SortOrder
 }
 
 export type AuditLogCreateNestedManyWithoutBusinessInput = {
@@ -499,6 +521,7 @@ export type AuditLogCreateWithoutBusinessInput = {
   oldValue?: string | null
   newValue?: string | null
   createdAt?: Date | string
+  details?: string | null
   user: Prisma.UserCreateNestedOneWithoutAuditLogsInput
 }
 
@@ -511,6 +534,7 @@ export type AuditLogUncheckedCreateWithoutBusinessInput = {
   newValue?: string | null
   userId: string
   createdAt?: Date | string
+  details?: string | null
 }
 
 export type AuditLogCreateOrConnectWithoutBusinessInput = {
@@ -552,6 +576,7 @@ export type AuditLogScalarWhereInput = {
   userId?: Prisma.StringFilter<"AuditLog"> | string
   businessId?: Prisma.StringFilter<"AuditLog"> | string
   createdAt?: Prisma.DateTimeFilter<"AuditLog"> | Date | string
+  details?: Prisma.StringNullableFilter<"AuditLog"> | string | null
 }
 
 export type AuditLogCreateWithoutUserInput = {
@@ -562,6 +587,7 @@ export type AuditLogCreateWithoutUserInput = {
   oldValue?: string | null
   newValue?: string | null
   createdAt?: Date | string
+  details?: string | null
   business: Prisma.BusinessCreateNestedOneWithoutAuditLogsInput
 }
 
@@ -574,6 +600,7 @@ export type AuditLogUncheckedCreateWithoutUserInput = {
   newValue?: string | null
   businessId: string
   createdAt?: Date | string
+  details?: string | null
 }
 
 export type AuditLogCreateOrConnectWithoutUserInput = {
@@ -611,6 +638,7 @@ export type AuditLogCreateManyBusinessInput = {
   newValue?: string | null
   userId: string
   createdAt?: Date | string
+  details?: string | null
 }
 
 export type AuditLogUpdateWithoutBusinessInput = {
@@ -621,6 +649,7 @@ export type AuditLogUpdateWithoutBusinessInput = {
   oldValue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   newValue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  details?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutAuditLogsNestedInput
 }
 
@@ -633,6 +662,7 @@ export type AuditLogUncheckedUpdateWithoutBusinessInput = {
   newValue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  details?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type AuditLogUncheckedUpdateManyWithoutBusinessInput = {
@@ -644,6 +674,7 @@ export type AuditLogUncheckedUpdateManyWithoutBusinessInput = {
   newValue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  details?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type AuditLogCreateManyUserInput = {
@@ -655,6 +686,7 @@ export type AuditLogCreateManyUserInput = {
   newValue?: string | null
   businessId: string
   createdAt?: Date | string
+  details?: string | null
 }
 
 export type AuditLogUpdateWithoutUserInput = {
@@ -665,6 +697,7 @@ export type AuditLogUpdateWithoutUserInput = {
   oldValue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   newValue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  details?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   business?: Prisma.BusinessUpdateOneRequiredWithoutAuditLogsNestedInput
 }
 
@@ -677,6 +710,7 @@ export type AuditLogUncheckedUpdateWithoutUserInput = {
   newValue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   businessId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  details?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type AuditLogUncheckedUpdateManyWithoutUserInput = {
@@ -688,6 +722,7 @@ export type AuditLogUncheckedUpdateManyWithoutUserInput = {
   newValue?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   businessId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  details?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -702,6 +737,7 @@ export type AuditLogSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   userId?: boolean
   businessId?: boolean
   createdAt?: boolean
+  details?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   business?: boolean | Prisma.BusinessDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["auditLog"]>
@@ -716,6 +752,7 @@ export type AuditLogSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   userId?: boolean
   businessId?: boolean
   createdAt?: boolean
+  details?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   business?: boolean | Prisma.BusinessDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["auditLog"]>
@@ -730,6 +767,7 @@ export type AuditLogSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   userId?: boolean
   businessId?: boolean
   createdAt?: boolean
+  details?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   business?: boolean | Prisma.BusinessDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["auditLog"]>
@@ -744,9 +782,10 @@ export type AuditLogSelectScalar = {
   userId?: boolean
   businessId?: boolean
   createdAt?: boolean
+  details?: boolean
 }
 
-export type AuditLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "action" | "entity" | "entityId" | "oldValue" | "newValue" | "userId" | "businessId" | "createdAt", ExtArgs["result"]["auditLog"]>
+export type AuditLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "action" | "entity" | "entityId" | "oldValue" | "newValue" | "userId" | "businessId" | "createdAt" | "details", ExtArgs["result"]["auditLog"]>
 export type AuditLogInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   business?: boolean | Prisma.BusinessDefaultArgs<ExtArgs>
@@ -776,6 +815,7 @@ export type $AuditLogPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     userId: string
     businessId: string
     createdAt: Date
+    details: string | null
   }, ExtArgs["result"]["auditLog"]>
   composites: {}
 }
@@ -1210,6 +1250,7 @@ export interface AuditLogFieldRefs {
   readonly userId: Prisma.FieldRef<"AuditLog", 'String'>
   readonly businessId: Prisma.FieldRef<"AuditLog", 'String'>
   readonly createdAt: Prisma.FieldRef<"AuditLog", 'DateTime'>
+  readonly details: Prisma.FieldRef<"AuditLog", 'String'>
 }
     
 

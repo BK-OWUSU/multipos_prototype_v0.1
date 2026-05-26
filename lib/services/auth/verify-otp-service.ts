@@ -5,11 +5,12 @@ import { NextRequest, NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { JwtPayload } from "@/types/auth/auth"
 
-export async function verifyOTPService(request: NextRequest) {
-  const cookieStore = await cookies();
-  const verify_token = cookieStore.get(VERIFY_COOKIE_NAME)?.value;
-  const { code } = await request.json();
-  
+export class VerifyOTPService {
+  static async verifyOTP(request: NextRequest) {
+    const cookieStore = await cookies();
+    const verify_token = cookieStore.get(VERIFY_COOKIE_NAME)?.value;
+    const { code } = await request.json();
+
   try {
     if (!verify_token) {
       return NextResponse.json({ error: "Unauthorized or expired verification session", success: false }, { status: 401 })
@@ -122,4 +123,5 @@ export async function verifyOTPService(request: NextRequest) {
       { status: 500 }
     )
   }
+}
 }

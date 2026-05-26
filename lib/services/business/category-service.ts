@@ -8,7 +8,9 @@ import { CategoryFormValues, categorySchema } from "@/types/schema/inventory.sch
  * Creates a new category and records the action in the audit log.
  */
 //POST
-export async function createCategoryService(
+export class CategoryService {
+//CREATE CATEGORY
+static async createCategoryService(
   data: CategoryFormValues, 
   userId: string,
   businessId: string,
@@ -70,8 +72,8 @@ export async function createCategoryService(
 /**
  * Updates an existing category, logs changes, and handles old file cleanup if the icon changed.
  */
-
-export async function getAllCategoriesService(businessId: string) {
+//GET ALL CATEGORIES FOR A BUSINESS
+static async getAllCategoriesService(businessId: string):Promise<AppResponse> {
     try {
         const categories = await prisma.category.findMany({
             where: {
@@ -95,16 +97,17 @@ export async function getAllCategoriesService(businessId: string) {
 
         return { 
             success: true, 
-            categories: categories 
-        };
+            data: categories 
+        } as AppResponse;
 
     } catch (error) {
         console.error("GET_CATEGORIES_ERROR:", error);
-        return { success: false, error: "Failed to fetch categories.", status: 500 };
+        return { success: false, error: "Failed to fetch categories.", status: 500 } as AppResponse;
     }
 }
 
-export async function getCategoryByIdService(categoryId: string, businessId: string) {
+//GET CATEGORY BY ID
+static async getCategoryByIdService(categoryId: string, businessId: string) {
     try {
          const category = await prisma.category.findFirst({
             where: { id: categoryId, businessId: businessId },
@@ -121,17 +124,17 @@ export async function getCategoryByIdService(categoryId: string, businessId: str
 
         return { 
             success: true, 
-            categories: category 
-        };
+            data: category 
+        } as AppResponse;
 
     } catch (error) {
         console.error("GET_CATEGORY_ERROR:", error);
-        return { success: false, error: "Failed to fetch category.", status: 500 };
+        return { success: false, error: "Failed to fetch category.", status: 500 } as AppResponse;
     }
 }
 
-
-export async function updateCategoryService(
+//UPDATE CATEGORY
+static async updateCategoryService(
   id: string,
   data: CategoryFormValues,
   userId: string,
@@ -205,7 +208,8 @@ export async function updateCategoryService(
 /**
  * Deletes a single category and its associated icon.
  */
-export async function deleteCategoryService(
+//DELETE CATEGORY
+static async deleteCategoryService(
   id: string,
   userId: string,
   businessId: string,
@@ -252,8 +256,8 @@ export async function deleteCategoryService(
   }
 }
 
-
-export async function performBulkCategoryDeleteService(
+//BULK DELETE CATEGORIES
+static async performBulkCategoryDeleteService(
   ids: string[], 
   userId: string, 
   businessId: string, 
@@ -311,7 +315,8 @@ export async function performBulkCategoryDeleteService(
 /**
  * Toggles the isActive status for multiple categories and logs the change.
  */
-export async function toggleBulkCategoryStatusService(
+//TOGGLE BULK CATEGORY STATUS
+static async toggleBulkCategoryStatusService(
   ids: string[], 
   userId: string, 
   businessId: string, 
@@ -360,4 +365,5 @@ export async function toggleBulkCategoryStatusService(
     console.error("BULK_CATEGORY_STATUS_TOGGLE_ERROR:", error);
     return { success: false, error: "Failed to update category statuses." } as AppResponse;
   }
+}
 }

@@ -3,6 +3,7 @@ import { AppResponse } from "@/types/auth/auth";
 import { deleteUTFile } from "@/lib/actions/uploadthing";
 import { productSchema,ProductFormValues } from "@/types/schema/inventory.schema";
 import { Product } from "@/types/schema/inventory";
+import { GroupedProductImportPayload } from "@/lib/configs/product-config";
 
 
 
@@ -46,7 +47,7 @@ export class ProductService {
           data: {
           name: validatedData.name,
           description: validatedData.description,
-          baseSku: validatedData.baseSku || null,
+          baseSku: validatedData.baseSku.trim().toUpperCase(), // Enforce SKU prefix formatting
           hasVariant: validatedData.hasVariant,
           isActive: validatedData.isActive,
           businessId: businessId,
@@ -214,6 +215,246 @@ export class ProductService {
   }
 
 
+// CREATE BULK PRODUCT SERVICE
+static async createBulkProductsService(
+    payload: { data: GroupedProductImportPayload[] },
+    userId: string,
+    employeeId: string,
+    businessId: string,
+    businessSlug: string
+  ) {
+    try {
+      const productItems = payload.data;
+
+      if (!productItems || productItems.length === 0) {
+        return { success: false, error: "No product data found in payload.", status: 400 };
+      }
+
+      // ── STEP 1: REMOVED GLOBAL ABORT ABILITY FOR SMOOTH UPSERTS ───────────────────
+
+      // ── STEP 2: EXECUTE TRANSACTION ───────────────────────────────────
+      const transactionResult = await prisma.$transaction(async (tx) => {
+        let savedProductsCount = 0;
+        let savedVariantsCount = 0;
+
+        for (const item of productItems) {
+          // A. Upsert the parent product container using its unique business + baseSku combo
+          const parentProduct = await tx.product.upsert({
+            where: {
+              businessId_baseSku: {
+                businessId: businessId,
+                baseSku: item.baseSku.trim().toUpperCase(),
+              }
+            },
+            update: {
+              name: item.name.trim(),
+              description: item.description,
+              hasVariant: item.hasVariant,
+              isActive: item.isActive,
+              categoryId: item.categoryId,
+              brandId: item.brandId,
+              isDeleted: false // Restores the parent product if it was previously marked as soft-deleted
+            },
+            create: {
+              name: item.name.trim(),
+              description: item.description,
+              baseSku: item.baseSku.trim().toUpperCase(),
+              hasVariant: item.hasVariant,
+              isActive: item.isActive,
+              businessId: businessId,
+              categoryId: item.categoryId,
+              brandId: item.brandId,
+            },
+          });
+
+          savedProductsCount++;
+          const attributeValueIdMap: Record<string, string> = {};
+
+          // B. Upsert Variant Attributes & Dynamic Attribute Values
+          if (item.hasVariant && item.attributes && item.attributes.length > 0) {
+            for (const attr of item.attributes) {
+              if (!attr.name) continue;
+
+              // 1. Upsert the primary Attribute Group (e.g., "Color")
+              const attributeGroup = await tx.variantAttribute.upsert({
+                where: {
+                  businessId_name: {
+                    businessId: businessId,
+                    name: attr.name.trim(),
+                  },
+                },
+                update: { sortOrder: attr.sortOrder },
+                create: {
+                  name: attr.name.trim(),
+                  businessId: businessId,
+                  sortOrder: attr.sortOrder,
+                },
+              });
+
+              // 2. Dynamically scan all variants to gather every real option value
+              const distinctValuesForAttribute = new Set<string>();
+              item.variants.forEach((v) => {
+                v.options.forEach((opt) => {
+                  if (opt.attributeName.trim().toLowerCase() === attr.name.trim().toLowerCase() && opt.value) {
+                    distinctValuesForAttribute.add(opt.value.trim());
+                  }
+                });
+              });
+
+              // 3. Secure option value configurations directly in your database maps
+              for (const tagValue of distinctValuesForAttribute) {
+                const valueRecord = await tx.variantAttributeValue.upsert({
+                  where: {
+                    attributeId_value: {
+                      attributeId: attributeGroup.id,
+                      value: tagValue,
+                    },
+                  },
+                  update: {},
+                  create: {
+                    attributeId: attributeGroup.id,
+                    value: tagValue,
+                  },
+                });
+
+                const compositeMapKey = `${attributeGroup.name}:${tagValue}`;
+                attributeValueIdMap[compositeMapKey] = valueRecord.id;
+              }
+            }
+          }
+
+          // C. Map Product Variants (With Smart Inventory Influx Management)
+          if (item.variants && item.variants.length > 0) {
+            for (const variantData of item.variants) {
+              
+              // 1. Look to see if the variant already exists in this specific business profile
+              const existingVariant = await tx.productVariant.findFirst({
+                where: {
+                  sku: variantData.sku.trim(),
+                  product: { businessId: businessId },
+                  isDeleted: false
+                }
+              });
+
+              let variantRecord;
+
+              if (existingVariant) {
+                // UPDATE: Maintain stock aggregation history safely
+                variantRecord = await tx.productVariant.update({
+                  where: { id: existingVariant.id },
+                  data: {
+                    barcode: variantData.barcode,
+                    price: variantData.price,
+                    costPrice: variantData.costPrice,
+                    stock: { increment: variantData.stock }, // Increments current storage with new excel imports
+                    lowStockAlert: variantData.lowStockAlert,
+                    weight: variantData.weight,
+                    length: variantData.length,
+                    width: variantData.width,
+                    height: variantData.height,
+                    isActive: variantData.isActive,
+                  }
+                });
+              } else {
+                // CREATE: Standard clean insert layout
+                variantRecord = await tx.productVariant.create({
+                  data: {
+                    productId: parentProduct.id,
+                    sku: variantData.sku.trim(),
+                    barcode: variantData.barcode,
+                    price: variantData.price,
+                    costPrice: variantData.costPrice,
+                    stock: variantData.stock,
+                    lowStockAlert: variantData.lowStockAlert,
+                    weight: variantData.weight,
+                    length: variantData.length,
+                    width: variantData.width,
+                    height: variantData.height,
+                    sortOrder: variantData.sortOrder,
+                    isActive: variantData.isActive,
+                  },
+                });
+              }
+
+              savedVariantsCount++;
+
+              // Map options relational junction rows (Only necessary for brand new variations)
+              if (!existingVariant && item.hasVariant && variantData.options && variantData.options.length > 0) {
+                const junctionsToInsert = variantData.options
+                  .map((opt) => {
+                    const lookupKey = `${opt.attributeName.trim()}:${opt.value.trim()}`;
+                    const targetValueId = attributeValueIdMap[lookupKey];
+
+                    if (!targetValueId) return null;
+
+                    return {
+                      variantId: variantRecord.id,
+                      attributeValueId: targetValueId,
+                    };
+                  })
+                  .filter(Boolean) as { variantId: string; attributeValueId: string }[];
+
+                if (junctionsToInsert.length > 0) {
+                  await tx.productVariantOption.createMany({
+                    data: junctionsToInsert,
+                  });
+                }
+              }
+
+              // Create stock activity log entry if incoming file inventory quantity > 0
+              if (variantData.stock > 0) {
+                await tx.stockLog.create({
+                  data: {
+                    productVariantId: variantRecord.id,
+                    employeeId: employeeId,
+                    businessId: businessId,
+                    change: variantData.stock,
+                    reason: existingVariant 
+                      ? `Stock replenishment via Excel template bulk-upload adjustments for SKU: ${variantRecord.sku}.`
+                      : `Initial inventory balance imported via Excel template for SKU: ${variantRecord.sku}.`,
+                  },
+                });
+              }
+            }
+          }
+        }
+
+        // D. Create a single execution batch summary Audit Log entry
+        await tx.auditLog.create({
+          data: {
+            action: "BULK_IMPORT_PRODUCTS",
+            entity: "PRODUCT",
+            entityId: "BULK_BATCH",
+            userId: userId,
+            businessId: businessId,
+            details: JSON.stringify({
+              productsProcessedCount: savedProductsCount,
+              variantsProcessedCount: savedVariantsCount,
+            }),
+          },
+        });
+
+        return { productsCount: savedProductsCount, variantsCount: savedVariantsCount };
+      });
+
+      return {
+        success: true,
+        message: `Successfully processed ${transactionResult.productsCount} products and configured ${transactionResult.variantsCount} stock item modifications/additions.`,
+        status: 201,
+        redirectTo: `/${businessSlug}/product_list`
+      };
+
+    } catch (error: unknown) {
+      console.error("Critical error inside createBulkProductsService execution pipeline:", error);
+      return {
+        success: false,
+        error: (error as Error).message || "An unexpected error occurred processing your file bulk upload configuration.",
+        status: 500,
+      };
+    }
+  }
+
+//GET ALL PRODUCTS SERVICE - FULL DETAIL WITH VARIANTS & IMAGES
 static async getAllProductsService(businessId: string): Promise<AppResponse> {
   try {
     // 1. Fetch Products Optimized for List/Grid Views with the new explicit relational schema
@@ -492,7 +733,7 @@ static async  updateProductService(
         data: {
           name: validatedData.name,
           description: validatedData.description,
-          baseSku: validatedData.baseSku || null,
+          baseSku: validatedData.baseSku.trim().toUpperCase(),
           hasVariant: validatedData.hasVariant,
           isActive: validatedData.isActive,
           categoryId: validatedData.categoryId === "none" ? null : validatedData.categoryId,
