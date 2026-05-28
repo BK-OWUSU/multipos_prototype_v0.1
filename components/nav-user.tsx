@@ -14,6 +14,7 @@ export function NavUser({ user,}:{user: {name: string, email: string, avatar: st
    const handleLogout = async () => {
     try {
       await logout()
+      localStorage.removeItem("sessionNotify")
       router.push("/login")
     } catch (error: unknown ) {
       console.error("Logout failed", error)

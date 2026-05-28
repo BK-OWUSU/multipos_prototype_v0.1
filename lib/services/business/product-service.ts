@@ -2,7 +2,7 @@ import { prisma } from "@/lib/dbHelper";
 import { AppResponse } from "@/types/auth/auth";
 import { deleteUTFile } from "@/lib/actions/uploadthing";
 import { productSchema,ProductFormValues } from "@/types/schema/inventory.schema";
-import { Product } from "@/types/schema/inventory";
+import { Product, ProductsVariants } from "@/types/schema/inventory";
 import { GroupedProductImportPayload } from "@/lib/configs/product-config";
 
 
@@ -637,7 +637,11 @@ static async getAllProductVariantsService(businessId: string) {
         stock: variant.stock,
         lowStockAlert: variant.lowStockAlert,
         isActive: variant.isActive,
+
         weight: variant.weight ? Number(variant.weight) : null,
+        length: variant.length ? Number(variant.length) : null,
+        height: variant.height ? Number(variant.height) : null,
+        width: variant.width ? Number(variant.width) : null,
         
         productName: variant.product.name,
         displayName: displayName, 
@@ -649,10 +653,12 @@ static async getAllProductVariantsService(businessId: string) {
         options: options,
         imageUrl: primaryImage ? primaryImage.imageUrl : null,
         images: variant.images,
-      };
+        createdAt: variant.createdAt,
+        sortOrder: variant.sortOrder
+      } as ProductsVariants; 
     });
 
-    return { success: true, data: transformedVariants, status: 200 } as AppResponse;
+    return { success: true, data: transformedVariants as ProductsVariants[], status: 200 } as AppResponse;
 
   } catch (error: unknown) {
     console.error("GET_ALL_PRODUCT_VARIANTS_ERROR:", error);

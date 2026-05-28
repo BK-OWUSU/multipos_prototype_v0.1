@@ -9,13 +9,6 @@ import CategoryForm from "./AddCategoryForm";
 import { categoriesColumnDef } from "@/components/tablesColumnDef/categoriesColumnDef";
 import { useCategoryStore } from "@/store/categoryStore";
 
-// Mock Data - Replace with your actual store/fetching logic
-const mockCategories = [
-  { id: "1", name: "Electronics", description: "Gadgets and devices", products: 120, isActive: true, createdAt: "12 Mar 2025" },
-  { id: "2", name: "Beverages", description: "Drinks and liquids", products: 45, isActive: true, createdAt: "10 Mar 2025" },
-  { id: "3", name: "Pharmacy", description: "Medicine", products: 15, isActive: false, createdAt: "28 Feb 2025" },
-];
-
 export default function CategoryPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const {fetchCategories, categories} = useCategoryStore();
@@ -28,13 +21,13 @@ export default function CategoryPage() {
     const categoryList = categories || [];
     const active = categoryList.filter(c => c.isActive).length;
     const inactive = categoryList.filter(c => !c.isActive).length;
-    console.log("Categories")
-    console.log(categoryList)
+    const totalProducts = categoryList.reduce((sum, category) => sum + (category._count?.products || 0), 0);
+    
   return [  
     { label: "Total Categories", value: categoryList.length, icon: Layers, color: "bg-indigo-50 text-indigo-600" },
     { label: "Active Categories", value: active, icon: CheckCircle2, color: "bg-green-50 text-green-600" },
     { label: "Inactive Categories", value: inactive, icon: XCircle, color: "bg-red-50 text-red-600" },
-    { label: "Total Products", value: 245, icon: Package, color: "bg-blue-50 text-blue-600" },
+    { label: "Total Products", value: totalProducts, icon: Package, color: "bg-blue-50 text-blue-600" },
     ]
 }, [categories]);
 

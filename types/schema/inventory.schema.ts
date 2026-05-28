@@ -79,7 +79,7 @@ export const categorySchema = z.object({
   imageUrl: z.string().optional().nullable(),
   fileKey: z.string().optional().nullable(), 
 });
-export type CategoryFormValues = z.infer<typeof categorySchema>;
+export type CategoryFormValues = z.input<typeof categorySchema>;
 
 export const brandSchema = z.object({
   name: z.string().min(2, "Brand name is required"),
@@ -88,7 +88,7 @@ export const brandSchema = z.object({
   imageUrl: z.string().optional().nullable(),
   fileKey: z.string().optional().nullable(), 
 });
-export type BrandFormValues = z.infer<typeof brandSchema>;
+export type BrandFormValues = z.input<typeof brandSchema>;
 
 export const createDiscountSchema = z.object({
   name: z.string().min(1, "Discount name is required"),

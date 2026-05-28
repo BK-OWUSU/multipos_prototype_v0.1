@@ -50,9 +50,65 @@ export type Product = Omit<PrismaProduct, 'createdAt' | 'updatedAt'> & {
   variants: TransformedProductVariant[];
 };
 
+// NATIVE TRANSFORMED PRODUCT VARIANT TYPE
+export type ProductsVariants = {
+    id: string;
+    productId: string;
+    sku: string;
+    barcode: string | null;
+    price: number;
+    costPrice: number;
+    stock: number;
+    lowStockAlert: number;
+    isActive: boolean;
+    weight: number | null;
+    length: number | null;
+    height: number | null;
+    width: number | null;
+    productName: string;
+    displayName: string;
+    description: string | null;
+    category: {
+        id: string;
+        name: string;
+    } | null;
+    brand: {
+        id: string;
+        name: string;
+    } | null;
+    hasMultipleVariants: boolean;
+    options: {
+        attributeId: string;
+        attributeName: string;
+        valueId: string;
+        value: string;
+    }[];
+    imageUrl: string | null;
+    images: {
+        id: string;
+        imageUrl: string;
+        imageKey: string | null;
+        isPrimary: boolean;
+    }[];
+    createdAt: Date;
+    sortOrder: number;
+}
 
 
-
+export type Category = {
+  id: string;
+  name: string;
+  businessId: string;
+  description?: string | null;
+  imageUrl?: string | null;
+  fileKey?: string | null;
+  isActive: boolean;
+  createdAt: string | Date;
+  updatedAt?: string | Date;
+  _count?: {
+    products: number;
+  };
+};
 
 export type Brand = {
   id: string;

@@ -1,5 +1,5 @@
 "use client"
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Package, CheckCircle2, XCircle, Award, Plus, Lightbulb, ShieldCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { GenericModal } from "@/components/reusables/GenericModal";
@@ -7,23 +7,29 @@ import CustomButton from "@/components/reusables/CustomButton";
 import TableMain from "@/components/reusables/table/TableMain";
 import BrandForm from "./AddBrandForm";
 import { brandsColumnDef } from "@/components/tablesColumnDef/brandsColumnDef"; // Ensure this is created
+import { useBrandStore } from "@/store/brandStore";
 
-// Mock Data updated for Brands
-const mockBrands = [
-  { id: "1", name: "Nike", description: "Sportswear and equipment", products: 85, isActive: true, createdAt: "12 Mar 2025" },
-  { id: "2", name: "Apple", description: "Consumer electronics", products: 40, isActive: true, createdAt: "10 Mar 2025" },
-  { id: "3", name: "Samsung", description: "Global electronics", products: 120, isActive: false, createdAt: "28 Feb 2025" },
-];
 
 export default function BrandPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const {fetchBrands, brands} = useBrandStore();
+    useEffect(()=>{
+      fetchBrands();
+    },[fetchBrands])
 
-  const stats = useMemo(() => [
-    { label: "Total Brands", value: mockBrands.length, icon: Award, color: "bg-purple-50 text-purple-600" },
-    { label: "Active Brands", value: mockBrands.filter(b => b.isActive).length, icon: ShieldCheck, color: "bg-emerald-50 text-emerald-600" },
-    { label: "Inactive Brands", value: mockBrands.filter(b => !b.isActive).length, icon: XCircle, color: "bg-rose-50 text-rose-600" },
-    { label: "Total Products", value: 245, icon: Package, color: "bg-blue-50 text-blue-600" },
-  ], []);
+  const stats = useMemo(() =>{
+    const brandList = brands || [];
+    const active = brandList.filter(b => b.isActive).length;
+    const inactive = brandList.filter(b => !b.isActive).length;
+    const totalProducts = brandList.reduce((sum, brand) => sum + (brand._count?.products || 0), 0);
+
+    return[
+    { label: "Total Brands", value: brandList.length, icon: Award, color: "bg-purple-50 text-purple-600" },
+    { label: "Active Brands", value: active, icon: ShieldCheck, color: "bg-emerald-50 text-emerald-600" },
+    { label: "Inactive Brands", value: inactive, icon: XCircle, color: "bg-rose-50 text-rose-600" },
+    { label: "Total Products", value: totalProducts, icon: Package, color: "bg-blue-50 text-blue-600" },
+  ]
+  }, [brands]);
 
   return (
     <div className="p-6 space-y-6 bg-gray-50/50 min-h-screen">
@@ -75,7 +81,7 @@ export default function BrandPage() {
         <div className="lg:col-span-3">
            <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 overflow-hidden">
               <TableMain 
-                data={[]} // Plug in actual data here
+                data={brands || []}
                 columns={brandsColumnDef} 
                 searchKey="name"
                 placeholder="Search brands..."

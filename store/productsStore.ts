@@ -2,12 +2,13 @@ import { create } from "zustand";
 import apiClient from "@/lib/api-client";
 import { AxiosError } from "axios";
 import { AppResponse } from "@/types/auth/auth";
-import { Product } from "@/types/schema/inventory";
+import { Product, ProductsVariants } from "@/types/schema/inventory";
 import { ProductFormValues } from "@/types/schema/inventory.schema";
 import { toast } from "sonner";
 
 type ProductStore = {
     products: Product[] | null;
+    productsVariants: ProductsVariants[] | null;
     loading: boolean;
     fetchProducts: () => Promise<void>;
     // fetchProductById: (productId: string) => Promise<Product | null>;
@@ -21,6 +22,7 @@ type ProductStore = {
 export const useProductStore = create<ProductStore>((set, get) => ({
     products: null,
     loading: false,
+    productsVariants: null,
 
     fetchProducts: async () => {
         try {
@@ -41,14 +43,13 @@ export const useProductStore = create<ProductStore>((set, get) => ({
         try {
             set({ loading: true });
             const response = await apiClient.get("/business/products/variants");
-            console.log(response.data.productsVariants);
             set({
-                products: response.data.productsVariants,
+                productsVariants: response.data.productsVariants as ProductsVariants[],
                 loading: false
             });
         } catch (error) {
             console.log("Error fetching products: ", error);
-            set({ products: null, loading: false });
+            set({ productsVariants: null, loading: false });
         }
     },
 

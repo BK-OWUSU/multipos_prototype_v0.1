@@ -14,6 +14,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@/components/ui/native-select"
 
 // Type structure for the select dropdown options
 interface SelectOption {
@@ -33,6 +37,7 @@ interface FormInputProps {
   hintText?: string;
   textArea?: boolean;
   select?: boolean;
+  nativeSelect?: boolean; 
   selectDefaultValue?: string;
   options?: SelectOption[]; 
   disabled?: boolean;
@@ -48,6 +53,7 @@ export function FormInput({
   hintText,
   textArea = false,
   select = false,
+  nativeSelect = false,
   selectDefaultValue,
   options = [],
   disabled = false
@@ -91,6 +97,29 @@ export function FormInput({
                 ))}
               </SelectContent>
             </Select>
+          )}
+        />
+        
+      ) : nativeSelect ? (
+        /* 1. NATIVE SELECT RENDERING */
+        <Controller
+          control={control}
+          name={name}
+          render={({ field }) => (
+            <NativeSelect 
+              onChange={field.onChange}
+              value={field.value}
+              disabled={disabled}
+              className={`${className} ${error ? "border-destructive" : ""}`}
+              aria-invalid={!!error}
+            >
+              <NativeSelectOption value="">{placeholder || "Select an option"}</NativeSelectOption>
+              {options.map((option) => (
+                <NativeSelectOption key={option.id} value={option.id}>
+                  {option.name}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
           )}
         />
       ) : textArea ? (

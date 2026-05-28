@@ -27,6 +27,12 @@ import {
 import Image from "next/image";
 import { deleteUTFile } from "@/lib/actions/uploadthing";
 import { UploadButton } from "@/utils/uploadthing";
+import { GenericModal } from "@/components/reusables/GenericModal";
+import CategoryForm from "../categories/AddCategoryForm";
+import { useCategoryStore } from "@/store/categoryStore";
+import BrandForm from "../brands/AddBrandForm";
+import { useBrandStore } from "@/store/brandStore";
+import { useAuthStore } from "@/store/useAuthStore";
 
 interface AddProductPageFormProps {
   categories?: { id: string; name: string }[];
@@ -35,13 +41,30 @@ interface AddProductPageFormProps {
   onCancel?: () => void;
 }
 
+// Header sub-component to show currency code in the title
+const CurrencyHeader = ({ title }: { title: string }) => {
+  const user = useAuthStore((state) => state.user);
+  const currencySymbol = user?.business?.currencySymbol || "";
+  return (
+    <span className="flex items-center">
+      {currencySymbol && <span className="mr-1">{currencySymbol}</span>}
+      {title} 
+    </span>
+  );
+};
+
+
 export default function AddProductPageForm({ 
   categories = [], 
   brands = [], 
   onSuccess, 
   onCancel 
 }: AddProductPageFormProps) {
+  //Stores
   const { createProduct } = useProductStore();
+  const {fetchCategories} = useCategoryStore();
+  const {fetchBrands} = useBrandStore();
+  //States
   const [uploadedFileKey, setUploadedFileKey] = useState<string | null>(null);
   const [isSuccessfullySubmitted, setIsSuccessfullySubmitted] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -378,15 +401,28 @@ const addVariantManually = () => {
                       options={categories}
                       selectDefaultValue="Uncategorized"
                     />
-                    <CustomButton
-                      className="self-baseline-last py-4"
-                      text="Add" 
-                      type="button" 
-                      customVariant="primary" 
-                      icon={<Plus className="h-4 w-4" />}
-                      size="sm"
-                      onClick={() => setIsCategoryModalOpen(true)}
-                    />     
+                     <GenericModal
+                              header="Add Category"
+                              description="Create a new category to organize your products."
+                              isOpen={isCategoryModalOpen}
+                              onOpenChange={setIsCategoryModalOpen}
+                              triggerBtn={
+                                <CustomButton
+                                  className="self-baseline-last py-4 shadow-md hover:shadow-lg transition-all"
+                                  customVariant="primary"
+                                  text="Add" 
+                                  icon={<Plus className="w-4 h-4 mr-2" />} 
+                                />
+                              }
+                            >
+                              <CategoryForm 
+                                onSuccess={() =>{ 
+                                  setIsCategoryModalOpen(false)
+                                  fetchCategories();
+                                }}
+                                onCancel={()=>setIsCategoryModalOpen(false)} 
+                                />
+                      </GenericModal>     
                   </div>
                 </div>
 
@@ -399,15 +435,27 @@ const addVariantManually = () => {
                       options={brands}
                       selectDefaultValue="No Brand"
                     />
-                    <CustomButton
-                      className="self-baseline-last py-4"
-                      text="Add" 
-                      type="button" 
-                      customVariant="primary" 
-                      icon={<Plus className="h-4 w-4" />}
-                      size="sm"
-                      onClick={() => setIsBrandModalOpen(true)}
-                    />
+                     <GenericModal
+                          header="Add Brand"
+                          description="Create a new brand label for your product inventory."
+                          isOpen={isBrandModalOpen}
+                          onOpenChange={setIsBrandModalOpen}
+                          triggerBtn={
+                            <CustomButton
+                              className="self-baseline-last py-4 shadow-md hover:shadow-lg transition-all"
+                              customVariant="primary"
+                              text="Add" 
+                              icon={<Plus className="w-4 h-4 mr-2" />} 
+                            />
+                          }
+                        >
+                      <BrandForm 
+                        onSuccess={() => {
+                          setIsBrandModalOpen(false);
+                          fetchBrands();
+                        }} 
+                        onCancel={() => setIsBrandModalOpen(false)} />
+                    </GenericModal>
                   </div>
                 </div>
               </div>
@@ -583,13 +631,12 @@ const addVariantManually = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        {/* TODO: Update Currency symbol from database */}
                         <TableHead className="w-24">Image</TableHead>
                         <TableHead>SKU *</TableHead>
                         <TableHead>Barcode</TableHead>
                         <TableHead>Options</TableHead>
-                        <TableHead>Price (€)</TableHead>
-                        <TableHead>Cost (€)</TableHead>
+                        <TableHead>{<CurrencyHeader title="Price"/>}</TableHead>
+                        <TableHead>{<CurrencyHeader title="Cost"/>}</TableHead>
                         <TableHead>Stock</TableHead>
                         <TableHead>Alert Limit</TableHead>
                         <TableHead>Weight (kg)</TableHead>
@@ -883,7 +930,7 @@ const addVariantManually = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-4">
                 <div>
-                  <label className="text-xs font-medium text-gray-600 block mb-1">Retail Price (€) *</label>
+                  <label className="text-xs font-medium text-gray-600 block mb-1">{<CurrencyHeader title="Price"/>}</label>
                   <Controller
                     control={control}
                     name="variants.0.price"
@@ -893,7 +940,7 @@ const addVariantManually = () => {
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-600 block mb-1">Cost Price (€)</label>
+                  <label className="text-xs font-medium text-gray-600 block mb-1">{<CurrencyHeader title="Cost Price"/>}</label>
                   <Controller
                     control={control}
                     name="variants.0.costPrice"

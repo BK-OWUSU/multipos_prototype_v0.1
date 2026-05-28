@@ -11,6 +11,7 @@ export default function LogoutButton() {
   const handleLogout = async () => {
     try {
       await logout()
+      localStorage.removeItem("sessionNotify")
       router.push("/login")
     } catch (error: unknown ) {
       console.error("Logout failed", error)

@@ -28,6 +28,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       // Create a constant to satisfy
       const session = user.session;
 
+      const sessionNotify = localStorage.getItem("sessionNotify");
+      if (sessionNotify === "true") {
+        return;
+      }
+
+      localStorage.setItem("sessionNotify", "true")
+
       toast.custom((t) => (
         <div className="bg-white border shadow-lg rounded-lg p-4 w-87.5">
           <div className="flex items-center gap-3 mb-2">
@@ -121,7 +128,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
      <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex bg-transparent border-b p-2 h-16 shrink-0 items-center gap-2 transition-[width,height] justify-between ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+        <header className="flex bg-transparent z-10  backdrop-blur-md sticky top-0  border-b p-2 h-16 shrink-0 items-center gap-2 transition-[width,height] justify-between ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator
