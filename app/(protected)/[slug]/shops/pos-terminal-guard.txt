@@ -1,0 +1,55 @@
+import React from "react";
+import { Lock, PlayCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+
+interface PosGuardBannerProps {
+  hasActiveSession: boolean;
+  onOpenRegisterClick: () => void;
+}
+
+export default function PosGuardBanner({ hasActiveSession, onOpenRegisterClick }: PosGuardBannerProps) {
+  if (hasActiveSession) return null;
+
+  return (
+    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <Alert className="max-w-md bg-white border-blue-100 rounded-2xl shadow-xl p-6 text-center flex flex-col items-center">
+        {/* Lock Icon Visual Indicator */}
+        <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-800 flex items-center justify-center mb-4">
+          <Lock className="w-5 h-5 stroke-[2.5]" />
+        </div>
+
+        <AlertTitle className="text-base font-black text-blue-950 tracking-tight">
+          Cash Register is Closed
+        </AlertTitle>
+        
+        <AlertDescription className="text-xs font-medium text-slate-500 mt-1.5 mb-5 max-w-sm leading-relaxed">
+          You must initialize a new cash register session and log an opening float before you can process payments or issue invoices.
+        </AlertDescription>
+
+        <Button 
+          onClick={onOpenRegisterClick}
+          className="bg-blue-800 hover:bg-blue-900 text-white font-bold text-xs h-10 px-5 rounded-xl gap-2 shadow-md transition-transform duration-150 active:scale-95"
+        >
+          <PlayCircle className="w-4 h-4 stroke-[2.5]" /> Open Register Session
+        </Button>
+      </Alert>
+    </div>
+  );
+}
+
+
+//NOTES SUGGESTIONS
+Cashier
+✓ Open Register
+✓ Close Register
+✓ Sell Products
+
+Manager
+✓ Open Register
+✓ Close Register
+✓ View Register History
+✓ Approve Variances
+
+Owner
+✓ Everything

@@ -8,6 +8,7 @@ import { toast } from "sonner";
 type AuthStore = {
     user: User| null;
     currentSlug: string | null;
+    shopSlug: string | null;
     loading: boolean;
     login: (data: LoginSchema)=> Promise<LoginResponse>;
     signup: (data: SignUpFormSchema) => Promise<SignUpResponse>;
@@ -22,6 +23,7 @@ export const useAuthStore = create<AuthStore>((set, get)=>({
     user: null,
     loading: false,
     currentSlug: null,
+    shopSlug: null,
 
     fetchUser: async() => {
         try {
@@ -29,10 +31,11 @@ export const useAuthStore = create<AuthStore>((set, get)=>({
             const response = await apiClient.get("/auth/me");
             set({
                 user: response.data.user as User,
-                currentSlug: response.data.user.business.slug || null, 
+                currentSlug: response.data.user.business.slug || null,
+                shopSlug: response.data.user.shop?.shopSlug || null,
                 loading: false
             });
-         
+        
         } catch (error) {
             console.log("Error fetching user: ", error);
             set({user: null, loading: false})
@@ -44,12 +47,15 @@ export const useAuthStore = create<AuthStore>((set, get)=>({
             const response = await apiClient.post("/auth/login", data);
             //Hydrate user data in the store after successful login
             await get().fetchUser();
+            const userData = response.data?.user;
             return {
                 success: response.data?.success,
                 redirectTo: response.data?.redirectTo,
                 status: response?.status,
                 multipleBusinesses: response.data?.multipleBusinesses,
-                businesses: response.data?.businesses
+                businesses: response.data?.multipleBusinesses,
+                businessesSlug: userData?.businessSlug,
+                shopSlug: userData?.shopSlug,
             } as LoginResponse;
         } catch (error: unknown) {
             if(error instanceof AxiosError) {

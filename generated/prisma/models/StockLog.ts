@@ -39,6 +39,8 @@ export type StockLogMinAggregateOutputType = {
   productVariantId: string | null
   employeeId: string | null
   businessId: string | null
+  shopId: string | null
+  shopInventoryId: string | null
   change: number | null
   reason: string | null
   createdAt: Date | null
@@ -49,6 +51,8 @@ export type StockLogMaxAggregateOutputType = {
   productVariantId: string | null
   employeeId: string | null
   businessId: string | null
+  shopId: string | null
+  shopInventoryId: string | null
   change: number | null
   reason: string | null
   createdAt: Date | null
@@ -59,6 +63,8 @@ export type StockLogCountAggregateOutputType = {
   productVariantId: number
   employeeId: number
   businessId: number
+  shopId: number
+  shopInventoryId: number
   change: number
   reason: number
   createdAt: number
@@ -79,6 +85,8 @@ export type StockLogMinAggregateInputType = {
   productVariantId?: true
   employeeId?: true
   businessId?: true
+  shopId?: true
+  shopInventoryId?: true
   change?: true
   reason?: true
   createdAt?: true
@@ -89,6 +97,8 @@ export type StockLogMaxAggregateInputType = {
   productVariantId?: true
   employeeId?: true
   businessId?: true
+  shopId?: true
+  shopInventoryId?: true
   change?: true
   reason?: true
   createdAt?: true
@@ -99,6 +109,8 @@ export type StockLogCountAggregateInputType = {
   productVariantId?: true
   employeeId?: true
   businessId?: true
+  shopId?: true
+  shopInventoryId?: true
   change?: true
   reason?: true
   createdAt?: true
@@ -196,6 +208,8 @@ export type StockLogGroupByOutputType = {
   productVariantId: string
   employeeId: string
   businessId: string
+  shopId: string
+  shopInventoryId: string | null
   change: number
   reason: string | null
   createdAt: Date
@@ -229,11 +243,15 @@ export type StockLogWhereInput = {
   productVariantId?: Prisma.StringFilter<"StockLog"> | string
   employeeId?: Prisma.StringFilter<"StockLog"> | string
   businessId?: Prisma.StringFilter<"StockLog"> | string
+  shopId?: Prisma.StringFilter<"StockLog"> | string
+  shopInventoryId?: Prisma.StringNullableFilter<"StockLog"> | string | null
   change?: Prisma.IntFilter<"StockLog"> | number
   reason?: Prisma.StringNullableFilter<"StockLog"> | string | null
   createdAt?: Prisma.DateTimeFilter<"StockLog"> | Date | string
   variant?: Prisma.XOR<Prisma.ProductVariantScalarRelationFilter, Prisma.ProductVariantWhereInput>
   employee?: Prisma.XOR<Prisma.EmployeeScalarRelationFilter, Prisma.EmployeeWhereInput>
+  shop?: Prisma.XOR<Prisma.ShopScalarRelationFilter, Prisma.ShopWhereInput>
+  inventory?: Prisma.XOR<Prisma.ShopInventoryNullableScalarRelationFilter, Prisma.ShopInventoryWhereInput> | null
 }
 
 export type StockLogOrderByWithRelationInput = {
@@ -241,11 +259,15 @@ export type StockLogOrderByWithRelationInput = {
   productVariantId?: Prisma.SortOrder
   employeeId?: Prisma.SortOrder
   businessId?: Prisma.SortOrder
+  shopId?: Prisma.SortOrder
+  shopInventoryId?: Prisma.SortOrderInput | Prisma.SortOrder
   change?: Prisma.SortOrder
   reason?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   variant?: Prisma.ProductVariantOrderByWithRelationInput
   employee?: Prisma.EmployeeOrderByWithRelationInput
+  shop?: Prisma.ShopOrderByWithRelationInput
+  inventory?: Prisma.ShopInventoryOrderByWithRelationInput
 }
 
 export type StockLogWhereUniqueInput = Prisma.AtLeast<{
@@ -256,11 +278,15 @@ export type StockLogWhereUniqueInput = Prisma.AtLeast<{
   productVariantId?: Prisma.StringFilter<"StockLog"> | string
   employeeId?: Prisma.StringFilter<"StockLog"> | string
   businessId?: Prisma.StringFilter<"StockLog"> | string
+  shopId?: Prisma.StringFilter<"StockLog"> | string
+  shopInventoryId?: Prisma.StringNullableFilter<"StockLog"> | string | null
   change?: Prisma.IntFilter<"StockLog"> | number
   reason?: Prisma.StringNullableFilter<"StockLog"> | string | null
   createdAt?: Prisma.DateTimeFilter<"StockLog"> | Date | string
   variant?: Prisma.XOR<Prisma.ProductVariantScalarRelationFilter, Prisma.ProductVariantWhereInput>
   employee?: Prisma.XOR<Prisma.EmployeeScalarRelationFilter, Prisma.EmployeeWhereInput>
+  shop?: Prisma.XOR<Prisma.ShopScalarRelationFilter, Prisma.ShopWhereInput>
+  inventory?: Prisma.XOR<Prisma.ShopInventoryNullableScalarRelationFilter, Prisma.ShopInventoryWhereInput> | null
 }, "id">
 
 export type StockLogOrderByWithAggregationInput = {
@@ -268,6 +294,8 @@ export type StockLogOrderByWithAggregationInput = {
   productVariantId?: Prisma.SortOrder
   employeeId?: Prisma.SortOrder
   businessId?: Prisma.SortOrder
+  shopId?: Prisma.SortOrder
+  shopInventoryId?: Prisma.SortOrderInput | Prisma.SortOrder
   change?: Prisma.SortOrder
   reason?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -286,6 +314,8 @@ export type StockLogScalarWhereWithAggregatesInput = {
   productVariantId?: Prisma.StringWithAggregatesFilter<"StockLog"> | string
   employeeId?: Prisma.StringWithAggregatesFilter<"StockLog"> | string
   businessId?: Prisma.StringWithAggregatesFilter<"StockLog"> | string
+  shopId?: Prisma.StringWithAggregatesFilter<"StockLog"> | string
+  shopInventoryId?: Prisma.StringNullableWithAggregatesFilter<"StockLog"> | string | null
   change?: Prisma.IntWithAggregatesFilter<"StockLog"> | number
   reason?: Prisma.StringNullableWithAggregatesFilter<"StockLog"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"StockLog"> | Date | string
@@ -299,6 +329,8 @@ export type StockLogCreateInput = {
   createdAt?: Date | string
   variant: Prisma.ProductVariantCreateNestedOneWithoutStockLogsInput
   employee: Prisma.EmployeeCreateNestedOneWithoutStockLogsInput
+  shop: Prisma.ShopCreateNestedOneWithoutStockLogsInput
+  inventory?: Prisma.ShopInventoryCreateNestedOneWithoutStockLogsInput
 }
 
 export type StockLogUncheckedCreateInput = {
@@ -306,6 +338,8 @@ export type StockLogUncheckedCreateInput = {
   productVariantId: string
   employeeId: string
   businessId: string
+  shopId: string
+  shopInventoryId?: string | null
   change: number
   reason?: string | null
   createdAt?: Date | string
@@ -319,6 +353,8 @@ export type StockLogUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   variant?: Prisma.ProductVariantUpdateOneRequiredWithoutStockLogsNestedInput
   employee?: Prisma.EmployeeUpdateOneRequiredWithoutStockLogsNestedInput
+  shop?: Prisma.ShopUpdateOneRequiredWithoutStockLogsNestedInput
+  inventory?: Prisma.ShopInventoryUpdateOneWithoutStockLogsNestedInput
 }
 
 export type StockLogUncheckedUpdateInput = {
@@ -326,6 +362,8 @@ export type StockLogUncheckedUpdateInput = {
   productVariantId?: Prisma.StringFieldUpdateOperationsInput | string
   employeeId?: Prisma.StringFieldUpdateOperationsInput | string
   businessId?: Prisma.StringFieldUpdateOperationsInput | string
+  shopId?: Prisma.StringFieldUpdateOperationsInput | string
+  shopInventoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   change?: Prisma.IntFieldUpdateOperationsInput | number
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -336,6 +374,8 @@ export type StockLogCreateManyInput = {
   productVariantId: string
   employeeId: string
   businessId: string
+  shopId: string
+  shopInventoryId?: string | null
   change: number
   reason?: string | null
   createdAt?: Date | string
@@ -354,6 +394,8 @@ export type StockLogUncheckedUpdateManyInput = {
   productVariantId?: Prisma.StringFieldUpdateOperationsInput | string
   employeeId?: Prisma.StringFieldUpdateOperationsInput | string
   businessId?: Prisma.StringFieldUpdateOperationsInput | string
+  shopId?: Prisma.StringFieldUpdateOperationsInput | string
+  shopInventoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   change?: Prisma.IntFieldUpdateOperationsInput | number
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -374,6 +416,8 @@ export type StockLogCountOrderByAggregateInput = {
   productVariantId?: Prisma.SortOrder
   employeeId?: Prisma.SortOrder
   businessId?: Prisma.SortOrder
+  shopId?: Prisma.SortOrder
+  shopInventoryId?: Prisma.SortOrder
   change?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -388,6 +432,8 @@ export type StockLogMaxOrderByAggregateInput = {
   productVariantId?: Prisma.SortOrder
   employeeId?: Prisma.SortOrder
   businessId?: Prisma.SortOrder
+  shopId?: Prisma.SortOrder
+  shopInventoryId?: Prisma.SortOrder
   change?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -398,6 +444,8 @@ export type StockLogMinOrderByAggregateInput = {
   productVariantId?: Prisma.SortOrder
   employeeId?: Prisma.SortOrder
   businessId?: Prisma.SortOrder
+  shopId?: Prisma.SortOrder
+  shopInventoryId?: Prisma.SortOrder
   change?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -491,6 +539,90 @@ export type StockLogUncheckedUpdateManyWithoutVariantNestedInput = {
   deleteMany?: Prisma.StockLogScalarWhereInput | Prisma.StockLogScalarWhereInput[]
 }
 
+export type StockLogCreateNestedManyWithoutShopInput = {
+  create?: Prisma.XOR<Prisma.StockLogCreateWithoutShopInput, Prisma.StockLogUncheckedCreateWithoutShopInput> | Prisma.StockLogCreateWithoutShopInput[] | Prisma.StockLogUncheckedCreateWithoutShopInput[]
+  connectOrCreate?: Prisma.StockLogCreateOrConnectWithoutShopInput | Prisma.StockLogCreateOrConnectWithoutShopInput[]
+  createMany?: Prisma.StockLogCreateManyShopInputEnvelope
+  connect?: Prisma.StockLogWhereUniqueInput | Prisma.StockLogWhereUniqueInput[]
+}
+
+export type StockLogUncheckedCreateNestedManyWithoutShopInput = {
+  create?: Prisma.XOR<Prisma.StockLogCreateWithoutShopInput, Prisma.StockLogUncheckedCreateWithoutShopInput> | Prisma.StockLogCreateWithoutShopInput[] | Prisma.StockLogUncheckedCreateWithoutShopInput[]
+  connectOrCreate?: Prisma.StockLogCreateOrConnectWithoutShopInput | Prisma.StockLogCreateOrConnectWithoutShopInput[]
+  createMany?: Prisma.StockLogCreateManyShopInputEnvelope
+  connect?: Prisma.StockLogWhereUniqueInput | Prisma.StockLogWhereUniqueInput[]
+}
+
+export type StockLogUpdateManyWithoutShopNestedInput = {
+  create?: Prisma.XOR<Prisma.StockLogCreateWithoutShopInput, Prisma.StockLogUncheckedCreateWithoutShopInput> | Prisma.StockLogCreateWithoutShopInput[] | Prisma.StockLogUncheckedCreateWithoutShopInput[]
+  connectOrCreate?: Prisma.StockLogCreateOrConnectWithoutShopInput | Prisma.StockLogCreateOrConnectWithoutShopInput[]
+  upsert?: Prisma.StockLogUpsertWithWhereUniqueWithoutShopInput | Prisma.StockLogUpsertWithWhereUniqueWithoutShopInput[]
+  createMany?: Prisma.StockLogCreateManyShopInputEnvelope
+  set?: Prisma.StockLogWhereUniqueInput | Prisma.StockLogWhereUniqueInput[]
+  disconnect?: Prisma.StockLogWhereUniqueInput | Prisma.StockLogWhereUniqueInput[]
+  delete?: Prisma.StockLogWhereUniqueInput | Prisma.StockLogWhereUniqueInput[]
+  connect?: Prisma.StockLogWhereUniqueInput | Prisma.StockLogWhereUniqueInput[]
+  update?: Prisma.StockLogUpdateWithWhereUniqueWithoutShopInput | Prisma.StockLogUpdateWithWhereUniqueWithoutShopInput[]
+  updateMany?: Prisma.StockLogUpdateManyWithWhereWithoutShopInput | Prisma.StockLogUpdateManyWithWhereWithoutShopInput[]
+  deleteMany?: Prisma.StockLogScalarWhereInput | Prisma.StockLogScalarWhereInput[]
+}
+
+export type StockLogUncheckedUpdateManyWithoutShopNestedInput = {
+  create?: Prisma.XOR<Prisma.StockLogCreateWithoutShopInput, Prisma.StockLogUncheckedCreateWithoutShopInput> | Prisma.StockLogCreateWithoutShopInput[] | Prisma.StockLogUncheckedCreateWithoutShopInput[]
+  connectOrCreate?: Prisma.StockLogCreateOrConnectWithoutShopInput | Prisma.StockLogCreateOrConnectWithoutShopInput[]
+  upsert?: Prisma.StockLogUpsertWithWhereUniqueWithoutShopInput | Prisma.StockLogUpsertWithWhereUniqueWithoutShopInput[]
+  createMany?: Prisma.StockLogCreateManyShopInputEnvelope
+  set?: Prisma.StockLogWhereUniqueInput | Prisma.StockLogWhereUniqueInput[]
+  disconnect?: Prisma.StockLogWhereUniqueInput | Prisma.StockLogWhereUniqueInput[]
+  delete?: Prisma.StockLogWhereUniqueInput | Prisma.StockLogWhereUniqueInput[]
+  connect?: Prisma.StockLogWhereUniqueInput | Prisma.StockLogWhereUniqueInput[]
+  update?: Prisma.StockLogUpdateWithWhereUniqueWithoutShopInput | Prisma.StockLogUpdateWithWhereUniqueWithoutShopInput[]
+  updateMany?: Prisma.StockLogUpdateManyWithWhereWithoutShopInput | Prisma.StockLogUpdateManyWithWhereWithoutShopInput[]
+  deleteMany?: Prisma.StockLogScalarWhereInput | Prisma.StockLogScalarWhereInput[]
+}
+
+export type StockLogCreateNestedManyWithoutInventoryInput = {
+  create?: Prisma.XOR<Prisma.StockLogCreateWithoutInventoryInput, Prisma.StockLogUncheckedCreateWithoutInventoryInput> | Prisma.StockLogCreateWithoutInventoryInput[] | Prisma.StockLogUncheckedCreateWithoutInventoryInput[]
+  connectOrCreate?: Prisma.StockLogCreateOrConnectWithoutInventoryInput | Prisma.StockLogCreateOrConnectWithoutInventoryInput[]
+  createMany?: Prisma.StockLogCreateManyInventoryInputEnvelope
+  connect?: Prisma.StockLogWhereUniqueInput | Prisma.StockLogWhereUniqueInput[]
+}
+
+export type StockLogUncheckedCreateNestedManyWithoutInventoryInput = {
+  create?: Prisma.XOR<Prisma.StockLogCreateWithoutInventoryInput, Prisma.StockLogUncheckedCreateWithoutInventoryInput> | Prisma.StockLogCreateWithoutInventoryInput[] | Prisma.StockLogUncheckedCreateWithoutInventoryInput[]
+  connectOrCreate?: Prisma.StockLogCreateOrConnectWithoutInventoryInput | Prisma.StockLogCreateOrConnectWithoutInventoryInput[]
+  createMany?: Prisma.StockLogCreateManyInventoryInputEnvelope
+  connect?: Prisma.StockLogWhereUniqueInput | Prisma.StockLogWhereUniqueInput[]
+}
+
+export type StockLogUpdateManyWithoutInventoryNestedInput = {
+  create?: Prisma.XOR<Prisma.StockLogCreateWithoutInventoryInput, Prisma.StockLogUncheckedCreateWithoutInventoryInput> | Prisma.StockLogCreateWithoutInventoryInput[] | Prisma.StockLogUncheckedCreateWithoutInventoryInput[]
+  connectOrCreate?: Prisma.StockLogCreateOrConnectWithoutInventoryInput | Prisma.StockLogCreateOrConnectWithoutInventoryInput[]
+  upsert?: Prisma.StockLogUpsertWithWhereUniqueWithoutInventoryInput | Prisma.StockLogUpsertWithWhereUniqueWithoutInventoryInput[]
+  createMany?: Prisma.StockLogCreateManyInventoryInputEnvelope
+  set?: Prisma.StockLogWhereUniqueInput | Prisma.StockLogWhereUniqueInput[]
+  disconnect?: Prisma.StockLogWhereUniqueInput | Prisma.StockLogWhereUniqueInput[]
+  delete?: Prisma.StockLogWhereUniqueInput | Prisma.StockLogWhereUniqueInput[]
+  connect?: Prisma.StockLogWhereUniqueInput | Prisma.StockLogWhereUniqueInput[]
+  update?: Prisma.StockLogUpdateWithWhereUniqueWithoutInventoryInput | Prisma.StockLogUpdateWithWhereUniqueWithoutInventoryInput[]
+  updateMany?: Prisma.StockLogUpdateManyWithWhereWithoutInventoryInput | Prisma.StockLogUpdateManyWithWhereWithoutInventoryInput[]
+  deleteMany?: Prisma.StockLogScalarWhereInput | Prisma.StockLogScalarWhereInput[]
+}
+
+export type StockLogUncheckedUpdateManyWithoutInventoryNestedInput = {
+  create?: Prisma.XOR<Prisma.StockLogCreateWithoutInventoryInput, Prisma.StockLogUncheckedCreateWithoutInventoryInput> | Prisma.StockLogCreateWithoutInventoryInput[] | Prisma.StockLogUncheckedCreateWithoutInventoryInput[]
+  connectOrCreate?: Prisma.StockLogCreateOrConnectWithoutInventoryInput | Prisma.StockLogCreateOrConnectWithoutInventoryInput[]
+  upsert?: Prisma.StockLogUpsertWithWhereUniqueWithoutInventoryInput | Prisma.StockLogUpsertWithWhereUniqueWithoutInventoryInput[]
+  createMany?: Prisma.StockLogCreateManyInventoryInputEnvelope
+  set?: Prisma.StockLogWhereUniqueInput | Prisma.StockLogWhereUniqueInput[]
+  disconnect?: Prisma.StockLogWhereUniqueInput | Prisma.StockLogWhereUniqueInput[]
+  delete?: Prisma.StockLogWhereUniqueInput | Prisma.StockLogWhereUniqueInput[]
+  connect?: Prisma.StockLogWhereUniqueInput | Prisma.StockLogWhereUniqueInput[]
+  update?: Prisma.StockLogUpdateWithWhereUniqueWithoutInventoryInput | Prisma.StockLogUpdateWithWhereUniqueWithoutInventoryInput[]
+  updateMany?: Prisma.StockLogUpdateManyWithWhereWithoutInventoryInput | Prisma.StockLogUpdateManyWithWhereWithoutInventoryInput[]
+  deleteMany?: Prisma.StockLogScalarWhereInput | Prisma.StockLogScalarWhereInput[]
+}
+
 export type StockLogCreateWithoutEmployeeInput = {
   id?: string
   businessId: string
@@ -498,12 +630,16 @@ export type StockLogCreateWithoutEmployeeInput = {
   reason?: string | null
   createdAt?: Date | string
   variant: Prisma.ProductVariantCreateNestedOneWithoutStockLogsInput
+  shop: Prisma.ShopCreateNestedOneWithoutStockLogsInput
+  inventory?: Prisma.ShopInventoryCreateNestedOneWithoutStockLogsInput
 }
 
 export type StockLogUncheckedCreateWithoutEmployeeInput = {
   id?: string
   productVariantId: string
   businessId: string
+  shopId: string
+  shopInventoryId?: string | null
   change: number
   reason?: string | null
   createdAt?: Date | string
@@ -543,6 +679,8 @@ export type StockLogScalarWhereInput = {
   productVariantId?: Prisma.StringFilter<"StockLog"> | string
   employeeId?: Prisma.StringFilter<"StockLog"> | string
   businessId?: Prisma.StringFilter<"StockLog"> | string
+  shopId?: Prisma.StringFilter<"StockLog"> | string
+  shopInventoryId?: Prisma.StringNullableFilter<"StockLog"> | string | null
   change?: Prisma.IntFilter<"StockLog"> | number
   reason?: Prisma.StringNullableFilter<"StockLog"> | string | null
   createdAt?: Prisma.DateTimeFilter<"StockLog"> | Date | string
@@ -555,12 +693,16 @@ export type StockLogCreateWithoutVariantInput = {
   reason?: string | null
   createdAt?: Date | string
   employee: Prisma.EmployeeCreateNestedOneWithoutStockLogsInput
+  shop: Prisma.ShopCreateNestedOneWithoutStockLogsInput
+  inventory?: Prisma.ShopInventoryCreateNestedOneWithoutStockLogsInput
 }
 
 export type StockLogUncheckedCreateWithoutVariantInput = {
   id?: string
   employeeId: string
   businessId: string
+  shopId: string
+  shopInventoryId?: string | null
   change: number
   reason?: string | null
   createdAt?: Date | string
@@ -592,10 +734,108 @@ export type StockLogUpdateManyWithWhereWithoutVariantInput = {
   data: Prisma.XOR<Prisma.StockLogUpdateManyMutationInput, Prisma.StockLogUncheckedUpdateManyWithoutVariantInput>
 }
 
+export type StockLogCreateWithoutShopInput = {
+  id?: string
+  businessId: string
+  change: number
+  reason?: string | null
+  createdAt?: Date | string
+  variant: Prisma.ProductVariantCreateNestedOneWithoutStockLogsInput
+  employee: Prisma.EmployeeCreateNestedOneWithoutStockLogsInput
+  inventory?: Prisma.ShopInventoryCreateNestedOneWithoutStockLogsInput
+}
+
+export type StockLogUncheckedCreateWithoutShopInput = {
+  id?: string
+  productVariantId: string
+  employeeId: string
+  businessId: string
+  shopInventoryId?: string | null
+  change: number
+  reason?: string | null
+  createdAt?: Date | string
+}
+
+export type StockLogCreateOrConnectWithoutShopInput = {
+  where: Prisma.StockLogWhereUniqueInput
+  create: Prisma.XOR<Prisma.StockLogCreateWithoutShopInput, Prisma.StockLogUncheckedCreateWithoutShopInput>
+}
+
+export type StockLogCreateManyShopInputEnvelope = {
+  data: Prisma.StockLogCreateManyShopInput | Prisma.StockLogCreateManyShopInput[]
+  skipDuplicates?: boolean
+}
+
+export type StockLogUpsertWithWhereUniqueWithoutShopInput = {
+  where: Prisma.StockLogWhereUniqueInput
+  update: Prisma.XOR<Prisma.StockLogUpdateWithoutShopInput, Prisma.StockLogUncheckedUpdateWithoutShopInput>
+  create: Prisma.XOR<Prisma.StockLogCreateWithoutShopInput, Prisma.StockLogUncheckedCreateWithoutShopInput>
+}
+
+export type StockLogUpdateWithWhereUniqueWithoutShopInput = {
+  where: Prisma.StockLogWhereUniqueInput
+  data: Prisma.XOR<Prisma.StockLogUpdateWithoutShopInput, Prisma.StockLogUncheckedUpdateWithoutShopInput>
+}
+
+export type StockLogUpdateManyWithWhereWithoutShopInput = {
+  where: Prisma.StockLogScalarWhereInput
+  data: Prisma.XOR<Prisma.StockLogUpdateManyMutationInput, Prisma.StockLogUncheckedUpdateManyWithoutShopInput>
+}
+
+export type StockLogCreateWithoutInventoryInput = {
+  id?: string
+  businessId: string
+  change: number
+  reason?: string | null
+  createdAt?: Date | string
+  variant: Prisma.ProductVariantCreateNestedOneWithoutStockLogsInput
+  employee: Prisma.EmployeeCreateNestedOneWithoutStockLogsInput
+  shop: Prisma.ShopCreateNestedOneWithoutStockLogsInput
+}
+
+export type StockLogUncheckedCreateWithoutInventoryInput = {
+  id?: string
+  productVariantId: string
+  employeeId: string
+  businessId: string
+  shopId: string
+  change: number
+  reason?: string | null
+  createdAt?: Date | string
+}
+
+export type StockLogCreateOrConnectWithoutInventoryInput = {
+  where: Prisma.StockLogWhereUniqueInput
+  create: Prisma.XOR<Prisma.StockLogCreateWithoutInventoryInput, Prisma.StockLogUncheckedCreateWithoutInventoryInput>
+}
+
+export type StockLogCreateManyInventoryInputEnvelope = {
+  data: Prisma.StockLogCreateManyInventoryInput | Prisma.StockLogCreateManyInventoryInput[]
+  skipDuplicates?: boolean
+}
+
+export type StockLogUpsertWithWhereUniqueWithoutInventoryInput = {
+  where: Prisma.StockLogWhereUniqueInput
+  update: Prisma.XOR<Prisma.StockLogUpdateWithoutInventoryInput, Prisma.StockLogUncheckedUpdateWithoutInventoryInput>
+  create: Prisma.XOR<Prisma.StockLogCreateWithoutInventoryInput, Prisma.StockLogUncheckedCreateWithoutInventoryInput>
+}
+
+export type StockLogUpdateWithWhereUniqueWithoutInventoryInput = {
+  where: Prisma.StockLogWhereUniqueInput
+  data: Prisma.XOR<Prisma.StockLogUpdateWithoutInventoryInput, Prisma.StockLogUncheckedUpdateWithoutInventoryInput>
+}
+
+export type StockLogUpdateManyWithWhereWithoutInventoryInput = {
+  where: Prisma.StockLogScalarWhereInput
+  data: Prisma.XOR<Prisma.StockLogUpdateManyMutationInput, Prisma.StockLogUncheckedUpdateManyWithoutInventoryInput>
+}
+
 export type StockLogCreateManyEmployeeInput = {
   id?: string
   productVariantId: string
   businessId: string
+  shopId: string
+  shopInventoryId?: string | null
   change: number
   reason?: string | null
   createdAt?: Date | string
@@ -608,12 +848,16 @@ export type StockLogUpdateWithoutEmployeeInput = {
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   variant?: Prisma.ProductVariantUpdateOneRequiredWithoutStockLogsNestedInput
+  shop?: Prisma.ShopUpdateOneRequiredWithoutStockLogsNestedInput
+  inventory?: Prisma.ShopInventoryUpdateOneWithoutStockLogsNestedInput
 }
 
 export type StockLogUncheckedUpdateWithoutEmployeeInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   productVariantId?: Prisma.StringFieldUpdateOperationsInput | string
   businessId?: Prisma.StringFieldUpdateOperationsInput | string
+  shopId?: Prisma.StringFieldUpdateOperationsInput | string
+  shopInventoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   change?: Prisma.IntFieldUpdateOperationsInput | number
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -623,6 +867,8 @@ export type StockLogUncheckedUpdateManyWithoutEmployeeInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   productVariantId?: Prisma.StringFieldUpdateOperationsInput | string
   businessId?: Prisma.StringFieldUpdateOperationsInput | string
+  shopId?: Prisma.StringFieldUpdateOperationsInput | string
+  shopInventoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   change?: Prisma.IntFieldUpdateOperationsInput | number
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -632,6 +878,8 @@ export type StockLogCreateManyVariantInput = {
   id?: string
   employeeId: string
   businessId: string
+  shopId: string
+  shopInventoryId?: string | null
   change: number
   reason?: string | null
   createdAt?: Date | string
@@ -644,12 +892,16 @@ export type StockLogUpdateWithoutVariantInput = {
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   employee?: Prisma.EmployeeUpdateOneRequiredWithoutStockLogsNestedInput
+  shop?: Prisma.ShopUpdateOneRequiredWithoutStockLogsNestedInput
+  inventory?: Prisma.ShopInventoryUpdateOneWithoutStockLogsNestedInput
 }
 
 export type StockLogUncheckedUpdateWithoutVariantInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   employeeId?: Prisma.StringFieldUpdateOperationsInput | string
   businessId?: Prisma.StringFieldUpdateOperationsInput | string
+  shopId?: Prisma.StringFieldUpdateOperationsInput | string
+  shopInventoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   change?: Prisma.IntFieldUpdateOperationsInput | number
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -659,6 +911,96 @@ export type StockLogUncheckedUpdateManyWithoutVariantInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   employeeId?: Prisma.StringFieldUpdateOperationsInput | string
   businessId?: Prisma.StringFieldUpdateOperationsInput | string
+  shopId?: Prisma.StringFieldUpdateOperationsInput | string
+  shopInventoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  change?: Prisma.IntFieldUpdateOperationsInput | number
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type StockLogCreateManyShopInput = {
+  id?: string
+  productVariantId: string
+  employeeId: string
+  businessId: string
+  shopInventoryId?: string | null
+  change: number
+  reason?: string | null
+  createdAt?: Date | string
+}
+
+export type StockLogUpdateWithoutShopInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  businessId?: Prisma.StringFieldUpdateOperationsInput | string
+  change?: Prisma.IntFieldUpdateOperationsInput | number
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  variant?: Prisma.ProductVariantUpdateOneRequiredWithoutStockLogsNestedInput
+  employee?: Prisma.EmployeeUpdateOneRequiredWithoutStockLogsNestedInput
+  inventory?: Prisma.ShopInventoryUpdateOneWithoutStockLogsNestedInput
+}
+
+export type StockLogUncheckedUpdateWithoutShopInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  productVariantId?: Prisma.StringFieldUpdateOperationsInput | string
+  employeeId?: Prisma.StringFieldUpdateOperationsInput | string
+  businessId?: Prisma.StringFieldUpdateOperationsInput | string
+  shopInventoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  change?: Prisma.IntFieldUpdateOperationsInput | number
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type StockLogUncheckedUpdateManyWithoutShopInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  productVariantId?: Prisma.StringFieldUpdateOperationsInput | string
+  employeeId?: Prisma.StringFieldUpdateOperationsInput | string
+  businessId?: Prisma.StringFieldUpdateOperationsInput | string
+  shopInventoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  change?: Prisma.IntFieldUpdateOperationsInput | number
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type StockLogCreateManyInventoryInput = {
+  id?: string
+  productVariantId: string
+  employeeId: string
+  businessId: string
+  shopId: string
+  change: number
+  reason?: string | null
+  createdAt?: Date | string
+}
+
+export type StockLogUpdateWithoutInventoryInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  businessId?: Prisma.StringFieldUpdateOperationsInput | string
+  change?: Prisma.IntFieldUpdateOperationsInput | number
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  variant?: Prisma.ProductVariantUpdateOneRequiredWithoutStockLogsNestedInput
+  employee?: Prisma.EmployeeUpdateOneRequiredWithoutStockLogsNestedInput
+  shop?: Prisma.ShopUpdateOneRequiredWithoutStockLogsNestedInput
+}
+
+export type StockLogUncheckedUpdateWithoutInventoryInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  productVariantId?: Prisma.StringFieldUpdateOperationsInput | string
+  employeeId?: Prisma.StringFieldUpdateOperationsInput | string
+  businessId?: Prisma.StringFieldUpdateOperationsInput | string
+  shopId?: Prisma.StringFieldUpdateOperationsInput | string
+  change?: Prisma.IntFieldUpdateOperationsInput | number
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type StockLogUncheckedUpdateManyWithoutInventoryInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  productVariantId?: Prisma.StringFieldUpdateOperationsInput | string
+  employeeId?: Prisma.StringFieldUpdateOperationsInput | string
+  businessId?: Prisma.StringFieldUpdateOperationsInput | string
+  shopId?: Prisma.StringFieldUpdateOperationsInput | string
   change?: Prisma.IntFieldUpdateOperationsInput | number
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -671,11 +1013,15 @@ export type StockLogSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   productVariantId?: boolean
   employeeId?: boolean
   businessId?: boolean
+  shopId?: boolean
+  shopInventoryId?: boolean
   change?: boolean
   reason?: boolean
   createdAt?: boolean
   variant?: boolean | Prisma.ProductVariantDefaultArgs<ExtArgs>
   employee?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
+  shop?: boolean | Prisma.ShopDefaultArgs<ExtArgs>
+  inventory?: boolean | Prisma.StockLog$inventoryArgs<ExtArgs>
 }, ExtArgs["result"]["stockLog"]>
 
 export type StockLogSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -683,11 +1029,15 @@ export type StockLogSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   productVariantId?: boolean
   employeeId?: boolean
   businessId?: boolean
+  shopId?: boolean
+  shopInventoryId?: boolean
   change?: boolean
   reason?: boolean
   createdAt?: boolean
   variant?: boolean | Prisma.ProductVariantDefaultArgs<ExtArgs>
   employee?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
+  shop?: boolean | Prisma.ShopDefaultArgs<ExtArgs>
+  inventory?: boolean | Prisma.StockLog$inventoryArgs<ExtArgs>
 }, ExtArgs["result"]["stockLog"]>
 
 export type StockLogSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -695,11 +1045,15 @@ export type StockLogSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   productVariantId?: boolean
   employeeId?: boolean
   businessId?: boolean
+  shopId?: boolean
+  shopInventoryId?: boolean
   change?: boolean
   reason?: boolean
   createdAt?: boolean
   variant?: boolean | Prisma.ProductVariantDefaultArgs<ExtArgs>
   employee?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
+  shop?: boolean | Prisma.ShopDefaultArgs<ExtArgs>
+  inventory?: boolean | Prisma.StockLog$inventoryArgs<ExtArgs>
 }, ExtArgs["result"]["stockLog"]>
 
 export type StockLogSelectScalar = {
@@ -707,23 +1061,31 @@ export type StockLogSelectScalar = {
   productVariantId?: boolean
   employeeId?: boolean
   businessId?: boolean
+  shopId?: boolean
+  shopInventoryId?: boolean
   change?: boolean
   reason?: boolean
   createdAt?: boolean
 }
 
-export type StockLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "productVariantId" | "employeeId" | "businessId" | "change" | "reason" | "createdAt", ExtArgs["result"]["stockLog"]>
+export type StockLogOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "productVariantId" | "employeeId" | "businessId" | "shopId" | "shopInventoryId" | "change" | "reason" | "createdAt", ExtArgs["result"]["stockLog"]>
 export type StockLogInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   variant?: boolean | Prisma.ProductVariantDefaultArgs<ExtArgs>
   employee?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
+  shop?: boolean | Prisma.ShopDefaultArgs<ExtArgs>
+  inventory?: boolean | Prisma.StockLog$inventoryArgs<ExtArgs>
 }
 export type StockLogIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   variant?: boolean | Prisma.ProductVariantDefaultArgs<ExtArgs>
   employee?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
+  shop?: boolean | Prisma.ShopDefaultArgs<ExtArgs>
+  inventory?: boolean | Prisma.StockLog$inventoryArgs<ExtArgs>
 }
 export type StockLogIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   variant?: boolean | Prisma.ProductVariantDefaultArgs<ExtArgs>
   employee?: boolean | Prisma.EmployeeDefaultArgs<ExtArgs>
+  shop?: boolean | Prisma.ShopDefaultArgs<ExtArgs>
+  inventory?: boolean | Prisma.StockLog$inventoryArgs<ExtArgs>
 }
 
 export type $StockLogPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -731,12 +1093,16 @@ export type $StockLogPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   objects: {
     variant: Prisma.$ProductVariantPayload<ExtArgs>
     employee: Prisma.$EmployeePayload<ExtArgs>
+    shop: Prisma.$ShopPayload<ExtArgs>
+    inventory: Prisma.$ShopInventoryPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     productVariantId: string
     employeeId: string
     businessId: string
+    shopId: string
+    shopInventoryId: string | null
     change: number
     reason: string | null
     createdAt: Date
@@ -1136,6 +1502,8 @@ export interface Prisma__StockLogClient<T, Null = never, ExtArgs extends runtime
   readonly [Symbol.toStringTag]: "PrismaPromise"
   variant<T extends Prisma.ProductVariantDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProductVariantDefaultArgs<ExtArgs>>): Prisma.Prisma__ProductVariantClient<runtime.Types.Result.GetResult<Prisma.$ProductVariantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   employee<T extends Prisma.EmployeeDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.EmployeeDefaultArgs<ExtArgs>>): Prisma.Prisma__EmployeeClient<runtime.Types.Result.GetResult<Prisma.$EmployeePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  shop<T extends Prisma.ShopDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ShopDefaultArgs<ExtArgs>>): Prisma.Prisma__ShopClient<runtime.Types.Result.GetResult<Prisma.$ShopPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  inventory<T extends Prisma.StockLog$inventoryArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.StockLog$inventoryArgs<ExtArgs>>): Prisma.Prisma__ShopInventoryClient<runtime.Types.Result.GetResult<Prisma.$ShopInventoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1169,6 +1537,8 @@ export interface StockLogFieldRefs {
   readonly productVariantId: Prisma.FieldRef<"StockLog", 'String'>
   readonly employeeId: Prisma.FieldRef<"StockLog", 'String'>
   readonly businessId: Prisma.FieldRef<"StockLog", 'String'>
+  readonly shopId: Prisma.FieldRef<"StockLog", 'String'>
+  readonly shopInventoryId: Prisma.FieldRef<"StockLog", 'String'>
   readonly change: Prisma.FieldRef<"StockLog", 'Int'>
   readonly reason: Prisma.FieldRef<"StockLog", 'String'>
   readonly createdAt: Prisma.FieldRef<"StockLog", 'DateTime'>
@@ -1570,6 +1940,25 @@ export type StockLogDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Limit how many StockLogs to delete.
    */
   limit?: number
+}
+
+/**
+ * StockLog.inventory
+ */
+export type StockLog$inventoryArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ShopInventory
+   */
+  select?: Prisma.ShopInventorySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ShopInventory
+   */
+  omit?: Prisma.ShopInventoryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ShopInventoryInclude<ExtArgs> | null
+  where?: Prisma.ShopInventoryWhereInput
 }
 
 /**

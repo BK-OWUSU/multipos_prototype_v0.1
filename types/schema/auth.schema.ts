@@ -1,7 +1,16 @@
 import {z} from "zod"
 
 export const signupSchema = z.object({
+    // Step 1: Business Info
     businessName: z.string().min(2,"Business name is required"),
+    countryCode: z.string().min(2, "Please select a country"),
+
+    // Step 2: Create Shop (Aligned exactly with your real DB schema)
+    shopName: z.string().min(2, "Shop name must be at least 2 characters."),
+    shopAddress: z.string().min(5, "Shop address is required.").or(z.literal("")), // optional but validated if entered, or force string depending on choice
+    shopPhone: z.string().min(7, "A valid contact number is required.").or(z.literal("")),
+
+    // Step 3: Owner Profile & Security
     firstName: z.string().min(2,"First name must be at least 2 characters"),
     lastName: z.string().min(2,"Last name cannot be empty"),
     email: z
@@ -12,7 +21,8 @@ export const signupSchema = z.object({
     .email("Please enter a valid email address"),
     password: z.string().min(8,"Password must be at least 8 characters"),
     confirmPassword: z.string(),
-    countryCode: z.string().min(2, "Please select a country"),
+    
+    // Step 4: Agreement
     termsAgreement: z.boolean().refine((val)=> val === true, {
         message: "You must agree to the terms and conditions"
     })
@@ -21,6 +31,9 @@ export const signupSchema = z.object({
         path: ["confirmPassword"]});
 
 export type SignUpFormSchema = z.infer<typeof signupSchema>;
+
+
+
 
 export const loginSchema = z.object({
   // email is a method of string, not a top-level function

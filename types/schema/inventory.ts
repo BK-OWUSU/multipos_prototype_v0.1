@@ -22,19 +22,30 @@ export interface TransformedVariantImage {
   isPrimary: boolean;
 }
 
-// 4. Fully Transformed Child Variant Shape
+// 🟢 NEW: 4. Localized Shop Inventory Distribution Matrix Row
+export interface LocalShopInventory {
+  id: string;
+  shopId: string;
+  stock: number;
+  lowStockAlert: number;
+}
+
+// 5. Fully Transformed Child Variant Shape
 export interface TransformedProductVariant {
   id: string;
   productId: string;
   sku: string;
   barcode: string | null;
   price: unknown;          
-  costPrice: unknown;      
+  costPrice: unknown;
+  sortOrder: number;
+  isActive: boolean;
+
   stock: number;
   lowStockAlert: number | null;
-  isActive: boolean;
-  sortOrder: number;
-  
+
+  shopInventories: LocalShopInventory[];
+
   // Custom transformed frontend additions
   images: TransformedVariantImage[];
   variantOptions: FormattedVariantOption[];

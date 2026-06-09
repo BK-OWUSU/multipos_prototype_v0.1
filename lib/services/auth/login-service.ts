@@ -33,7 +33,12 @@ static async login(email: string, password: string, ipAddress?: string, userAgen
                     include: {
                         business: true,
                         role: true,
-                        shop: true
+                        shop: true,
+                        assignedShops: {
+                            include: {
+                                shop: true
+                            }
+                        }
                     },
                 },
                 userSessionLogs: {
@@ -131,6 +136,23 @@ static async login(email: string, password: string, ipAddress?: string, userAgen
                  },
              });
 
+                //TEMPORAL TESTING 
+                let shops: {id:string, name: string, slug: string}[] = [];
+                if (user.accountType === "OWNER") {
+                    shops = emp.assignedShops.map((assignedShop) => ({
+                        id: assignedShop.shop.id,
+                        name: assignedShop.shop.name,
+                        slug: assignedShop.shop.slug,
+                    }));
+                } else if (emp.shop) {
+                    shops = [{
+                        id: emp.shop.id,
+                        name: emp.shop.name,
+                        slug: emp.shop.slug,
+                    }];
+                }
+                //TEMPORAL TESTING
+
            // Generate Session 
             const tokenObject: JwtPayload = {
                 userId: user.id,
@@ -143,12 +165,16 @@ static async login(email: string, password: string, ipAddress?: string, userAgen
                 lastName: emp.lastName,
                 email: emp.email,
                 access: emp.role.access,
-                shopId: emp.shopId || undefined
+                shopId: shops[0]?.id || undefined,
+                shopSlug: shops[0]?.slug || undefined
             };
+
+            console.log("Token Payload: ", tokenObject);
+            console.log("Shop: ", emp.shop);
 
 
             const token = generatePOSToken(tokenObject);
-            const response = NextResponse.json({ success: true, redirectTo: `/${emp.business.slug}/dashboard` }, { status: 200 });
+            const response = NextResponse.json({ success: true, redirectTo: `/${emp.business.slug}/dashboard`, user: tokenObject }, { status: 200 });
 
             response.cookies.set(POS_COOKIE_NAME, token, {
                 httpOnly: true,

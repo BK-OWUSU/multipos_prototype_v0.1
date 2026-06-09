@@ -66,7 +66,8 @@ export default function AccessControlsPage() {
         {/* Right Panel - Role Details with Tabs */}
         <div className="flex-1 bg-white rounded-lg border shadow-sm overflow-hidden flex flex-col">
           {selectedRoleId ? (
-            <Tabs defaultValue="access" className="flex-1 flex flex-col min-h-0">
+            <Tabs defaultValue="access" 
+            className="flex-1 flex flex-col min-h-0">
               {/* Role Header */}
               <div className="border-b px-6 py-4 shrink-0">
                 <RoleHeader roleId={selectedRoleId} />
@@ -76,25 +77,25 @@ export default function AccessControlsPage() {
               <TabsList className="border-b px-6 bg-transparent h-auto p-0 justify-start shrink-0">
                 <TabsTrigger 
                   value="details" 
-                  // className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+                   className=" data-[state=active]:text-blue-800 data-[state=active]:border-b-3 data-[state=active]:border-b-blue-800 rounded-none border-b-2 border-transparent bg-transparent py-3 px-3 text-xs font-bold text-slate-400 transition-all"
                 >
                   Details
                 </TabsTrigger>
                 <TabsTrigger 
                   value="permissions"
-                  // className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+                   className=" data-[state=active]:text-blue-800 data-[state=active]:border-b-3 data-[state=active]:border-b-blue-800 rounded-none border-b-2 border-transparent bg-transparent py-3 px-3 text-xs font-bold text-slate-400 transition-all"
                 >
                   Permissions (12)
                 </TabsTrigger>
                 <TabsTrigger 
                   value="access"
-                  // className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+                   className=" data-[state=active]:text-blue-800 data-[state=active]:border-b-3 data-[state=active]:border-b-blue-800 rounded-none border-b-2 border-transparent bg-transparent py-3 px-3 text-xs font-bold text-slate-400 transition-all"
                 >
                   Access (29)
                 </TabsTrigger>
                 <TabsTrigger 
                   value="users"
-                  // className="data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none"
+                  className=" data-[state=active]:text-blue-800 data-[state=active]:border-b-3 data-[state=active]:border-b-blue-800 rounded-none border-b-2 border-transparent bg-transparent py-3 px-3 text-xs font-bold text-slate-400 transition-all"
                 >
                   Users (1)
                 </TabsTrigger>

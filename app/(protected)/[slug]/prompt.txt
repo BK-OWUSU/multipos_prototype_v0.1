@@ -1,0 +1,19 @@
+this is how my multiTenantPOS app is structured. But i want to include shops to the system. I dont how to do it , which routes  I should include it to. Dont know how go about the whole thing :
+I have also attached my database: 
+This is my nav with the routes: 
+I have
+/langindPage 
+/login
+/signup
+/app/ (protected)/[businessSlug]/
+layout
+page
+ ........all the routes here
+I have attached 
+pictures of my project structure,
+codes for
+-prisma database
+-layout.tsx in the (protected)/[slug] routes
+-routes code(routes in the app)/
+
+---How do i implement shops etc..

@@ -38,7 +38,7 @@ export type EmployeeMinAggregateOutputType = {
   hireDate: Date | null
   businessId: string | null
   roleId: string | null
-  shopId: string | null
+  currentShopId: string | null
   isActive: boolean | null
   isDeleted: boolean | null
   deletedAt: Date | null
@@ -61,7 +61,7 @@ export type EmployeeMaxAggregateOutputType = {
   hireDate: Date | null
   businessId: string | null
   roleId: string | null
-  shopId: string | null
+  currentShopId: string | null
   isActive: boolean | null
   isDeleted: boolean | null
   deletedAt: Date | null
@@ -84,7 +84,7 @@ export type EmployeeCountAggregateOutputType = {
   hireDate: number
   businessId: number
   roleId: number
-  shopId: number
+  currentShopId: number
   isActive: number
   isDeleted: number
   deletedAt: number
@@ -109,7 +109,7 @@ export type EmployeeMinAggregateInputType = {
   hireDate?: true
   businessId?: true
   roleId?: true
-  shopId?: true
+  currentShopId?: true
   isActive?: true
   isDeleted?: true
   deletedAt?: true
@@ -132,7 +132,7 @@ export type EmployeeMaxAggregateInputType = {
   hireDate?: true
   businessId?: true
   roleId?: true
-  shopId?: true
+  currentShopId?: true
   isActive?: true
   isDeleted?: true
   deletedAt?: true
@@ -155,7 +155,7 @@ export type EmployeeCountAggregateInputType = {
   hireDate?: true
   businessId?: true
   roleId?: true
-  shopId?: true
+  currentShopId?: true
   isActive?: true
   isDeleted?: true
   deletedAt?: true
@@ -251,7 +251,7 @@ export type EmployeeGroupByOutputType = {
   hireDate: Date | null
   businessId: string
   roleId: string
-  shopId: string | null
+  currentShopId: string | null
   isActive: boolean
   isDeleted: boolean
   deletedAt: Date | null
@@ -295,16 +295,16 @@ export type EmployeeWhereInput = {
   hireDate?: Prisma.DateTimeNullableFilter<"Employee"> | Date | string | null
   businessId?: Prisma.StringFilter<"Employee"> | string
   roleId?: Prisma.StringFilter<"Employee"> | string
-  shopId?: Prisma.StringNullableFilter<"Employee"> | string | null
+  currentShopId?: Prisma.StringNullableFilter<"Employee"> | string | null
   isActive?: Prisma.BoolFilter<"Employee"> | boolean
   isDeleted?: Prisma.BoolFilter<"Employee"> | boolean
   deletedAt?: Prisma.DateTimeNullableFilter<"Employee"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Employee"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Employee"> | Date | string
   hasSystemAccess?: Prisma.BoolFilter<"Employee"> | boolean
+  assignedShops?: Prisma.EmployeeShopListRelationFilter
   business?: Prisma.XOR<Prisma.BusinessScalarRelationFilter, Prisma.BusinessWhereInput>
   role?: Prisma.XOR<Prisma.RoleScalarRelationFilter, Prisma.RoleWhereInput>
-  shop?: Prisma.XOR<Prisma.ShopNullableScalarRelationFilter, Prisma.ShopWhereInput> | null
   openedSessions?: Prisma.CashSessionListRelationFilter
   closedSessions?: Prisma.CashSessionListRelationFilter
   user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
@@ -312,6 +312,7 @@ export type EmployeeWhereInput = {
   sales?: Prisma.SaleListRelationFilter
   stockLogs?: Prisma.StockLogListRelationFilter
   timeCards?: Prisma.TimeCardListRelationFilter
+  shop?: Prisma.XOR<Prisma.ShopNullableScalarRelationFilter, Prisma.ShopWhereInput> | null
 }
 
 export type EmployeeOrderByWithRelationInput = {
@@ -328,16 +329,16 @@ export type EmployeeOrderByWithRelationInput = {
   hireDate?: Prisma.SortOrderInput | Prisma.SortOrder
   businessId?: Prisma.SortOrder
   roleId?: Prisma.SortOrder
-  shopId?: Prisma.SortOrderInput | Prisma.SortOrder
+  currentShopId?: Prisma.SortOrderInput | Prisma.SortOrder
   isActive?: Prisma.SortOrder
   isDeleted?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   hasSystemAccess?: Prisma.SortOrder
+  assignedShops?: Prisma.EmployeeShopOrderByRelationAggregateInput
   business?: Prisma.BusinessOrderByWithRelationInput
   role?: Prisma.RoleOrderByWithRelationInput
-  shop?: Prisma.ShopOrderByWithRelationInput
   openedSessions?: Prisma.CashSessionOrderByRelationAggregateInput
   closedSessions?: Prisma.CashSessionOrderByRelationAggregateInput
   user?: Prisma.UserOrderByWithRelationInput
@@ -345,6 +346,7 @@ export type EmployeeOrderByWithRelationInput = {
   sales?: Prisma.SaleOrderByRelationAggregateInput
   stockLogs?: Prisma.StockLogOrderByRelationAggregateInput
   timeCards?: Prisma.TimeCardOrderByRelationAggregateInput
+  shop?: Prisma.ShopOrderByWithRelationInput
 }
 
 export type EmployeeWhereUniqueInput = Prisma.AtLeast<{
@@ -365,16 +367,16 @@ export type EmployeeWhereUniqueInput = Prisma.AtLeast<{
   hireDate?: Prisma.DateTimeNullableFilter<"Employee"> | Date | string | null
   businessId?: Prisma.StringFilter<"Employee"> | string
   roleId?: Prisma.StringFilter<"Employee"> | string
-  shopId?: Prisma.StringNullableFilter<"Employee"> | string | null
+  currentShopId?: Prisma.StringNullableFilter<"Employee"> | string | null
   isActive?: Prisma.BoolFilter<"Employee"> | boolean
   isDeleted?: Prisma.BoolFilter<"Employee"> | boolean
   deletedAt?: Prisma.DateTimeNullableFilter<"Employee"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Employee"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Employee"> | Date | string
   hasSystemAccess?: Prisma.BoolFilter<"Employee"> | boolean
+  assignedShops?: Prisma.EmployeeShopListRelationFilter
   business?: Prisma.XOR<Prisma.BusinessScalarRelationFilter, Prisma.BusinessWhereInput>
   role?: Prisma.XOR<Prisma.RoleScalarRelationFilter, Prisma.RoleWhereInput>
-  shop?: Prisma.XOR<Prisma.ShopNullableScalarRelationFilter, Prisma.ShopWhereInput> | null
   openedSessions?: Prisma.CashSessionListRelationFilter
   closedSessions?: Prisma.CashSessionListRelationFilter
   user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
@@ -382,6 +384,7 @@ export type EmployeeWhereUniqueInput = Prisma.AtLeast<{
   sales?: Prisma.SaleListRelationFilter
   stockLogs?: Prisma.StockLogListRelationFilter
   timeCards?: Prisma.TimeCardListRelationFilter
+  shop?: Prisma.XOR<Prisma.ShopNullableScalarRelationFilter, Prisma.ShopWhereInput> | null
 }, "id" | "email_businessId">
 
 export type EmployeeOrderByWithAggregationInput = {
@@ -398,7 +401,7 @@ export type EmployeeOrderByWithAggregationInput = {
   hireDate?: Prisma.SortOrderInput | Prisma.SortOrder
   businessId?: Prisma.SortOrder
   roleId?: Prisma.SortOrder
-  shopId?: Prisma.SortOrderInput | Prisma.SortOrder
+  currentShopId?: Prisma.SortOrderInput | Prisma.SortOrder
   isActive?: Prisma.SortOrder
   isDeleted?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -427,7 +430,7 @@ export type EmployeeScalarWhereWithAggregatesInput = {
   hireDate?: Prisma.DateTimeNullableWithAggregatesFilter<"Employee"> | Date | string | null
   businessId?: Prisma.StringWithAggregatesFilter<"Employee"> | string
   roleId?: Prisma.StringWithAggregatesFilter<"Employee"> | string
-  shopId?: Prisma.StringNullableWithAggregatesFilter<"Employee"> | string | null
+  currentShopId?: Prisma.StringNullableWithAggregatesFilter<"Employee"> | string | null
   isActive?: Prisma.BoolWithAggregatesFilter<"Employee"> | boolean
   isDeleted?: Prisma.BoolWithAggregatesFilter<"Employee"> | boolean
   deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Employee"> | Date | string | null
@@ -454,9 +457,9 @@ export type EmployeeCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   hasSystemAccess?: boolean
+  assignedShops?: Prisma.EmployeeShopCreateNestedManyWithoutEmployeeInput
   business: Prisma.BusinessCreateNestedOneWithoutEmployeeInput
   role: Prisma.RoleCreateNestedOneWithoutEmployeeInput
-  shop?: Prisma.ShopCreateNestedOneWithoutEmployeeInput
   openedSessions?: Prisma.CashSessionCreateNestedManyWithoutOpenedByInput
   closedSessions?: Prisma.CashSessionCreateNestedManyWithoutClosedByInput
   user?: Prisma.UserCreateNestedOneWithoutEmployeeInput
@@ -464,6 +467,7 @@ export type EmployeeCreateInput = {
   sales?: Prisma.SaleCreateNestedManyWithoutEmployeeInput
   stockLogs?: Prisma.StockLogCreateNestedManyWithoutEmployeeInput
   timeCards?: Prisma.TimeCardCreateNestedManyWithoutEmployeeInput
+  shop?: Prisma.ShopCreateNestedOneWithoutEmployeeInput
 }
 
 export type EmployeeUncheckedCreateInput = {
@@ -480,13 +484,14 @@ export type EmployeeUncheckedCreateInput = {
   hireDate?: Date | string | null
   businessId: string
   roleId: string
-  shopId?: string | null
+  currentShopId?: string | null
   isActive?: boolean
   isDeleted?: boolean
   deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   hasSystemAccess?: boolean
+  assignedShops?: Prisma.EmployeeShopUncheckedCreateNestedManyWithoutEmployeeInput
   openedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutOpenedByInput
   closedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutClosedByInput
   user?: Prisma.UserUncheckedCreateNestedOneWithoutEmployeeInput
@@ -514,9 +519,9 @@ export type EmployeeUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedShops?: Prisma.EmployeeShopUpdateManyWithoutEmployeeNestedInput
   business?: Prisma.BusinessUpdateOneRequiredWithoutEmployeeNestedInput
   role?: Prisma.RoleUpdateOneRequiredWithoutEmployeeNestedInput
-  shop?: Prisma.ShopUpdateOneWithoutEmployeeNestedInput
   openedSessions?: Prisma.CashSessionUpdateManyWithoutOpenedByNestedInput
   closedSessions?: Prisma.CashSessionUpdateManyWithoutClosedByNestedInput
   user?: Prisma.UserUpdateOneWithoutEmployeeNestedInput
@@ -524,6 +529,7 @@ export type EmployeeUpdateInput = {
   sales?: Prisma.SaleUpdateManyWithoutEmployeeNestedInput
   stockLogs?: Prisma.StockLogUpdateManyWithoutEmployeeNestedInput
   timeCards?: Prisma.TimeCardUpdateManyWithoutEmployeeNestedInput
+  shop?: Prisma.ShopUpdateOneWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateInput = {
@@ -540,13 +546,14 @@ export type EmployeeUncheckedUpdateInput = {
   hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   businessId?: Prisma.StringFieldUpdateOperationsInput | string
   roleId?: Prisma.StringFieldUpdateOperationsInput | string
-  shopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currentShopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedShops?: Prisma.EmployeeShopUncheckedUpdateManyWithoutEmployeeNestedInput
   openedSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutOpenedByNestedInput
   closedSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutClosedByNestedInput
   user?: Prisma.UserUncheckedUpdateOneWithoutEmployeeNestedInput
@@ -570,7 +577,7 @@ export type EmployeeCreateManyInput = {
   hireDate?: Date | string | null
   businessId: string
   roleId: string
-  shopId?: string | null
+  currentShopId?: string | null
   isActive?: boolean
   isDeleted?: boolean
   deletedAt?: Date | string | null
@@ -613,7 +620,7 @@ export type EmployeeUncheckedUpdateManyInput = {
   hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   businessId?: Prisma.StringFieldUpdateOperationsInput | string
   roleId?: Prisma.StringFieldUpdateOperationsInput | string
-  shopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currentShopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -651,7 +658,7 @@ export type EmployeeCountOrderByAggregateInput = {
   hireDate?: Prisma.SortOrder
   businessId?: Prisma.SortOrder
   roleId?: Prisma.SortOrder
-  shopId?: Prisma.SortOrder
+  currentShopId?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   isDeleted?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -674,7 +681,7 @@ export type EmployeeMaxOrderByAggregateInput = {
   hireDate?: Prisma.SortOrder
   businessId?: Prisma.SortOrder
   roleId?: Prisma.SortOrder
-  shopId?: Prisma.SortOrder
+  currentShopId?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   isDeleted?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -697,7 +704,7 @@ export type EmployeeMinOrderByAggregateInput = {
   hireDate?: Prisma.SortOrder
   businessId?: Prisma.SortOrder
   roleId?: Prisma.SortOrder
-  shopId?: Prisma.SortOrder
+  currentShopId?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
   isDeleted?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
@@ -706,14 +713,14 @@ export type EmployeeMinOrderByAggregateInput = {
   hasSystemAccess?: Prisma.SortOrder
 }
 
-export type EmployeeNullableScalarRelationFilter = {
-  is?: Prisma.EmployeeWhereInput | null
-  isNot?: Prisma.EmployeeWhereInput | null
-}
-
 export type EmployeeScalarRelationFilter = {
   is?: Prisma.EmployeeWhereInput
   isNot?: Prisma.EmployeeWhereInput
+}
+
+export type EmployeeNullableScalarRelationFilter = {
+  is?: Prisma.EmployeeWhereInput | null
+  isNot?: Prisma.EmployeeWhereInput | null
 }
 
 export type EmployeeCreateNestedManyWithoutBusinessInput = {
@@ -756,6 +763,20 @@ export type EmployeeUncheckedUpdateManyWithoutBusinessNestedInput = {
   update?: Prisma.EmployeeUpdateWithWhereUniqueWithoutBusinessInput | Prisma.EmployeeUpdateWithWhereUniqueWithoutBusinessInput[]
   updateMany?: Prisma.EmployeeUpdateManyWithWhereWithoutBusinessInput | Prisma.EmployeeUpdateManyWithWhereWithoutBusinessInput[]
   deleteMany?: Prisma.EmployeeScalarWhereInput | Prisma.EmployeeScalarWhereInput[]
+}
+
+export type EmployeeCreateNestedOneWithoutAssignedShopsInput = {
+  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutAssignedShopsInput, Prisma.EmployeeUncheckedCreateWithoutAssignedShopsInput>
+  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutAssignedShopsInput
+  connect?: Prisma.EmployeeWhereUniqueInput
+}
+
+export type EmployeeUpdateOneRequiredWithoutAssignedShopsNestedInput = {
+  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutAssignedShopsInput, Prisma.EmployeeUncheckedCreateWithoutAssignedShopsInput>
+  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutAssignedShopsInput
+  upsert?: Prisma.EmployeeUpsertWithoutAssignedShopsInput
+  connect?: Prisma.EmployeeWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EmployeeUpdateToOneWithWhereWithoutAssignedShopsInput, Prisma.EmployeeUpdateWithoutAssignedShopsInput>, Prisma.EmployeeUncheckedUpdateWithoutAssignedShopsInput>
 }
 
 export type EmployeeCreateNestedOneWithoutGrantedUsersInput = {
@@ -830,6 +851,20 @@ export type EmployeeUncheckedUpdateManyWithoutRoleNestedInput = {
   deleteMany?: Prisma.EmployeeScalarWhereInput | Prisma.EmployeeScalarWhereInput[]
 }
 
+export type EmployeeCreateNestedOneWithoutTimeCardsInput = {
+  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutTimeCardsInput, Prisma.EmployeeUncheckedCreateWithoutTimeCardsInput>
+  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutTimeCardsInput
+  connect?: Prisma.EmployeeWhereUniqueInput
+}
+
+export type EmployeeUpdateOneRequiredWithoutTimeCardsNestedInput = {
+  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutTimeCardsInput, Prisma.EmployeeUncheckedCreateWithoutTimeCardsInput>
+  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutTimeCardsInput
+  upsert?: Prisma.EmployeeUpsertWithoutTimeCardsInput
+  connect?: Prisma.EmployeeWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.EmployeeUpdateToOneWithWhereWithoutTimeCardsInput, Prisma.EmployeeUpdateWithoutTimeCardsInput>, Prisma.EmployeeUncheckedUpdateWithoutTimeCardsInput>
+}
+
 export type EmployeeCreateNestedManyWithoutShopInput = {
   create?: Prisma.XOR<Prisma.EmployeeCreateWithoutShopInput, Prisma.EmployeeUncheckedCreateWithoutShopInput> | Prisma.EmployeeCreateWithoutShopInput[] | Prisma.EmployeeUncheckedCreateWithoutShopInput[]
   connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutShopInput | Prisma.EmployeeCreateOrConnectWithoutShopInput[]
@@ -870,20 +905,6 @@ export type EmployeeUncheckedUpdateManyWithoutShopNestedInput = {
   update?: Prisma.EmployeeUpdateWithWhereUniqueWithoutShopInput | Prisma.EmployeeUpdateWithWhereUniqueWithoutShopInput[]
   updateMany?: Prisma.EmployeeUpdateManyWithWhereWithoutShopInput | Prisma.EmployeeUpdateManyWithWhereWithoutShopInput[]
   deleteMany?: Prisma.EmployeeScalarWhereInput | Prisma.EmployeeScalarWhereInput[]
-}
-
-export type EmployeeCreateNestedOneWithoutTimeCardsInput = {
-  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutTimeCardsInput, Prisma.EmployeeUncheckedCreateWithoutTimeCardsInput>
-  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutTimeCardsInput
-  connect?: Prisma.EmployeeWhereUniqueInput
-}
-
-export type EmployeeUpdateOneRequiredWithoutTimeCardsNestedInput = {
-  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutTimeCardsInput, Prisma.EmployeeUncheckedCreateWithoutTimeCardsInput>
-  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutTimeCardsInput
-  upsert?: Prisma.EmployeeUpsertWithoutTimeCardsInput
-  connect?: Prisma.EmployeeWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.EmployeeUpdateToOneWithWhereWithoutTimeCardsInput, Prisma.EmployeeUpdateWithoutTimeCardsInput>, Prisma.EmployeeUncheckedUpdateWithoutTimeCardsInput>
 }
 
 export type EmployeeCreateNestedOneWithoutStockLogsInput = {
@@ -962,8 +983,8 @@ export type EmployeeCreateWithoutBusinessInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   hasSystemAccess?: boolean
+  assignedShops?: Prisma.EmployeeShopCreateNestedManyWithoutEmployeeInput
   role: Prisma.RoleCreateNestedOneWithoutEmployeeInput
-  shop?: Prisma.ShopCreateNestedOneWithoutEmployeeInput
   openedSessions?: Prisma.CashSessionCreateNestedManyWithoutOpenedByInput
   closedSessions?: Prisma.CashSessionCreateNestedManyWithoutClosedByInput
   user?: Prisma.UserCreateNestedOneWithoutEmployeeInput
@@ -971,6 +992,7 @@ export type EmployeeCreateWithoutBusinessInput = {
   sales?: Prisma.SaleCreateNestedManyWithoutEmployeeInput
   stockLogs?: Prisma.StockLogCreateNestedManyWithoutEmployeeInput
   timeCards?: Prisma.TimeCardCreateNestedManyWithoutEmployeeInput
+  shop?: Prisma.ShopCreateNestedOneWithoutEmployeeInput
 }
 
 export type EmployeeUncheckedCreateWithoutBusinessInput = {
@@ -986,13 +1008,14 @@ export type EmployeeUncheckedCreateWithoutBusinessInput = {
   dateOfBirth?: Date | string | null
   hireDate?: Date | string | null
   roleId: string
-  shopId?: string | null
+  currentShopId?: string | null
   isActive?: boolean
   isDeleted?: boolean
   deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   hasSystemAccess?: boolean
+  assignedShops?: Prisma.EmployeeShopUncheckedCreateNestedManyWithoutEmployeeInput
   openedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutOpenedByInput
   closedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutClosedByInput
   user?: Prisma.UserUncheckedCreateNestedOneWithoutEmployeeInput
@@ -1045,13 +1068,149 @@ export type EmployeeScalarWhereInput = {
   hireDate?: Prisma.DateTimeNullableFilter<"Employee"> | Date | string | null
   businessId?: Prisma.StringFilter<"Employee"> | string
   roleId?: Prisma.StringFilter<"Employee"> | string
-  shopId?: Prisma.StringNullableFilter<"Employee"> | string | null
+  currentShopId?: Prisma.StringNullableFilter<"Employee"> | string | null
   isActive?: Prisma.BoolFilter<"Employee"> | boolean
   isDeleted?: Prisma.BoolFilter<"Employee"> | boolean
   deletedAt?: Prisma.DateTimeNullableFilter<"Employee"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Employee"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Employee"> | Date | string
   hasSystemAccess?: Prisma.BoolFilter<"Employee"> | boolean
+}
+
+export type EmployeeCreateWithoutAssignedShopsInput = {
+  id?: string
+  firstName: string
+  lastName: string
+  email: string
+  phone?: string | null
+  imageUrl?: string | null
+  fileKey?: string | null
+  designation?: string | null
+  address?: string | null
+  dateOfBirth?: Date | string | null
+  hireDate?: Date | string | null
+  isActive?: boolean
+  isDeleted?: boolean
+  deletedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  hasSystemAccess?: boolean
+  business: Prisma.BusinessCreateNestedOneWithoutEmployeeInput
+  role: Prisma.RoleCreateNestedOneWithoutEmployeeInput
+  openedSessions?: Prisma.CashSessionCreateNestedManyWithoutOpenedByInput
+  closedSessions?: Prisma.CashSessionCreateNestedManyWithoutClosedByInput
+  user?: Prisma.UserCreateNestedOneWithoutEmployeeInput
+  grantedUsers?: Prisma.UserCreateNestedManyWithoutGrantorInput
+  sales?: Prisma.SaleCreateNestedManyWithoutEmployeeInput
+  stockLogs?: Prisma.StockLogCreateNestedManyWithoutEmployeeInput
+  timeCards?: Prisma.TimeCardCreateNestedManyWithoutEmployeeInput
+  shop?: Prisma.ShopCreateNestedOneWithoutEmployeeInput
+}
+
+export type EmployeeUncheckedCreateWithoutAssignedShopsInput = {
+  id?: string
+  firstName: string
+  lastName: string
+  email: string
+  phone?: string | null
+  imageUrl?: string | null
+  fileKey?: string | null
+  designation?: string | null
+  address?: string | null
+  dateOfBirth?: Date | string | null
+  hireDate?: Date | string | null
+  businessId: string
+  roleId: string
+  currentShopId?: string | null
+  isActive?: boolean
+  isDeleted?: boolean
+  deletedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  hasSystemAccess?: boolean
+  openedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutOpenedByInput
+  closedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutClosedByInput
+  user?: Prisma.UserUncheckedCreateNestedOneWithoutEmployeeInput
+  grantedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutGrantorInput
+  sales?: Prisma.SaleUncheckedCreateNestedManyWithoutEmployeeInput
+  stockLogs?: Prisma.StockLogUncheckedCreateNestedManyWithoutEmployeeInput
+  timeCards?: Prisma.TimeCardUncheckedCreateNestedManyWithoutEmployeeInput
+}
+
+export type EmployeeCreateOrConnectWithoutAssignedShopsInput = {
+  where: Prisma.EmployeeWhereUniqueInput
+  create: Prisma.XOR<Prisma.EmployeeCreateWithoutAssignedShopsInput, Prisma.EmployeeUncheckedCreateWithoutAssignedShopsInput>
+}
+
+export type EmployeeUpsertWithoutAssignedShopsInput = {
+  update: Prisma.XOR<Prisma.EmployeeUpdateWithoutAssignedShopsInput, Prisma.EmployeeUncheckedUpdateWithoutAssignedShopsInput>
+  create: Prisma.XOR<Prisma.EmployeeCreateWithoutAssignedShopsInput, Prisma.EmployeeUncheckedCreateWithoutAssignedShopsInput>
+  where?: Prisma.EmployeeWhereInput
+}
+
+export type EmployeeUpdateToOneWithWhereWithoutAssignedShopsInput = {
+  where?: Prisma.EmployeeWhereInput
+  data: Prisma.XOR<Prisma.EmployeeUpdateWithoutAssignedShopsInput, Prisma.EmployeeUncheckedUpdateWithoutAssignedShopsInput>
+}
+
+export type EmployeeUpdateWithoutAssignedShopsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  firstName?: Prisma.StringFieldUpdateOperationsInput | string
+  lastName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fileKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  business?: Prisma.BusinessUpdateOneRequiredWithoutEmployeeNestedInput
+  role?: Prisma.RoleUpdateOneRequiredWithoutEmployeeNestedInput
+  openedSessions?: Prisma.CashSessionUpdateManyWithoutOpenedByNestedInput
+  closedSessions?: Prisma.CashSessionUpdateManyWithoutClosedByNestedInput
+  user?: Prisma.UserUpdateOneWithoutEmployeeNestedInput
+  grantedUsers?: Prisma.UserUpdateManyWithoutGrantorNestedInput
+  sales?: Prisma.SaleUpdateManyWithoutEmployeeNestedInput
+  stockLogs?: Prisma.StockLogUpdateManyWithoutEmployeeNestedInput
+  timeCards?: Prisma.TimeCardUpdateManyWithoutEmployeeNestedInput
+  shop?: Prisma.ShopUpdateOneWithoutEmployeeNestedInput
+}
+
+export type EmployeeUncheckedUpdateWithoutAssignedShopsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  firstName?: Prisma.StringFieldUpdateOperationsInput | string
+  lastName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  fileKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  designation?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  businessId?: Prisma.StringFieldUpdateOperationsInput | string
+  roleId?: Prisma.StringFieldUpdateOperationsInput | string
+  currentShopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  openedSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutOpenedByNestedInput
+  closedSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutClosedByNestedInput
+  user?: Prisma.UserUncheckedUpdateOneWithoutEmployeeNestedInput
+  grantedUsers?: Prisma.UserUncheckedUpdateManyWithoutGrantorNestedInput
+  sales?: Prisma.SaleUncheckedUpdateManyWithoutEmployeeNestedInput
+  stockLogs?: Prisma.StockLogUncheckedUpdateManyWithoutEmployeeNestedInput
+  timeCards?: Prisma.TimeCardUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type EmployeeCreateWithoutGrantedUsersInput = {
@@ -1072,15 +1231,16 @@ export type EmployeeCreateWithoutGrantedUsersInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   hasSystemAccess?: boolean
+  assignedShops?: Prisma.EmployeeShopCreateNestedManyWithoutEmployeeInput
   business: Prisma.BusinessCreateNestedOneWithoutEmployeeInput
   role: Prisma.RoleCreateNestedOneWithoutEmployeeInput
-  shop?: Prisma.ShopCreateNestedOneWithoutEmployeeInput
   openedSessions?: Prisma.CashSessionCreateNestedManyWithoutOpenedByInput
   closedSessions?: Prisma.CashSessionCreateNestedManyWithoutClosedByInput
   user?: Prisma.UserCreateNestedOneWithoutEmployeeInput
   sales?: Prisma.SaleCreateNestedManyWithoutEmployeeInput
   stockLogs?: Prisma.StockLogCreateNestedManyWithoutEmployeeInput
   timeCards?: Prisma.TimeCardCreateNestedManyWithoutEmployeeInput
+  shop?: Prisma.ShopCreateNestedOneWithoutEmployeeInput
 }
 
 export type EmployeeUncheckedCreateWithoutGrantedUsersInput = {
@@ -1097,13 +1257,14 @@ export type EmployeeUncheckedCreateWithoutGrantedUsersInput = {
   hireDate?: Date | string | null
   businessId: string
   roleId: string
-  shopId?: string | null
+  currentShopId?: string | null
   isActive?: boolean
   isDeleted?: boolean
   deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   hasSystemAccess?: boolean
+  assignedShops?: Prisma.EmployeeShopUncheckedCreateNestedManyWithoutEmployeeInput
   openedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutOpenedByInput
   closedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutClosedByInput
   user?: Prisma.UserUncheckedCreateNestedOneWithoutEmployeeInput
@@ -1135,15 +1296,16 @@ export type EmployeeCreateWithoutUserInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   hasSystemAccess?: boolean
+  assignedShops?: Prisma.EmployeeShopCreateNestedManyWithoutEmployeeInput
   business: Prisma.BusinessCreateNestedOneWithoutEmployeeInput
   role: Prisma.RoleCreateNestedOneWithoutEmployeeInput
-  shop?: Prisma.ShopCreateNestedOneWithoutEmployeeInput
   openedSessions?: Prisma.CashSessionCreateNestedManyWithoutOpenedByInput
   closedSessions?: Prisma.CashSessionCreateNestedManyWithoutClosedByInput
   grantedUsers?: Prisma.UserCreateNestedManyWithoutGrantorInput
   sales?: Prisma.SaleCreateNestedManyWithoutEmployeeInput
   stockLogs?: Prisma.StockLogCreateNestedManyWithoutEmployeeInput
   timeCards?: Prisma.TimeCardCreateNestedManyWithoutEmployeeInput
+  shop?: Prisma.ShopCreateNestedOneWithoutEmployeeInput
 }
 
 export type EmployeeUncheckedCreateWithoutUserInput = {
@@ -1160,13 +1322,14 @@ export type EmployeeUncheckedCreateWithoutUserInput = {
   hireDate?: Date | string | null
   businessId: string
   roleId: string
-  shopId?: string | null
+  currentShopId?: string | null
   isActive?: boolean
   isDeleted?: boolean
   deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   hasSystemAccess?: boolean
+  assignedShops?: Prisma.EmployeeShopUncheckedCreateNestedManyWithoutEmployeeInput
   openedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutOpenedByInput
   closedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutClosedByInput
   grantedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutGrantorInput
@@ -1209,15 +1372,16 @@ export type EmployeeUpdateWithoutGrantedUsersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedShops?: Prisma.EmployeeShopUpdateManyWithoutEmployeeNestedInput
   business?: Prisma.BusinessUpdateOneRequiredWithoutEmployeeNestedInput
   role?: Prisma.RoleUpdateOneRequiredWithoutEmployeeNestedInput
-  shop?: Prisma.ShopUpdateOneWithoutEmployeeNestedInput
   openedSessions?: Prisma.CashSessionUpdateManyWithoutOpenedByNestedInput
   closedSessions?: Prisma.CashSessionUpdateManyWithoutClosedByNestedInput
   user?: Prisma.UserUpdateOneWithoutEmployeeNestedInput
   sales?: Prisma.SaleUpdateManyWithoutEmployeeNestedInput
   stockLogs?: Prisma.StockLogUpdateManyWithoutEmployeeNestedInput
   timeCards?: Prisma.TimeCardUpdateManyWithoutEmployeeNestedInput
+  shop?: Prisma.ShopUpdateOneWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutGrantedUsersInput = {
@@ -1234,13 +1398,14 @@ export type EmployeeUncheckedUpdateWithoutGrantedUsersInput = {
   hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   businessId?: Prisma.StringFieldUpdateOperationsInput | string
   roleId?: Prisma.StringFieldUpdateOperationsInput | string
-  shopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currentShopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedShops?: Prisma.EmployeeShopUncheckedUpdateManyWithoutEmployeeNestedInput
   openedSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutOpenedByNestedInput
   closedSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutClosedByNestedInput
   user?: Prisma.UserUncheckedUpdateOneWithoutEmployeeNestedInput
@@ -1278,15 +1443,16 @@ export type EmployeeUpdateWithoutUserInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedShops?: Prisma.EmployeeShopUpdateManyWithoutEmployeeNestedInput
   business?: Prisma.BusinessUpdateOneRequiredWithoutEmployeeNestedInput
   role?: Prisma.RoleUpdateOneRequiredWithoutEmployeeNestedInput
-  shop?: Prisma.ShopUpdateOneWithoutEmployeeNestedInput
   openedSessions?: Prisma.CashSessionUpdateManyWithoutOpenedByNestedInput
   closedSessions?: Prisma.CashSessionUpdateManyWithoutClosedByNestedInput
   grantedUsers?: Prisma.UserUpdateManyWithoutGrantorNestedInput
   sales?: Prisma.SaleUpdateManyWithoutEmployeeNestedInput
   stockLogs?: Prisma.StockLogUpdateManyWithoutEmployeeNestedInput
   timeCards?: Prisma.TimeCardUpdateManyWithoutEmployeeNestedInput
+  shop?: Prisma.ShopUpdateOneWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutUserInput = {
@@ -1303,13 +1469,14 @@ export type EmployeeUncheckedUpdateWithoutUserInput = {
   hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   businessId?: Prisma.StringFieldUpdateOperationsInput | string
   roleId?: Prisma.StringFieldUpdateOperationsInput | string
-  shopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currentShopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedShops?: Prisma.EmployeeShopUncheckedUpdateManyWithoutEmployeeNestedInput
   openedSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutOpenedByNestedInput
   closedSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutClosedByNestedInput
   grantedUsers?: Prisma.UserUncheckedUpdateManyWithoutGrantorNestedInput
@@ -1336,8 +1503,8 @@ export type EmployeeCreateWithoutRoleInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   hasSystemAccess?: boolean
+  assignedShops?: Prisma.EmployeeShopCreateNestedManyWithoutEmployeeInput
   business: Prisma.BusinessCreateNestedOneWithoutEmployeeInput
-  shop?: Prisma.ShopCreateNestedOneWithoutEmployeeInput
   openedSessions?: Prisma.CashSessionCreateNestedManyWithoutOpenedByInput
   closedSessions?: Prisma.CashSessionCreateNestedManyWithoutClosedByInput
   user?: Prisma.UserCreateNestedOneWithoutEmployeeInput
@@ -1345,6 +1512,7 @@ export type EmployeeCreateWithoutRoleInput = {
   sales?: Prisma.SaleCreateNestedManyWithoutEmployeeInput
   stockLogs?: Prisma.StockLogCreateNestedManyWithoutEmployeeInput
   timeCards?: Prisma.TimeCardCreateNestedManyWithoutEmployeeInput
+  shop?: Prisma.ShopCreateNestedOneWithoutEmployeeInput
 }
 
 export type EmployeeUncheckedCreateWithoutRoleInput = {
@@ -1360,13 +1528,14 @@ export type EmployeeUncheckedCreateWithoutRoleInput = {
   dateOfBirth?: Date | string | null
   hireDate?: Date | string | null
   businessId: string
-  shopId?: string | null
+  currentShopId?: string | null
   isActive?: boolean
   isDeleted?: boolean
   deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   hasSystemAccess?: boolean
+  assignedShops?: Prisma.EmployeeShopUncheckedCreateNestedManyWithoutEmployeeInput
   openedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutOpenedByInput
   closedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutClosedByInput
   user?: Prisma.UserUncheckedCreateNestedOneWithoutEmployeeInput
@@ -1402,90 +1571,6 @@ export type EmployeeUpdateManyWithWhereWithoutRoleInput = {
   data: Prisma.XOR<Prisma.EmployeeUpdateManyMutationInput, Prisma.EmployeeUncheckedUpdateManyWithoutRoleInput>
 }
 
-export type EmployeeCreateWithoutShopInput = {
-  id?: string
-  firstName: string
-  lastName: string
-  email: string
-  phone?: string | null
-  imageUrl?: string | null
-  fileKey?: string | null
-  designation?: string | null
-  address?: string | null
-  dateOfBirth?: Date | string | null
-  hireDate?: Date | string | null
-  isActive?: boolean
-  isDeleted?: boolean
-  deletedAt?: Date | string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  hasSystemAccess?: boolean
-  business: Prisma.BusinessCreateNestedOneWithoutEmployeeInput
-  role: Prisma.RoleCreateNestedOneWithoutEmployeeInput
-  openedSessions?: Prisma.CashSessionCreateNestedManyWithoutOpenedByInput
-  closedSessions?: Prisma.CashSessionCreateNestedManyWithoutClosedByInput
-  user?: Prisma.UserCreateNestedOneWithoutEmployeeInput
-  grantedUsers?: Prisma.UserCreateNestedManyWithoutGrantorInput
-  sales?: Prisma.SaleCreateNestedManyWithoutEmployeeInput
-  stockLogs?: Prisma.StockLogCreateNestedManyWithoutEmployeeInput
-  timeCards?: Prisma.TimeCardCreateNestedManyWithoutEmployeeInput
-}
-
-export type EmployeeUncheckedCreateWithoutShopInput = {
-  id?: string
-  firstName: string
-  lastName: string
-  email: string
-  phone?: string | null
-  imageUrl?: string | null
-  fileKey?: string | null
-  designation?: string | null
-  address?: string | null
-  dateOfBirth?: Date | string | null
-  hireDate?: Date | string | null
-  businessId: string
-  roleId: string
-  isActive?: boolean
-  isDeleted?: boolean
-  deletedAt?: Date | string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  hasSystemAccess?: boolean
-  openedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutOpenedByInput
-  closedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutClosedByInput
-  user?: Prisma.UserUncheckedCreateNestedOneWithoutEmployeeInput
-  grantedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutGrantorInput
-  sales?: Prisma.SaleUncheckedCreateNestedManyWithoutEmployeeInput
-  stockLogs?: Prisma.StockLogUncheckedCreateNestedManyWithoutEmployeeInput
-  timeCards?: Prisma.TimeCardUncheckedCreateNestedManyWithoutEmployeeInput
-}
-
-export type EmployeeCreateOrConnectWithoutShopInput = {
-  where: Prisma.EmployeeWhereUniqueInput
-  create: Prisma.XOR<Prisma.EmployeeCreateWithoutShopInput, Prisma.EmployeeUncheckedCreateWithoutShopInput>
-}
-
-export type EmployeeCreateManyShopInputEnvelope = {
-  data: Prisma.EmployeeCreateManyShopInput | Prisma.EmployeeCreateManyShopInput[]
-  skipDuplicates?: boolean
-}
-
-export type EmployeeUpsertWithWhereUniqueWithoutShopInput = {
-  where: Prisma.EmployeeWhereUniqueInput
-  update: Prisma.XOR<Prisma.EmployeeUpdateWithoutShopInput, Prisma.EmployeeUncheckedUpdateWithoutShopInput>
-  create: Prisma.XOR<Prisma.EmployeeCreateWithoutShopInput, Prisma.EmployeeUncheckedCreateWithoutShopInput>
-}
-
-export type EmployeeUpdateWithWhereUniqueWithoutShopInput = {
-  where: Prisma.EmployeeWhereUniqueInput
-  data: Prisma.XOR<Prisma.EmployeeUpdateWithoutShopInput, Prisma.EmployeeUncheckedUpdateWithoutShopInput>
-}
-
-export type EmployeeUpdateManyWithWhereWithoutShopInput = {
-  where: Prisma.EmployeeScalarWhereInput
-  data: Prisma.XOR<Prisma.EmployeeUpdateManyMutationInput, Prisma.EmployeeUncheckedUpdateManyWithoutShopInput>
-}
-
 export type EmployeeCreateWithoutTimeCardsInput = {
   id?: string
   firstName: string
@@ -1504,15 +1589,16 @@ export type EmployeeCreateWithoutTimeCardsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   hasSystemAccess?: boolean
+  assignedShops?: Prisma.EmployeeShopCreateNestedManyWithoutEmployeeInput
   business: Prisma.BusinessCreateNestedOneWithoutEmployeeInput
   role: Prisma.RoleCreateNestedOneWithoutEmployeeInput
-  shop?: Prisma.ShopCreateNestedOneWithoutEmployeeInput
   openedSessions?: Prisma.CashSessionCreateNestedManyWithoutOpenedByInput
   closedSessions?: Prisma.CashSessionCreateNestedManyWithoutClosedByInput
   user?: Prisma.UserCreateNestedOneWithoutEmployeeInput
   grantedUsers?: Prisma.UserCreateNestedManyWithoutGrantorInput
   sales?: Prisma.SaleCreateNestedManyWithoutEmployeeInput
   stockLogs?: Prisma.StockLogCreateNestedManyWithoutEmployeeInput
+  shop?: Prisma.ShopCreateNestedOneWithoutEmployeeInput
 }
 
 export type EmployeeUncheckedCreateWithoutTimeCardsInput = {
@@ -1529,13 +1615,14 @@ export type EmployeeUncheckedCreateWithoutTimeCardsInput = {
   hireDate?: Date | string | null
   businessId: string
   roleId: string
-  shopId?: string | null
+  currentShopId?: string | null
   isActive?: boolean
   isDeleted?: boolean
   deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   hasSystemAccess?: boolean
+  assignedShops?: Prisma.EmployeeShopUncheckedCreateNestedManyWithoutEmployeeInput
   openedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutOpenedByInput
   closedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutClosedByInput
   user?: Prisma.UserUncheckedCreateNestedOneWithoutEmployeeInput
@@ -1578,15 +1665,16 @@ export type EmployeeUpdateWithoutTimeCardsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedShops?: Prisma.EmployeeShopUpdateManyWithoutEmployeeNestedInput
   business?: Prisma.BusinessUpdateOneRequiredWithoutEmployeeNestedInput
   role?: Prisma.RoleUpdateOneRequiredWithoutEmployeeNestedInput
-  shop?: Prisma.ShopUpdateOneWithoutEmployeeNestedInput
   openedSessions?: Prisma.CashSessionUpdateManyWithoutOpenedByNestedInput
   closedSessions?: Prisma.CashSessionUpdateManyWithoutClosedByNestedInput
   user?: Prisma.UserUpdateOneWithoutEmployeeNestedInput
   grantedUsers?: Prisma.UserUpdateManyWithoutGrantorNestedInput
   sales?: Prisma.SaleUpdateManyWithoutEmployeeNestedInput
   stockLogs?: Prisma.StockLogUpdateManyWithoutEmployeeNestedInput
+  shop?: Prisma.ShopUpdateOneWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutTimeCardsInput = {
@@ -1603,19 +1691,106 @@ export type EmployeeUncheckedUpdateWithoutTimeCardsInput = {
   hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   businessId?: Prisma.StringFieldUpdateOperationsInput | string
   roleId?: Prisma.StringFieldUpdateOperationsInput | string
-  shopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currentShopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedShops?: Prisma.EmployeeShopUncheckedUpdateManyWithoutEmployeeNestedInput
   openedSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutOpenedByNestedInput
   closedSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutClosedByNestedInput
   user?: Prisma.UserUncheckedUpdateOneWithoutEmployeeNestedInput
   grantedUsers?: Prisma.UserUncheckedUpdateManyWithoutGrantorNestedInput
   sales?: Prisma.SaleUncheckedUpdateManyWithoutEmployeeNestedInput
   stockLogs?: Prisma.StockLogUncheckedUpdateManyWithoutEmployeeNestedInput
+}
+
+export type EmployeeCreateWithoutShopInput = {
+  id?: string
+  firstName: string
+  lastName: string
+  email: string
+  phone?: string | null
+  imageUrl?: string | null
+  fileKey?: string | null
+  designation?: string | null
+  address?: string | null
+  dateOfBirth?: Date | string | null
+  hireDate?: Date | string | null
+  isActive?: boolean
+  isDeleted?: boolean
+  deletedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  hasSystemAccess?: boolean
+  assignedShops?: Prisma.EmployeeShopCreateNestedManyWithoutEmployeeInput
+  business: Prisma.BusinessCreateNestedOneWithoutEmployeeInput
+  role: Prisma.RoleCreateNestedOneWithoutEmployeeInput
+  openedSessions?: Prisma.CashSessionCreateNestedManyWithoutOpenedByInput
+  closedSessions?: Prisma.CashSessionCreateNestedManyWithoutClosedByInput
+  user?: Prisma.UserCreateNestedOneWithoutEmployeeInput
+  grantedUsers?: Prisma.UserCreateNestedManyWithoutGrantorInput
+  sales?: Prisma.SaleCreateNestedManyWithoutEmployeeInput
+  stockLogs?: Prisma.StockLogCreateNestedManyWithoutEmployeeInput
+  timeCards?: Prisma.TimeCardCreateNestedManyWithoutEmployeeInput
+}
+
+export type EmployeeUncheckedCreateWithoutShopInput = {
+  id?: string
+  firstName: string
+  lastName: string
+  email: string
+  phone?: string | null
+  imageUrl?: string | null
+  fileKey?: string | null
+  designation?: string | null
+  address?: string | null
+  dateOfBirth?: Date | string | null
+  hireDate?: Date | string | null
+  businessId: string
+  roleId: string
+  isActive?: boolean
+  isDeleted?: boolean
+  deletedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  hasSystemAccess?: boolean
+  assignedShops?: Prisma.EmployeeShopUncheckedCreateNestedManyWithoutEmployeeInput
+  openedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutOpenedByInput
+  closedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutClosedByInput
+  user?: Prisma.UserUncheckedCreateNestedOneWithoutEmployeeInput
+  grantedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutGrantorInput
+  sales?: Prisma.SaleUncheckedCreateNestedManyWithoutEmployeeInput
+  stockLogs?: Prisma.StockLogUncheckedCreateNestedManyWithoutEmployeeInput
+  timeCards?: Prisma.TimeCardUncheckedCreateNestedManyWithoutEmployeeInput
+}
+
+export type EmployeeCreateOrConnectWithoutShopInput = {
+  where: Prisma.EmployeeWhereUniqueInput
+  create: Prisma.XOR<Prisma.EmployeeCreateWithoutShopInput, Prisma.EmployeeUncheckedCreateWithoutShopInput>
+}
+
+export type EmployeeCreateManyShopInputEnvelope = {
+  data: Prisma.EmployeeCreateManyShopInput | Prisma.EmployeeCreateManyShopInput[]
+  skipDuplicates?: boolean
+}
+
+export type EmployeeUpsertWithWhereUniqueWithoutShopInput = {
+  where: Prisma.EmployeeWhereUniqueInput
+  update: Prisma.XOR<Prisma.EmployeeUpdateWithoutShopInput, Prisma.EmployeeUncheckedUpdateWithoutShopInput>
+  create: Prisma.XOR<Prisma.EmployeeCreateWithoutShopInput, Prisma.EmployeeUncheckedCreateWithoutShopInput>
+}
+
+export type EmployeeUpdateWithWhereUniqueWithoutShopInput = {
+  where: Prisma.EmployeeWhereUniqueInput
+  data: Prisma.XOR<Prisma.EmployeeUpdateWithoutShopInput, Prisma.EmployeeUncheckedUpdateWithoutShopInput>
+}
+
+export type EmployeeUpdateManyWithWhereWithoutShopInput = {
+  where: Prisma.EmployeeScalarWhereInput
+  data: Prisma.XOR<Prisma.EmployeeUpdateManyMutationInput, Prisma.EmployeeUncheckedUpdateManyWithoutShopInput>
 }
 
 export type EmployeeCreateWithoutStockLogsInput = {
@@ -1636,15 +1811,16 @@ export type EmployeeCreateWithoutStockLogsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   hasSystemAccess?: boolean
+  assignedShops?: Prisma.EmployeeShopCreateNestedManyWithoutEmployeeInput
   business: Prisma.BusinessCreateNestedOneWithoutEmployeeInput
   role: Prisma.RoleCreateNestedOneWithoutEmployeeInput
-  shop?: Prisma.ShopCreateNestedOneWithoutEmployeeInput
   openedSessions?: Prisma.CashSessionCreateNestedManyWithoutOpenedByInput
   closedSessions?: Prisma.CashSessionCreateNestedManyWithoutClosedByInput
   user?: Prisma.UserCreateNestedOneWithoutEmployeeInput
   grantedUsers?: Prisma.UserCreateNestedManyWithoutGrantorInput
   sales?: Prisma.SaleCreateNestedManyWithoutEmployeeInput
   timeCards?: Prisma.TimeCardCreateNestedManyWithoutEmployeeInput
+  shop?: Prisma.ShopCreateNestedOneWithoutEmployeeInput
 }
 
 export type EmployeeUncheckedCreateWithoutStockLogsInput = {
@@ -1661,13 +1837,14 @@ export type EmployeeUncheckedCreateWithoutStockLogsInput = {
   hireDate?: Date | string | null
   businessId: string
   roleId: string
-  shopId?: string | null
+  currentShopId?: string | null
   isActive?: boolean
   isDeleted?: boolean
   deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   hasSystemAccess?: boolean
+  assignedShops?: Prisma.EmployeeShopUncheckedCreateNestedManyWithoutEmployeeInput
   openedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutOpenedByInput
   closedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutClosedByInput
   user?: Prisma.UserUncheckedCreateNestedOneWithoutEmployeeInput
@@ -1710,15 +1887,16 @@ export type EmployeeUpdateWithoutStockLogsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedShops?: Prisma.EmployeeShopUpdateManyWithoutEmployeeNestedInput
   business?: Prisma.BusinessUpdateOneRequiredWithoutEmployeeNestedInput
   role?: Prisma.RoleUpdateOneRequiredWithoutEmployeeNestedInput
-  shop?: Prisma.ShopUpdateOneWithoutEmployeeNestedInput
   openedSessions?: Prisma.CashSessionUpdateManyWithoutOpenedByNestedInput
   closedSessions?: Prisma.CashSessionUpdateManyWithoutClosedByNestedInput
   user?: Prisma.UserUpdateOneWithoutEmployeeNestedInput
   grantedUsers?: Prisma.UserUpdateManyWithoutGrantorNestedInput
   sales?: Prisma.SaleUpdateManyWithoutEmployeeNestedInput
   timeCards?: Prisma.TimeCardUpdateManyWithoutEmployeeNestedInput
+  shop?: Prisma.ShopUpdateOneWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutStockLogsInput = {
@@ -1735,13 +1913,14 @@ export type EmployeeUncheckedUpdateWithoutStockLogsInput = {
   hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   businessId?: Prisma.StringFieldUpdateOperationsInput | string
   roleId?: Prisma.StringFieldUpdateOperationsInput | string
-  shopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currentShopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedShops?: Prisma.EmployeeShopUncheckedUpdateManyWithoutEmployeeNestedInput
   openedSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutOpenedByNestedInput
   closedSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutClosedByNestedInput
   user?: Prisma.UserUncheckedUpdateOneWithoutEmployeeNestedInput
@@ -1768,15 +1947,16 @@ export type EmployeeCreateWithoutSalesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   hasSystemAccess?: boolean
+  assignedShops?: Prisma.EmployeeShopCreateNestedManyWithoutEmployeeInput
   business: Prisma.BusinessCreateNestedOneWithoutEmployeeInput
   role: Prisma.RoleCreateNestedOneWithoutEmployeeInput
-  shop?: Prisma.ShopCreateNestedOneWithoutEmployeeInput
   openedSessions?: Prisma.CashSessionCreateNestedManyWithoutOpenedByInput
   closedSessions?: Prisma.CashSessionCreateNestedManyWithoutClosedByInput
   user?: Prisma.UserCreateNestedOneWithoutEmployeeInput
   grantedUsers?: Prisma.UserCreateNestedManyWithoutGrantorInput
   stockLogs?: Prisma.StockLogCreateNestedManyWithoutEmployeeInput
   timeCards?: Prisma.TimeCardCreateNestedManyWithoutEmployeeInput
+  shop?: Prisma.ShopCreateNestedOneWithoutEmployeeInput
 }
 
 export type EmployeeUncheckedCreateWithoutSalesInput = {
@@ -1793,13 +1973,14 @@ export type EmployeeUncheckedCreateWithoutSalesInput = {
   hireDate?: Date | string | null
   businessId: string
   roleId: string
-  shopId?: string | null
+  currentShopId?: string | null
   isActive?: boolean
   isDeleted?: boolean
   deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   hasSystemAccess?: boolean
+  assignedShops?: Prisma.EmployeeShopUncheckedCreateNestedManyWithoutEmployeeInput
   openedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutOpenedByInput
   closedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutClosedByInput
   user?: Prisma.UserUncheckedCreateNestedOneWithoutEmployeeInput
@@ -1842,15 +2023,16 @@ export type EmployeeUpdateWithoutSalesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedShops?: Prisma.EmployeeShopUpdateManyWithoutEmployeeNestedInput
   business?: Prisma.BusinessUpdateOneRequiredWithoutEmployeeNestedInput
   role?: Prisma.RoleUpdateOneRequiredWithoutEmployeeNestedInput
-  shop?: Prisma.ShopUpdateOneWithoutEmployeeNestedInput
   openedSessions?: Prisma.CashSessionUpdateManyWithoutOpenedByNestedInput
   closedSessions?: Prisma.CashSessionUpdateManyWithoutClosedByNestedInput
   user?: Prisma.UserUpdateOneWithoutEmployeeNestedInput
   grantedUsers?: Prisma.UserUpdateManyWithoutGrantorNestedInput
   stockLogs?: Prisma.StockLogUpdateManyWithoutEmployeeNestedInput
   timeCards?: Prisma.TimeCardUpdateManyWithoutEmployeeNestedInput
+  shop?: Prisma.ShopUpdateOneWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutSalesInput = {
@@ -1867,13 +2049,14 @@ export type EmployeeUncheckedUpdateWithoutSalesInput = {
   hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   businessId?: Prisma.StringFieldUpdateOperationsInput | string
   roleId?: Prisma.StringFieldUpdateOperationsInput | string
-  shopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currentShopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedShops?: Prisma.EmployeeShopUncheckedUpdateManyWithoutEmployeeNestedInput
   openedSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutOpenedByNestedInput
   closedSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutClosedByNestedInput
   user?: Prisma.UserUncheckedUpdateOneWithoutEmployeeNestedInput
@@ -1900,15 +2083,16 @@ export type EmployeeCreateWithoutOpenedSessionsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   hasSystemAccess?: boolean
+  assignedShops?: Prisma.EmployeeShopCreateNestedManyWithoutEmployeeInput
   business: Prisma.BusinessCreateNestedOneWithoutEmployeeInput
   role: Prisma.RoleCreateNestedOneWithoutEmployeeInput
-  shop?: Prisma.ShopCreateNestedOneWithoutEmployeeInput
   closedSessions?: Prisma.CashSessionCreateNestedManyWithoutClosedByInput
   user?: Prisma.UserCreateNestedOneWithoutEmployeeInput
   grantedUsers?: Prisma.UserCreateNestedManyWithoutGrantorInput
   sales?: Prisma.SaleCreateNestedManyWithoutEmployeeInput
   stockLogs?: Prisma.StockLogCreateNestedManyWithoutEmployeeInput
   timeCards?: Prisma.TimeCardCreateNestedManyWithoutEmployeeInput
+  shop?: Prisma.ShopCreateNestedOneWithoutEmployeeInput
 }
 
 export type EmployeeUncheckedCreateWithoutOpenedSessionsInput = {
@@ -1925,13 +2109,14 @@ export type EmployeeUncheckedCreateWithoutOpenedSessionsInput = {
   hireDate?: Date | string | null
   businessId: string
   roleId: string
-  shopId?: string | null
+  currentShopId?: string | null
   isActive?: boolean
   isDeleted?: boolean
   deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   hasSystemAccess?: boolean
+  assignedShops?: Prisma.EmployeeShopUncheckedCreateNestedManyWithoutEmployeeInput
   closedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutClosedByInput
   user?: Prisma.UserUncheckedCreateNestedOneWithoutEmployeeInput
   grantedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutGrantorInput
@@ -1963,15 +2148,16 @@ export type EmployeeCreateWithoutClosedSessionsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   hasSystemAccess?: boolean
+  assignedShops?: Prisma.EmployeeShopCreateNestedManyWithoutEmployeeInput
   business: Prisma.BusinessCreateNestedOneWithoutEmployeeInput
   role: Prisma.RoleCreateNestedOneWithoutEmployeeInput
-  shop?: Prisma.ShopCreateNestedOneWithoutEmployeeInput
   openedSessions?: Prisma.CashSessionCreateNestedManyWithoutOpenedByInput
   user?: Prisma.UserCreateNestedOneWithoutEmployeeInput
   grantedUsers?: Prisma.UserCreateNestedManyWithoutGrantorInput
   sales?: Prisma.SaleCreateNestedManyWithoutEmployeeInput
   stockLogs?: Prisma.StockLogCreateNestedManyWithoutEmployeeInput
   timeCards?: Prisma.TimeCardCreateNestedManyWithoutEmployeeInput
+  shop?: Prisma.ShopCreateNestedOneWithoutEmployeeInput
 }
 
 export type EmployeeUncheckedCreateWithoutClosedSessionsInput = {
@@ -1988,13 +2174,14 @@ export type EmployeeUncheckedCreateWithoutClosedSessionsInput = {
   hireDate?: Date | string | null
   businessId: string
   roleId: string
-  shopId?: string | null
+  currentShopId?: string | null
   isActive?: boolean
   isDeleted?: boolean
   deletedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   hasSystemAccess?: boolean
+  assignedShops?: Prisma.EmployeeShopUncheckedCreateNestedManyWithoutEmployeeInput
   openedSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutOpenedByInput
   user?: Prisma.UserUncheckedCreateNestedOneWithoutEmployeeInput
   grantedUsers?: Prisma.UserUncheckedCreateNestedManyWithoutGrantorInput
@@ -2037,15 +2224,16 @@ export type EmployeeUpdateWithoutOpenedSessionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedShops?: Prisma.EmployeeShopUpdateManyWithoutEmployeeNestedInput
   business?: Prisma.BusinessUpdateOneRequiredWithoutEmployeeNestedInput
   role?: Prisma.RoleUpdateOneRequiredWithoutEmployeeNestedInput
-  shop?: Prisma.ShopUpdateOneWithoutEmployeeNestedInput
   closedSessions?: Prisma.CashSessionUpdateManyWithoutClosedByNestedInput
   user?: Prisma.UserUpdateOneWithoutEmployeeNestedInput
   grantedUsers?: Prisma.UserUpdateManyWithoutGrantorNestedInput
   sales?: Prisma.SaleUpdateManyWithoutEmployeeNestedInput
   stockLogs?: Prisma.StockLogUpdateManyWithoutEmployeeNestedInput
   timeCards?: Prisma.TimeCardUpdateManyWithoutEmployeeNestedInput
+  shop?: Prisma.ShopUpdateOneWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutOpenedSessionsInput = {
@@ -2062,13 +2250,14 @@ export type EmployeeUncheckedUpdateWithoutOpenedSessionsInput = {
   hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   businessId?: Prisma.StringFieldUpdateOperationsInput | string
   roleId?: Prisma.StringFieldUpdateOperationsInput | string
-  shopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currentShopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedShops?: Prisma.EmployeeShopUncheckedUpdateManyWithoutEmployeeNestedInput
   closedSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutClosedByNestedInput
   user?: Prisma.UserUncheckedUpdateOneWithoutEmployeeNestedInput
   grantedUsers?: Prisma.UserUncheckedUpdateManyWithoutGrantorNestedInput
@@ -2106,15 +2295,16 @@ export type EmployeeUpdateWithoutClosedSessionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedShops?: Prisma.EmployeeShopUpdateManyWithoutEmployeeNestedInput
   business?: Prisma.BusinessUpdateOneRequiredWithoutEmployeeNestedInput
   role?: Prisma.RoleUpdateOneRequiredWithoutEmployeeNestedInput
-  shop?: Prisma.ShopUpdateOneWithoutEmployeeNestedInput
   openedSessions?: Prisma.CashSessionUpdateManyWithoutOpenedByNestedInput
   user?: Prisma.UserUpdateOneWithoutEmployeeNestedInput
   grantedUsers?: Prisma.UserUpdateManyWithoutGrantorNestedInput
   sales?: Prisma.SaleUpdateManyWithoutEmployeeNestedInput
   stockLogs?: Prisma.StockLogUpdateManyWithoutEmployeeNestedInput
   timeCards?: Prisma.TimeCardUpdateManyWithoutEmployeeNestedInput
+  shop?: Prisma.ShopUpdateOneWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutClosedSessionsInput = {
@@ -2131,13 +2321,14 @@ export type EmployeeUncheckedUpdateWithoutClosedSessionsInput = {
   hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   businessId?: Prisma.StringFieldUpdateOperationsInput | string
   roleId?: Prisma.StringFieldUpdateOperationsInput | string
-  shopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currentShopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedShops?: Prisma.EmployeeShopUncheckedUpdateManyWithoutEmployeeNestedInput
   openedSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutOpenedByNestedInput
   user?: Prisma.UserUncheckedUpdateOneWithoutEmployeeNestedInput
   grantedUsers?: Prisma.UserUncheckedUpdateManyWithoutGrantorNestedInput
@@ -2159,7 +2350,7 @@ export type EmployeeCreateManyBusinessInput = {
   dateOfBirth?: Date | string | null
   hireDate?: Date | string | null
   roleId: string
-  shopId?: string | null
+  currentShopId?: string | null
   isActive?: boolean
   isDeleted?: boolean
   deletedAt?: Date | string | null
@@ -2186,8 +2377,8 @@ export type EmployeeUpdateWithoutBusinessInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedShops?: Prisma.EmployeeShopUpdateManyWithoutEmployeeNestedInput
   role?: Prisma.RoleUpdateOneRequiredWithoutEmployeeNestedInput
-  shop?: Prisma.ShopUpdateOneWithoutEmployeeNestedInput
   openedSessions?: Prisma.CashSessionUpdateManyWithoutOpenedByNestedInput
   closedSessions?: Prisma.CashSessionUpdateManyWithoutClosedByNestedInput
   user?: Prisma.UserUpdateOneWithoutEmployeeNestedInput
@@ -2195,6 +2386,7 @@ export type EmployeeUpdateWithoutBusinessInput = {
   sales?: Prisma.SaleUpdateManyWithoutEmployeeNestedInput
   stockLogs?: Prisma.StockLogUpdateManyWithoutEmployeeNestedInput
   timeCards?: Prisma.TimeCardUpdateManyWithoutEmployeeNestedInput
+  shop?: Prisma.ShopUpdateOneWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutBusinessInput = {
@@ -2210,13 +2402,14 @@ export type EmployeeUncheckedUpdateWithoutBusinessInput = {
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   roleId?: Prisma.StringFieldUpdateOperationsInput | string
-  shopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currentShopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedShops?: Prisma.EmployeeShopUncheckedUpdateManyWithoutEmployeeNestedInput
   openedSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutOpenedByNestedInput
   closedSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutClosedByNestedInput
   user?: Prisma.UserUncheckedUpdateOneWithoutEmployeeNestedInput
@@ -2239,7 +2432,7 @@ export type EmployeeUncheckedUpdateManyWithoutBusinessInput = {
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   roleId?: Prisma.StringFieldUpdateOperationsInput | string
-  shopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currentShopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2261,7 +2454,7 @@ export type EmployeeCreateManyRoleInput = {
   dateOfBirth?: Date | string | null
   hireDate?: Date | string | null
   businessId: string
-  shopId?: string | null
+  currentShopId?: string | null
   isActive?: boolean
   isDeleted?: boolean
   deletedAt?: Date | string | null
@@ -2288,8 +2481,8 @@ export type EmployeeUpdateWithoutRoleInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedShops?: Prisma.EmployeeShopUpdateManyWithoutEmployeeNestedInput
   business?: Prisma.BusinessUpdateOneRequiredWithoutEmployeeNestedInput
-  shop?: Prisma.ShopUpdateOneWithoutEmployeeNestedInput
   openedSessions?: Prisma.CashSessionUpdateManyWithoutOpenedByNestedInput
   closedSessions?: Prisma.CashSessionUpdateManyWithoutClosedByNestedInput
   user?: Prisma.UserUpdateOneWithoutEmployeeNestedInput
@@ -2297,6 +2490,7 @@ export type EmployeeUpdateWithoutRoleInput = {
   sales?: Prisma.SaleUpdateManyWithoutEmployeeNestedInput
   stockLogs?: Prisma.StockLogUpdateManyWithoutEmployeeNestedInput
   timeCards?: Prisma.TimeCardUpdateManyWithoutEmployeeNestedInput
+  shop?: Prisma.ShopUpdateOneWithoutEmployeeNestedInput
 }
 
 export type EmployeeUncheckedUpdateWithoutRoleInput = {
@@ -2312,13 +2506,14 @@ export type EmployeeUncheckedUpdateWithoutRoleInput = {
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   businessId?: Prisma.StringFieldUpdateOperationsInput | string
-  shopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currentShopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedShops?: Prisma.EmployeeShopUncheckedUpdateManyWithoutEmployeeNestedInput
   openedSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutOpenedByNestedInput
   closedSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutClosedByNestedInput
   user?: Prisma.UserUncheckedUpdateOneWithoutEmployeeNestedInput
@@ -2341,7 +2536,7 @@ export type EmployeeUncheckedUpdateManyWithoutRoleInput = {
   dateOfBirth?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   businessId?: Prisma.StringFieldUpdateOperationsInput | string
-  shopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currentShopId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
   isDeleted?: Prisma.BoolFieldUpdateOperationsInput | boolean
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -2390,6 +2585,7 @@ export type EmployeeUpdateWithoutShopInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedShops?: Prisma.EmployeeShopUpdateManyWithoutEmployeeNestedInput
   business?: Prisma.BusinessUpdateOneRequiredWithoutEmployeeNestedInput
   role?: Prisma.RoleUpdateOneRequiredWithoutEmployeeNestedInput
   openedSessions?: Prisma.CashSessionUpdateManyWithoutOpenedByNestedInput
@@ -2421,6 +2617,7 @@ export type EmployeeUncheckedUpdateWithoutShopInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   hasSystemAccess?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  assignedShops?: Prisma.EmployeeShopUncheckedUpdateManyWithoutEmployeeNestedInput
   openedSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutOpenedByNestedInput
   closedSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutClosedByNestedInput
   user?: Prisma.UserUncheckedUpdateOneWithoutEmployeeNestedInput
@@ -2458,6 +2655,7 @@ export type EmployeeUncheckedUpdateManyWithoutShopInput = {
  */
 
 export type EmployeeCountOutputType = {
+  assignedShops: number
   openedSessions: number
   closedSessions: number
   grantedUsers: number
@@ -2467,6 +2665,7 @@ export type EmployeeCountOutputType = {
 }
 
 export type EmployeeCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  assignedShops?: boolean | EmployeeCountOutputTypeCountAssignedShopsArgs
   openedSessions?: boolean | EmployeeCountOutputTypeCountOpenedSessionsArgs
   closedSessions?: boolean | EmployeeCountOutputTypeCountClosedSessionsArgs
   grantedUsers?: boolean | EmployeeCountOutputTypeCountGrantedUsersArgs
@@ -2483,6 +2682,13 @@ export type EmployeeCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Ext
    * Select specific fields to fetch from the EmployeeCountOutputType
    */
   select?: Prisma.EmployeeCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * EmployeeCountOutputType without action
+ */
+export type EmployeeCountOutputTypeCountAssignedShopsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.EmployeeShopWhereInput
 }
 
 /**
@@ -2542,16 +2748,16 @@ export type EmployeeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   hireDate?: boolean
   businessId?: boolean
   roleId?: boolean
-  shopId?: boolean
+  currentShopId?: boolean
   isActive?: boolean
   isDeleted?: boolean
   deletedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   hasSystemAccess?: boolean
+  assignedShops?: boolean | Prisma.Employee$assignedShopsArgs<ExtArgs>
   business?: boolean | Prisma.BusinessDefaultArgs<ExtArgs>
   role?: boolean | Prisma.RoleDefaultArgs<ExtArgs>
-  shop?: boolean | Prisma.Employee$shopArgs<ExtArgs>
   openedSessions?: boolean | Prisma.Employee$openedSessionsArgs<ExtArgs>
   closedSessions?: boolean | Prisma.Employee$closedSessionsArgs<ExtArgs>
   user?: boolean | Prisma.Employee$userArgs<ExtArgs>
@@ -2559,6 +2765,7 @@ export type EmployeeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   sales?: boolean | Prisma.Employee$salesArgs<ExtArgs>
   stockLogs?: boolean | Prisma.Employee$stockLogsArgs<ExtArgs>
   timeCards?: boolean | Prisma.Employee$timeCardsArgs<ExtArgs>
+  shop?: boolean | Prisma.Employee$shopArgs<ExtArgs>
   _count?: boolean | Prisma.EmployeeCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["employee"]>
 
@@ -2576,7 +2783,7 @@ export type EmployeeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   hireDate?: boolean
   businessId?: boolean
   roleId?: boolean
-  shopId?: boolean
+  currentShopId?: boolean
   isActive?: boolean
   isDeleted?: boolean
   deletedAt?: boolean
@@ -2602,7 +2809,7 @@ export type EmployeeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   hireDate?: boolean
   businessId?: boolean
   roleId?: boolean
-  shopId?: boolean
+  currentShopId?: boolean
   isActive?: boolean
   isDeleted?: boolean
   deletedAt?: boolean
@@ -2628,7 +2835,7 @@ export type EmployeeSelectScalar = {
   hireDate?: boolean
   businessId?: boolean
   roleId?: boolean
-  shopId?: boolean
+  currentShopId?: boolean
   isActive?: boolean
   isDeleted?: boolean
   deletedAt?: boolean
@@ -2637,11 +2844,11 @@ export type EmployeeSelectScalar = {
   hasSystemAccess?: boolean
 }
 
-export type EmployeeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "firstName" | "lastName" | "email" | "phone" | "imageUrl" | "fileKey" | "designation" | "address" | "dateOfBirth" | "hireDate" | "businessId" | "roleId" | "shopId" | "isActive" | "isDeleted" | "deletedAt" | "createdAt" | "updatedAt" | "hasSystemAccess", ExtArgs["result"]["employee"]>
+export type EmployeeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "firstName" | "lastName" | "email" | "phone" | "imageUrl" | "fileKey" | "designation" | "address" | "dateOfBirth" | "hireDate" | "businessId" | "roleId" | "currentShopId" | "isActive" | "isDeleted" | "deletedAt" | "createdAt" | "updatedAt" | "hasSystemAccess", ExtArgs["result"]["employee"]>
 export type EmployeeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  assignedShops?: boolean | Prisma.Employee$assignedShopsArgs<ExtArgs>
   business?: boolean | Prisma.BusinessDefaultArgs<ExtArgs>
   role?: boolean | Prisma.RoleDefaultArgs<ExtArgs>
-  shop?: boolean | Prisma.Employee$shopArgs<ExtArgs>
   openedSessions?: boolean | Prisma.Employee$openedSessionsArgs<ExtArgs>
   closedSessions?: boolean | Prisma.Employee$closedSessionsArgs<ExtArgs>
   user?: boolean | Prisma.Employee$userArgs<ExtArgs>
@@ -2649,6 +2856,7 @@ export type EmployeeInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   sales?: boolean | Prisma.Employee$salesArgs<ExtArgs>
   stockLogs?: boolean | Prisma.Employee$stockLogsArgs<ExtArgs>
   timeCards?: boolean | Prisma.Employee$timeCardsArgs<ExtArgs>
+  shop?: boolean | Prisma.Employee$shopArgs<ExtArgs>
   _count?: boolean | Prisma.EmployeeCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type EmployeeIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2665,9 +2873,9 @@ export type EmployeeIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
 export type $EmployeePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Employee"
   objects: {
+    assignedShops: Prisma.$EmployeeShopPayload<ExtArgs>[]
     business: Prisma.$BusinessPayload<ExtArgs>
     role: Prisma.$RolePayload<ExtArgs>
-    shop: Prisma.$ShopPayload<ExtArgs> | null
     openedSessions: Prisma.$CashSessionPayload<ExtArgs>[]
     closedSessions: Prisma.$CashSessionPayload<ExtArgs>[]
     user: Prisma.$UserPayload<ExtArgs> | null
@@ -2675,6 +2883,7 @@ export type $EmployeePayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     sales: Prisma.$SalePayload<ExtArgs>[]
     stockLogs: Prisma.$StockLogPayload<ExtArgs>[]
     timeCards: Prisma.$TimeCardPayload<ExtArgs>[]
+    shop: Prisma.$ShopPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2690,7 +2899,7 @@ export type $EmployeePayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     hireDate: Date | null
     businessId: string
     roleId: string
-    shopId: string | null
+    currentShopId: string | null
     isActive: boolean
     isDeleted: boolean
     deletedAt: Date | null
@@ -3091,9 +3300,9 @@ readonly fields: EmployeeFieldRefs;
  */
 export interface Prisma__EmployeeClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  assignedShops<T extends Prisma.Employee$assignedShopsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$assignedShopsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EmployeeShopPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   business<T extends Prisma.BusinessDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.BusinessDefaultArgs<ExtArgs>>): Prisma.Prisma__BusinessClient<runtime.Types.Result.GetResult<Prisma.$BusinessPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   role<T extends Prisma.RoleDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RoleDefaultArgs<ExtArgs>>): Prisma.Prisma__RoleClient<runtime.Types.Result.GetResult<Prisma.$RolePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  shop<T extends Prisma.Employee$shopArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$shopArgs<ExtArgs>>): Prisma.Prisma__ShopClient<runtime.Types.Result.GetResult<Prisma.$ShopPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   openedSessions<T extends Prisma.Employee$openedSessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$openedSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CashSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   closedSessions<T extends Prisma.Employee$closedSessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$closedSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CashSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   user<T extends Prisma.Employee$userArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$userArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
@@ -3101,6 +3310,7 @@ export interface Prisma__EmployeeClient<T, Null = never, ExtArgs extends runtime
   sales<T extends Prisma.Employee$salesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$salesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SalePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   stockLogs<T extends Prisma.Employee$stockLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$stockLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$StockLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   timeCards<T extends Prisma.Employee$timeCardsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$timeCardsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TimeCardPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  shop<T extends Prisma.Employee$shopArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$shopArgs<ExtArgs>>): Prisma.Prisma__ShopClient<runtime.Types.Result.GetResult<Prisma.$ShopPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3143,7 +3353,7 @@ export interface EmployeeFieldRefs {
   readonly hireDate: Prisma.FieldRef<"Employee", 'DateTime'>
   readonly businessId: Prisma.FieldRef<"Employee", 'String'>
   readonly roleId: Prisma.FieldRef<"Employee", 'String'>
-  readonly shopId: Prisma.FieldRef<"Employee", 'String'>
+  readonly currentShopId: Prisma.FieldRef<"Employee", 'String'>
   readonly isActive: Prisma.FieldRef<"Employee", 'Boolean'>
   readonly isDeleted: Prisma.FieldRef<"Employee", 'Boolean'>
   readonly deletedAt: Prisma.FieldRef<"Employee", 'DateTime'>
@@ -3551,22 +3761,27 @@ export type EmployeeDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
 }
 
 /**
- * Employee.shop
+ * Employee.assignedShops
  */
-export type Employee$shopArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type Employee$assignedShopsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the Shop
+   * Select specific fields to fetch from the EmployeeShop
    */
-  select?: Prisma.ShopSelect<ExtArgs> | null
+  select?: Prisma.EmployeeShopSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the Shop
+   * Omit specific fields from the EmployeeShop
    */
-  omit?: Prisma.ShopOmit<ExtArgs> | null
+  omit?: Prisma.EmployeeShopOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.ShopInclude<ExtArgs> | null
-  where?: Prisma.ShopWhereInput
+  include?: Prisma.EmployeeShopInclude<ExtArgs> | null
+  where?: Prisma.EmployeeShopWhereInput
+  orderBy?: Prisma.EmployeeShopOrderByWithRelationInput | Prisma.EmployeeShopOrderByWithRelationInput[]
+  cursor?: Prisma.EmployeeShopWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.EmployeeShopScalarFieldEnum | Prisma.EmployeeShopScalarFieldEnum[]
 }
 
 /**
@@ -3730,6 +3945,25 @@ export type Employee$timeCardsArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.TimeCardScalarFieldEnum | Prisma.TimeCardScalarFieldEnum[]
+}
+
+/**
+ * Employee.shop
+ */
+export type Employee$shopArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Shop
+   */
+  select?: Prisma.ShopSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Shop
+   */
+  omit?: Prisma.ShopOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ShopInclude<ExtArgs> | null
+  where?: Prisma.ShopWhereInput
 }
 
 /**

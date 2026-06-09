@@ -1,16 +1,23 @@
 import { z } from "zod";
 
-// ── 1. INDIVIDUAL OPTION VALUE SELECTION ───────────────────
+
+// INVENTORY MANAGEMENT SCHEMAS
+export const variantBranchInventorySchema = z.object({
+  shopId: z.string().min(1, "Shop assignment is required"),
+  stock: z.coerce.number().int().nonnegative("Stock cannot be negative").default(0),
+  lowStockAlert: z.coerce.number().int().nonnegative().default(5),
+});
+
+//INDIVIDUAL OPTION VALUE SELECTION
 // Maps to: VariantAttributeValue linked through ProductVariantOption
 export const variantOptionSchema = z.object({
-  attributeName: z.string().min(1, "Attribute name is required"), // e.g., "Color"
-  
+  attributeName: z.string().min(1, "Attribute name is required"), // e.g., "Color" 
   // Optional if creating a brand new value on the fly, populated if selecting existing
   attributeValueId: z.string().optional().nullable(), 
   value: z.string().min(1, "Option value is required"), // e.g., "Blue"
 });
 
-// ── 2. ROOT ATTRIBUTE RULES DEFINITION ──────────────────────
+//ROOT ATTRIBUTE RULES DEFINITION
 // Maps to: VariantAttribute
 export const productAttributeSchema = z.object({
   id: z.string().optional(), // Existing ID if editing
@@ -19,7 +26,7 @@ export const productAttributeSchema = z.object({
   matrixSplitValues: z.string().optional().default(""),
 });
 
-// ── 3. PRODUCT VARIANT CONFIGURATION (The SKUs) ────────────
+//PRODUCT VARIANT CONFIGURATION (The SKUs)
 // Maps to: ProductVariant & VariantImage
 export const productVariantSchema = z.object({
   id: z.string().optional(), // Existing ID if editing
@@ -29,8 +36,9 @@ export const productVariantSchema = z.object({
   // Coercion automatically converts string form-inputs into floats/ints
   price: z.coerce.number().min(0, "Price cannot be negative").default(0),
   costPrice: z.coerce.number().min(0, "Cost Price cannot be negative").default(0),
-  stock: z.coerce.number().int().nonnegative().default(0),
-  lowStockAlert: z.coerce.number().int().nonnegative().default(5),
+
+  //FIXED: Replaced flat fields with localized branch inventories array
+  branchInventories: z.array(variantBranchInventorySchema).default([]),
   
   // Physical Dimensions matching database decimals
   weight: z.coerce.number().nonnegative().optional().nullable(), 
@@ -49,7 +57,7 @@ export const productVariantSchema = z.object({
   fileKey: z.string().optional().nullable().or(z.literal("")),
 });
 
-// ── 4. THE MAIN PRODUCT SCHEMA (The Parent Container) ─────
+//THE MAIN PRODUCT SCHEMA (The Parent Container)
 // Maps to: Product
 export const productSchema = z.object({
   name: z.string().min(2, "Product name is required"),

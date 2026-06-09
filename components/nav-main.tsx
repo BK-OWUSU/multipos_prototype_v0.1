@@ -53,42 +53,38 @@ export function NavMain({ items }: { items: NavGroup[] }) {
           const hasSubItems = group.items && group.items.length > 0
           const isOpen = openGroup === group.title
 
-          return (
-            <Collapsible
-              key={group.title}
-              asChild
-              open={isOpen}
-              onOpenChange={(open) => {
-                setOpenGroup(open ? group.title : null)
-              }}
-              className="group/collapsible"
-            >
-              <SidebarMenuItem>
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuButton 
-                    tooltip={group.title}
-                    className={isActive ? "font-extrabold animate-pulse" : ""}
-                  >
-                    {group.icon && <group.icon className="h-4 w-4" />}
-                    <span>{group.title}</span>
-
-                    {/* Show chevron only for groups that have sub-items */}
-                    {hasSubItems && (
+          // --- CONDITION 1: MENU ITEM HAS SUB-ITEMS (COLLAPSIBLE DRAWER) ---
+          if (hasSubItems) {
+            return (
+              <Collapsible
+                key={group.title}
+                asChild
+                open={isOpen}
+                onOpenChange={(open) => {
+                  setOpenGroup(open ? group.title : null)
+                }}
+                className="group/collapsible"
+              >
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton 
+                      tooltip={group.title}
+                      className={isActive ? "font-extrabold animate-pulse" : ""}
+                    >
+                      {group.icon && <group.icon className="h-4 w-4" />}
+                      <span>{group.title}</span>
                       <ChevronRightIcon 
                         className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" 
                       />
-                    )}
-                  </SidebarMenuButton>
-                </CollapsibleTrigger>
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
 
-                {/* Render submenu ONLY if the group has items */}
-                {hasSubItems && (
                   <CollapsibleContent>
                     <SidebarMenuSub>
                       {group.items?.map((subItem) => (
                         <SidebarMenuSubItem key={subItem.title}>
                           <SidebarMenuSubButton
-			                      className="text-white hover:text-blue-950 transition-colors" 
+                            className="text-white hover:text-blue-950 transition-colors" 
                             asChild 
                             isActive={pathname === subItem.url}
                           >
@@ -98,13 +94,12 @@ export function NavMain({ items }: { items: NavGroup[] }) {
                                 target="_blank" 
                                 rel="noopener noreferrer"
                               >
-                                {subItem.icon && <subItem.icon className="h-4 w-4  transition-colors" />}
+                                {subItem.icon && <subItem.icon className="h-4 w-4 transition-colors" />}
                                 <span>{subItem.title}</span>
                               </a>
                             ) : (
-                              <Link href={subItem.url}
-                              >
-                                {subItem.icon && <subItem.icon className="h-4 w-4  transition-colors" />}
+                              <Link href={subItem.url}>
+                                {subItem.icon && <subItem.icon className="h-4 w-4 transition-colors" />}
                                 <span>{subItem.title}</span>
                               </Link>
                             )}
@@ -113,9 +108,32 @@ export function NavMain({ items }: { items: NavGroup[] }) {
                       ))}
                     </SidebarMenuSub>
                   </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+            )
+          }
+
+          // --- CONDITION 2: STANDALONE LINK (E.G. DASHBOARD PAGE) ---
+          return (
+            <SidebarMenuItem key={group.title}>
+              <SidebarMenuButton
+                tooltip={group.title}
+                className={isActive ? "font-extrabold animate-pulse" : ""}
+                asChild
+              >
+                {group.url.startsWith('http') ? (
+                  <a href={group.url} target="_blank" rel="noopener noreferrer">
+                    {group.icon && <group.icon className="h-4 w-4" />}
+                    <span>{group.title}</span>
+                  </a>
+                ) : (
+                  <Link href={group.url || "#"}>
+                    {group.icon && <group.icon className="h-4 w-4" />}
+                    <span>{group.title}</span>
+                  </Link>
                 )}
-              </SidebarMenuItem>
-            </Collapsible>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           )
         })}
       </SidebarMenu>

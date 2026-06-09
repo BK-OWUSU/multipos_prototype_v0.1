@@ -3,7 +3,7 @@ import { prisma } from "@/lib/dbHelper";
 import { sendOTPEmail } from "@/lib/email";
 import { AccountType, RoleName, RoleType } from "@/generated/prisma/enums";
 import { generateOTP, saveOTP } from "@/lib/otp";
-import { generateUniqueSlug } from "@/lib/slugGenerator";
+import { generateUniqueBusinessSlug, generateUniqueShopSlug } from "@/lib/slugGenerator";
 import { NextResponse } from "next/server";
 import { seedRoles } from "@/lib/services/seed/roles.seed";
 import { getAllInfoByISO } from 'iso-country-currency';
@@ -14,13 +14,24 @@ static async signUp(rawData: SignUpFormSchema) {
     try {
 
         const validatedData = signupSchema.parse(rawData);
-        const { businessName, email, password, firstName, lastName, countryCode } = validatedData;
+        const { 
+        businessName, 
+        email, 
+        password, 
+        firstName, 
+        lastName, 
+        countryCode,
+        shopName,
+        shopAddress,
+        shopPhone 
+      } = validatedData;
 
         // Get the rich metadata from the latest library version
         const countryData = getAllInfoByISO(countryCode);
         if (!countryData) throw new Error("Unsupported country selected.");
         //Generate unique slug for the business and password hash
-        const subdomainSlug = await generateUniqueSlug(businessName); 
+        const subdomainSlug = await generateUniqueBusinessSlug(businessName);
+        const shopSlug = await generateUniqueShopSlug(shopName, subdomainSlug);
         const hashedPassword = await hashPassword(password);
 
          //Check if user already exists
@@ -69,18 +80,19 @@ static async signUp(rawData: SignUpFormSchema) {
                 }
             }); 
 
-            //Creating OWNER Employee Account
+            // 3. Creating OWNER Employee Account
             const ownerEmployee = await transact.employee.create({
-                data: {
-                    firstName: firstName,
-                    lastName: lastName,
-                    email: email,
-                    phone: null,
-                    roleId: ownerRole.id,
-                    businessId: business.id,
-                    hasSystemAccess: true, 
-                }
+            data: {
+                firstName: firstName,
+                lastName: lastName,
+                email: email,
+                phone: shopPhone || null, // Leverage shop phone if no main identity phone is explicitly captured
+                roleId: ownerRole.id,
+                businessId: business.id,
+                hasSystemAccess: true, 
+            }
             });
+
             // 4 Creating OWNER User Account
              const user = await transact.user.create({
                 data: {
@@ -91,13 +103,35 @@ static async signUp(rawData: SignUpFormSchema) {
                 },
             });
 
+            // 5. Creating First Shop Location (Aligned with your exact Prisma Schema)
+            const shop = await transact.shop.create({
+            data: {
+                name: shopName,
+                slug: shopSlug,
+                address: shopAddress || null,
+                phone: shopPhone || null,
+                businessId: business.id,
+                isActive: true,
+                isDeleted: false
+            }
+            });
+
+            // 6. Associating the Owner Employee to this Specific Initial Shop Context
+            await transact.employeeShop.create({
+            data: {
+                employeeId: ownerEmployee.id,
+                shopId: shop.id,
+                businessId: business.id
+            }
+            });
+
             //Creating Other Roles for the new Business
             await seedRoles(user.id, business.id, transact,);
 
-            // 5 Generating OPT
+           // 7. Generating Verification OTP
             const otpCode = generateOTP();
             await saveOTP(user.id, otpCode, transact);
-            return { user, otpCode, ownerEmployee, ownerRole, business };
+            return { user, otpCode, ownerEmployee, ownerRole, business, shop };
         })
 
         await prisma.role.update({

@@ -1,25 +1,29 @@
 import { User, UserWithRelations } from "@/types/auth/auth";
 
+
 export function mapUserToResponse(user: UserWithRelations): User {
   const emp = user.employee;
   const currentSession = user.userSessionLogs?.[0];
   const previousSession = user.userSessionLogs?.[1];
-  const shop = user.employee.shop;
+
+  // Safely extract the primary or first assigned shop out of the join array
+  // If your employee model has a direct singular fallback link named 'shop', use that instead
+  const primaryShopAssignment = emp.assignedShops?.[0]?.shop  || emp.shop;
 
   return {
     id: user.id,
     employeeId: emp.id,
     firstName: emp.firstName,
     lastName: emp.lastName,
-    fullName:  `${emp.firstName} ${emp.lastName}`,
+    fullName: `${emp.firstName} ${emp.lastName}`,
     email: emp.email,
-    imageUrl: emp.imageUrl,
-    fileKey: emp.fileKey,
+    imageUrl: emp.imageUrl || null,
+    fileKey: emp.fileKey || null,
 
     role: {
-      name: emp.role.name,
-      permissions: emp.role.permissions,
-      access: emp.role.access,
+      name: emp.role?.name,
+      permissions: emp.role?.permissions || [],
+      access: emp.role?.access || [],
     },
 
     business: {
@@ -32,14 +36,25 @@ export function mapUserToResponse(user: UserWithRelations): User {
       countryCode: emp.business.countryCode || undefined,
     },
   
-    shop: shop 
+    shop: primaryShopAssignment 
       ? {
-        id: shop.id,
-        name: shop.name,
-        address: shop.address,
-        phone: shop.phone  
+          id: primaryShopAssignment.id,
+          name: primaryShopAssignment.name,
+          shopSlug: primaryShopAssignment.slug,
+          address: primaryShopAssignment.address || null,
+          phone: primaryShopAssignment.phone || null  
+        }
+        : undefined,
+        
+        assignedShops: emp.assignedShops?.map(shp => ({
+          shop: {
+            id: shp.shop.id,
+            name: shp.shop.name,
+            shopSlug: primaryShopAssignment.slug,
+            address: shp.shop.address || null,
+            phone: shp.shop.phone || null
       }
-      : undefined,
+    })) || undefined,  
 
     session: currentSession
       ? {

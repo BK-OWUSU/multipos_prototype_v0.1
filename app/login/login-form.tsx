@@ -12,6 +12,7 @@ import { LoginResponse } from "@/types/auth/auth"
 import CustomButton from "@/components/reusables/CustomButton"
 import { LogIn,Loader2 } from "lucide-react";
 import { toast } from "sonner"
+import Link from "next/link"
 
 
 
@@ -41,7 +42,13 @@ export function LoginForm({className,...props}: React.ComponentProps<"form">) {
       if(response.success && response.redirectTo) {
 
         toast.success("Login successful! Redirecting...", { icon: <Loader2 className="mr-2 h-4 w-4 animate-spin" /> });
-        router.push(response.redirectTo);
+        // If response.redirectTo is "/mark-tech/dashboard", this extracts "mark-tech"
+        // const cleanSlug = response.redirectTo.split("/")[1]; 
+
+        const shopSlug = response.shopSlug || null;
+        const businessSlug = response.businessesSlug || null;
+        // router.push(`/${businessSlug}/${shopSlug ? shopSlug + "/" : ""}dashboard`);
+        router.push(`/${businessSlug}/dashboard`);
         return;
       }
       
@@ -72,7 +79,7 @@ export function LoginForm({className,...props}: React.ComponentProps<"form">) {
             type="submit" 
             text="Login" 
             isLoading={isSubmitting} 
-            className="w-full"
+            className="h-10 bg-blue-800 hover:bg-blue-900 font-semibold text-sm rounded-md px-6"
             icon={<LogIn className="w-4 h-4" />}
           />
         </Field>
@@ -81,9 +88,9 @@ export function LoginForm({className,...props}: React.ComponentProps<"form">) {
         <Field>
           <FieldDescription className="text-center">
             Don&apos;t have an account?{" "}
-            <a href="/signup" className="underline underline-offset-4">
+            <Link href="/signup" className="underline text-blue-700 underline-offset-4">
               Sign up
-            </a>
+            </Link>
           </FieldDescription>
         </Field>
       </FieldGroup>

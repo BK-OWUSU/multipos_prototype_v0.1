@@ -1,4 +1,4 @@
-import { Prisma } from "@/lib/generated/prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 
 
 //Role
@@ -21,9 +21,17 @@ export type UserWithRelations = Prisma.UserGetPayload<{
         business: true,
         role: true,
         shop: true,
+        assignedShops: {
+          include: {
+            shop: true
+          }
+        }
       },
     },
-    userSessionLogs: true
+    userSessionLogs: {
+      orderBy: { loginAt: "desc" },
+      take: 2
+    }
   }
 }>
 
@@ -63,9 +71,20 @@ export type User = {
   shop?: {
     id:        string;
     name?:     string | null;
+    shopSlug:  string;
     address?:  string | null;
     phone?:    string | null;
-  }
+  };
+
+  assignedShops?: {
+          shop: {
+              id: string;
+              name: string;
+              shopSlug: string;
+              phone: string | null;
+              address: string | null;
+        }
+  }[];
 
   //Session Details
   session?: {
@@ -177,6 +196,7 @@ export type JwtPayload = {
   access: string[];
   needsPasswordChange?: boolean;
   shopId?: string;
+  shopSlug?: string;
 };
 
 //Token
@@ -210,6 +230,8 @@ export type LoginResponse = {
         name: string;
         slug: string;
     }[];
+    businessesSlug?: string;
+    shopSlug?: string;
 }
 
 export type SignUpResponse = {

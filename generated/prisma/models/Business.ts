@@ -350,6 +350,7 @@ export type BusinessWhereInput = {
   auditLogs?: Prisma.AuditLogListRelationFilter
   brands?: Prisma.BrandListRelationFilter
   userSessionLogs?: Prisma.UserSessionLogListRelationFilter
+  shopInventories?: Prisma.ShopInventoryListRelationFilter
 }
 
 export type BusinessOrderByWithRelationInput = {
@@ -387,6 +388,7 @@ export type BusinessOrderByWithRelationInput = {
   auditLogs?: Prisma.AuditLogOrderByRelationAggregateInput
   brands?: Prisma.BrandOrderByRelationAggregateInput
   userSessionLogs?: Prisma.UserSessionLogOrderByRelationAggregateInput
+  shopInventories?: Prisma.ShopInventoryOrderByRelationAggregateInput
 }
 
 export type BusinessWhereUniqueInput = Prisma.AtLeast<{
@@ -427,6 +429,7 @@ export type BusinessWhereUniqueInput = Prisma.AtLeast<{
   auditLogs?: Prisma.AuditLogListRelationFilter
   brands?: Prisma.BrandListRelationFilter
   userSessionLogs?: Prisma.UserSessionLogListRelationFilter
+  shopInventories?: Prisma.ShopInventoryListRelationFilter
 }, "id" | "slug">
 
 export type BusinessOrderByWithAggregationInput = {
@@ -518,6 +521,7 @@ export type BusinessCreateInput = {
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessUncheckedCreateInput = {
@@ -555,6 +559,7 @@ export type BusinessUncheckedCreateInput = {
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandUncheckedCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryUncheckedCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessUpdateInput = {
@@ -592,6 +597,7 @@ export type BusinessUpdateInput = {
   auditLogs?: Prisma.AuditLogUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessUncheckedUpdateInput = {
@@ -629,6 +635,7 @@ export type BusinessUncheckedUpdateInput = {
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUncheckedUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUncheckedUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessCreateManyInput = {
@@ -852,20 +859,6 @@ export type BusinessUpdateOneRequiredWithoutRolesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.BusinessUpdateToOneWithWhereWithoutRolesInput, Prisma.BusinessUpdateWithoutRolesInput>, Prisma.BusinessUncheckedUpdateWithoutRolesInput>
 }
 
-export type BusinessCreateNestedOneWithoutShopsInput = {
-  create?: Prisma.XOR<Prisma.BusinessCreateWithoutShopsInput, Prisma.BusinessUncheckedCreateWithoutShopsInput>
-  connectOrCreate?: Prisma.BusinessCreateOrConnectWithoutShopsInput
-  connect?: Prisma.BusinessWhereUniqueInput
-}
-
-export type BusinessUpdateOneRequiredWithoutShopsNestedInput = {
-  create?: Prisma.XOR<Prisma.BusinessCreateWithoutShopsInput, Prisma.BusinessUncheckedCreateWithoutShopsInput>
-  connectOrCreate?: Prisma.BusinessCreateOrConnectWithoutShopsInput
-  upsert?: Prisma.BusinessUpsertWithoutShopsInput
-  connect?: Prisma.BusinessWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.BusinessUpdateToOneWithWhereWithoutShopsInput, Prisma.BusinessUpdateWithoutShopsInput>, Prisma.BusinessUncheckedUpdateWithoutShopsInput>
-}
-
 export type BusinessCreateNestedOneWithoutCategoriesInput = {
   create?: Prisma.XOR<Prisma.BusinessCreateWithoutCategoriesInput, Prisma.BusinessUncheckedCreateWithoutCategoriesInput>
   connectOrCreate?: Prisma.BusinessCreateOrConnectWithoutCategoriesInput
@@ -920,6 +913,34 @@ export type BusinessUpdateOneRequiredWithoutProductAttributesNestedInput = {
   upsert?: Prisma.BusinessUpsertWithoutProductAttributesInput
   connect?: Prisma.BusinessWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.BusinessUpdateToOneWithWhereWithoutProductAttributesInput, Prisma.BusinessUpdateWithoutProductAttributesInput>, Prisma.BusinessUncheckedUpdateWithoutProductAttributesInput>
+}
+
+export type BusinessCreateNestedOneWithoutShopsInput = {
+  create?: Prisma.XOR<Prisma.BusinessCreateWithoutShopsInput, Prisma.BusinessUncheckedCreateWithoutShopsInput>
+  connectOrCreate?: Prisma.BusinessCreateOrConnectWithoutShopsInput
+  connect?: Prisma.BusinessWhereUniqueInput
+}
+
+export type BusinessUpdateOneRequiredWithoutShopsNestedInput = {
+  create?: Prisma.XOR<Prisma.BusinessCreateWithoutShopsInput, Prisma.BusinessUncheckedCreateWithoutShopsInput>
+  connectOrCreate?: Prisma.BusinessCreateOrConnectWithoutShopsInput
+  upsert?: Prisma.BusinessUpsertWithoutShopsInput
+  connect?: Prisma.BusinessWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.BusinessUpdateToOneWithWhereWithoutShopsInput, Prisma.BusinessUpdateWithoutShopsInput>, Prisma.BusinessUncheckedUpdateWithoutShopsInput>
+}
+
+export type BusinessCreateNestedOneWithoutShopInventoriesInput = {
+  create?: Prisma.XOR<Prisma.BusinessCreateWithoutShopInventoriesInput, Prisma.BusinessUncheckedCreateWithoutShopInventoriesInput>
+  connectOrCreate?: Prisma.BusinessCreateOrConnectWithoutShopInventoriesInput
+  connect?: Prisma.BusinessWhereUniqueInput
+}
+
+export type BusinessUpdateOneRequiredWithoutShopInventoriesNestedInput = {
+  create?: Prisma.XOR<Prisma.BusinessCreateWithoutShopInventoriesInput, Prisma.BusinessUncheckedCreateWithoutShopInventoriesInput>
+  connectOrCreate?: Prisma.BusinessCreateOrConnectWithoutShopInventoriesInput
+  upsert?: Prisma.BusinessUpsertWithoutShopInventoriesInput
+  connect?: Prisma.BusinessWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.BusinessUpdateToOneWithWhereWithoutShopInventoriesInput, Prisma.BusinessUpdateWithoutShopInventoriesInput>, Prisma.BusinessUncheckedUpdateWithoutShopInventoriesInput>
 }
 
 export type BusinessCreateNestedOneWithoutDiscountsInput = {
@@ -1040,6 +1061,7 @@ export type BusinessCreateWithoutEmployeeInput = {
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessUncheckedCreateWithoutEmployeeInput = {
@@ -1076,6 +1098,7 @@ export type BusinessUncheckedCreateWithoutEmployeeInput = {
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandUncheckedCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryUncheckedCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessCreateOrConnectWithoutEmployeeInput = {
@@ -1128,6 +1151,7 @@ export type BusinessUpdateWithoutEmployeeInput = {
   auditLogs?: Prisma.AuditLogUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessUncheckedUpdateWithoutEmployeeInput = {
@@ -1164,6 +1188,7 @@ export type BusinessUncheckedUpdateWithoutEmployeeInput = {
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUncheckedUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUncheckedUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessCreateWithoutUserSessionLogsInput = {
@@ -1200,6 +1225,7 @@ export type BusinessCreateWithoutUserSessionLogsInput = {
   discounts?: Prisma.DiscountCreateNestedManyWithoutBusinessInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessUncheckedCreateWithoutUserSessionLogsInput = {
@@ -1236,6 +1262,7 @@ export type BusinessUncheckedCreateWithoutUserSessionLogsInput = {
   discounts?: Prisma.DiscountUncheckedCreateNestedManyWithoutBusinessInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandUncheckedCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryUncheckedCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessCreateOrConnectWithoutUserSessionLogsInput = {
@@ -1288,6 +1315,7 @@ export type BusinessUpdateWithoutUserSessionLogsInput = {
   discounts?: Prisma.DiscountUpdateManyWithoutBusinessNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessUncheckedUpdateWithoutUserSessionLogsInput = {
@@ -1324,6 +1352,7 @@ export type BusinessUncheckedUpdateWithoutUserSessionLogsInput = {
   discounts?: Prisma.DiscountUncheckedUpdateManyWithoutBusinessNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUncheckedUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUncheckedUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessCreateWithoutRolesInput = {
@@ -1360,6 +1389,7 @@ export type BusinessCreateWithoutRolesInput = {
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessUncheckedCreateWithoutRolesInput = {
@@ -1396,6 +1426,7 @@ export type BusinessUncheckedCreateWithoutRolesInput = {
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandUncheckedCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryUncheckedCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessCreateOrConnectWithoutRolesInput = {
@@ -1448,6 +1479,7 @@ export type BusinessUpdateWithoutRolesInput = {
   auditLogs?: Prisma.AuditLogUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessUncheckedUpdateWithoutRolesInput = {
@@ -1484,166 +1516,7 @@ export type BusinessUncheckedUpdateWithoutRolesInput = {
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUncheckedUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedUpdateManyWithoutBusinessNestedInput
-}
-
-export type BusinessCreateWithoutShopsInput = {
-  id?: string
-  name: string
-  slug: string
-  email: string
-  phone?: string | null
-  address?: string | null
-  logoUrl?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  isEmailVerified?: boolean
-  onboardingStep?: number
-  isOnboarded?: boolean
-  workHrsStartTime?: Date | string | null
-  workHrsCloseTime?: Date | string | null
-  termsAgreement?: boolean
-  countryCode?: string | null
-  currencyCode?: string
-  currencySymbol?: string
-  locale?: string
-  dateFormat?: string | null
-  employee?: Prisma.EmployeeCreateNestedManyWithoutBusinessInput
-  products?: Prisma.ProductCreateNestedManyWithoutBusinessInput
-  productAttributes?: Prisma.VariantAttributeCreateNestedManyWithoutBusinessInput
-  customers?: Prisma.CustomerCreateNestedManyWithoutBusinessInput
-  sales?: Prisma.SaleCreateNestedManyWithoutBusinessInput
-  saleItems?: Prisma.SaleItemCreateNestedManyWithoutBusinessInput
-  cashSessions?: Prisma.CashSessionCreateNestedManyWithoutBusinessInput
-  categories?: Prisma.CategoryCreateNestedManyWithoutBusinessInput
-  roles?: Prisma.RoleCreateNestedManyWithoutBusinessInput
-  discounts?: Prisma.DiscountCreateNestedManyWithoutBusinessInput
-  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutBusinessInput
-  brands?: Prisma.BrandCreateNestedManyWithoutBusinessInput
-  userSessionLogs?: Prisma.UserSessionLogCreateNestedManyWithoutBusinessInput
-}
-
-export type BusinessUncheckedCreateWithoutShopsInput = {
-  id?: string
-  name: string
-  slug: string
-  email: string
-  phone?: string | null
-  address?: string | null
-  logoUrl?: string | null
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  isEmailVerified?: boolean
-  onboardingStep?: number
-  isOnboarded?: boolean
-  workHrsStartTime?: Date | string | null
-  workHrsCloseTime?: Date | string | null
-  termsAgreement?: boolean
-  countryCode?: string | null
-  currencyCode?: string
-  currencySymbol?: string
-  locale?: string
-  dateFormat?: string | null
-  employee?: Prisma.EmployeeUncheckedCreateNestedManyWithoutBusinessInput
-  products?: Prisma.ProductUncheckedCreateNestedManyWithoutBusinessInput
-  productAttributes?: Prisma.VariantAttributeUncheckedCreateNestedManyWithoutBusinessInput
-  customers?: Prisma.CustomerUncheckedCreateNestedManyWithoutBusinessInput
-  sales?: Prisma.SaleUncheckedCreateNestedManyWithoutBusinessInput
-  saleItems?: Prisma.SaleItemUncheckedCreateNestedManyWithoutBusinessInput
-  cashSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutBusinessInput
-  categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutBusinessInput
-  roles?: Prisma.RoleUncheckedCreateNestedManyWithoutBusinessInput
-  discounts?: Prisma.DiscountUncheckedCreateNestedManyWithoutBusinessInput
-  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutBusinessInput
-  brands?: Prisma.BrandUncheckedCreateNestedManyWithoutBusinessInput
-  userSessionLogs?: Prisma.UserSessionLogUncheckedCreateNestedManyWithoutBusinessInput
-}
-
-export type BusinessCreateOrConnectWithoutShopsInput = {
-  where: Prisma.BusinessWhereUniqueInput
-  create: Prisma.XOR<Prisma.BusinessCreateWithoutShopsInput, Prisma.BusinessUncheckedCreateWithoutShopsInput>
-}
-
-export type BusinessUpsertWithoutShopsInput = {
-  update: Prisma.XOR<Prisma.BusinessUpdateWithoutShopsInput, Prisma.BusinessUncheckedUpdateWithoutShopsInput>
-  create: Prisma.XOR<Prisma.BusinessCreateWithoutShopsInput, Prisma.BusinessUncheckedCreateWithoutShopsInput>
-  where?: Prisma.BusinessWhereInput
-}
-
-export type BusinessUpdateToOneWithWhereWithoutShopsInput = {
-  where?: Prisma.BusinessWhereInput
-  data: Prisma.XOR<Prisma.BusinessUpdateWithoutShopsInput, Prisma.BusinessUncheckedUpdateWithoutShopsInput>
-}
-
-export type BusinessUpdateWithoutShopsInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  slug?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  onboardingStep?: Prisma.IntFieldUpdateOperationsInput | number
-  isOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  workHrsStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  workHrsCloseTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  termsAgreement?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  currencyCode?: Prisma.StringFieldUpdateOperationsInput | string
-  currencySymbol?: Prisma.StringFieldUpdateOperationsInput | string
-  locale?: Prisma.StringFieldUpdateOperationsInput | string
-  dateFormat?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  employee?: Prisma.EmployeeUpdateManyWithoutBusinessNestedInput
-  products?: Prisma.ProductUpdateManyWithoutBusinessNestedInput
-  productAttributes?: Prisma.VariantAttributeUpdateManyWithoutBusinessNestedInput
-  customers?: Prisma.CustomerUpdateManyWithoutBusinessNestedInput
-  sales?: Prisma.SaleUpdateManyWithoutBusinessNestedInput
-  saleItems?: Prisma.SaleItemUpdateManyWithoutBusinessNestedInput
-  cashSessions?: Prisma.CashSessionUpdateManyWithoutBusinessNestedInput
-  categories?: Prisma.CategoryUpdateManyWithoutBusinessNestedInput
-  roles?: Prisma.RoleUpdateManyWithoutBusinessNestedInput
-  discounts?: Prisma.DiscountUpdateManyWithoutBusinessNestedInput
-  auditLogs?: Prisma.AuditLogUpdateManyWithoutBusinessNestedInput
-  brands?: Prisma.BrandUpdateManyWithoutBusinessNestedInput
-  userSessionLogs?: Prisma.UserSessionLogUpdateManyWithoutBusinessNestedInput
-}
-
-export type BusinessUncheckedUpdateWithoutShopsInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  slug?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  onboardingStep?: Prisma.IntFieldUpdateOperationsInput | number
-  isOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  workHrsStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  workHrsCloseTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  termsAgreement?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  currencyCode?: Prisma.StringFieldUpdateOperationsInput | string
-  currencySymbol?: Prisma.StringFieldUpdateOperationsInput | string
-  locale?: Prisma.StringFieldUpdateOperationsInput | string
-  dateFormat?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  employee?: Prisma.EmployeeUncheckedUpdateManyWithoutBusinessNestedInput
-  products?: Prisma.ProductUncheckedUpdateManyWithoutBusinessNestedInput
-  productAttributes?: Prisma.VariantAttributeUncheckedUpdateManyWithoutBusinessNestedInput
-  customers?: Prisma.CustomerUncheckedUpdateManyWithoutBusinessNestedInput
-  sales?: Prisma.SaleUncheckedUpdateManyWithoutBusinessNestedInput
-  saleItems?: Prisma.SaleItemUncheckedUpdateManyWithoutBusinessNestedInput
-  cashSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutBusinessNestedInput
-  categories?: Prisma.CategoryUncheckedUpdateManyWithoutBusinessNestedInput
-  roles?: Prisma.RoleUncheckedUpdateManyWithoutBusinessNestedInput
-  discounts?: Prisma.DiscountUncheckedUpdateManyWithoutBusinessNestedInput
-  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutBusinessNestedInput
-  brands?: Prisma.BrandUncheckedUpdateManyWithoutBusinessNestedInput
-  userSessionLogs?: Prisma.UserSessionLogUncheckedUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUncheckedUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessCreateWithoutCategoriesInput = {
@@ -1680,6 +1553,7 @@ export type BusinessCreateWithoutCategoriesInput = {
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessUncheckedCreateWithoutCategoriesInput = {
@@ -1716,6 +1590,7 @@ export type BusinessUncheckedCreateWithoutCategoriesInput = {
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandUncheckedCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryUncheckedCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessCreateOrConnectWithoutCategoriesInput = {
@@ -1768,6 +1643,7 @@ export type BusinessUpdateWithoutCategoriesInput = {
   auditLogs?: Prisma.AuditLogUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessUncheckedUpdateWithoutCategoriesInput = {
@@ -1804,6 +1680,7 @@ export type BusinessUncheckedUpdateWithoutCategoriesInput = {
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUncheckedUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUncheckedUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessCreateWithoutBrandsInput = {
@@ -1840,6 +1717,7 @@ export type BusinessCreateWithoutBrandsInput = {
   discounts?: Prisma.DiscountCreateNestedManyWithoutBusinessInput
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessUncheckedCreateWithoutBrandsInput = {
@@ -1876,6 +1754,7 @@ export type BusinessUncheckedCreateWithoutBrandsInput = {
   discounts?: Prisma.DiscountUncheckedCreateNestedManyWithoutBusinessInput
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryUncheckedCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessCreateOrConnectWithoutBrandsInput = {
@@ -1928,6 +1807,7 @@ export type BusinessUpdateWithoutBrandsInput = {
   discounts?: Prisma.DiscountUpdateManyWithoutBusinessNestedInput
   auditLogs?: Prisma.AuditLogUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessUncheckedUpdateWithoutBrandsInput = {
@@ -1964,6 +1844,7 @@ export type BusinessUncheckedUpdateWithoutBrandsInput = {
   discounts?: Prisma.DiscountUncheckedUpdateManyWithoutBusinessNestedInput
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUncheckedUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessCreateWithoutProductsInput = {
@@ -2000,6 +1881,7 @@ export type BusinessCreateWithoutProductsInput = {
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessUncheckedCreateWithoutProductsInput = {
@@ -2036,6 +1918,7 @@ export type BusinessUncheckedCreateWithoutProductsInput = {
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandUncheckedCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryUncheckedCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessCreateOrConnectWithoutProductsInput = {
@@ -2088,6 +1971,7 @@ export type BusinessUpdateWithoutProductsInput = {
   auditLogs?: Prisma.AuditLogUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessUncheckedUpdateWithoutProductsInput = {
@@ -2124,6 +2008,7 @@ export type BusinessUncheckedUpdateWithoutProductsInput = {
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUncheckedUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUncheckedUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessCreateWithoutProductAttributesInput = {
@@ -2160,6 +2045,7 @@ export type BusinessCreateWithoutProductAttributesInput = {
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessUncheckedCreateWithoutProductAttributesInput = {
@@ -2196,6 +2082,7 @@ export type BusinessUncheckedCreateWithoutProductAttributesInput = {
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandUncheckedCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryUncheckedCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessCreateOrConnectWithoutProductAttributesInput = {
@@ -2248,6 +2135,7 @@ export type BusinessUpdateWithoutProductAttributesInput = {
   auditLogs?: Prisma.AuditLogUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessUncheckedUpdateWithoutProductAttributesInput = {
@@ -2274,6 +2162,335 @@ export type BusinessUncheckedUpdateWithoutProductAttributesInput = {
   employee?: Prisma.EmployeeUncheckedUpdateManyWithoutBusinessNestedInput
   shops?: Prisma.ShopUncheckedUpdateManyWithoutBusinessNestedInput
   products?: Prisma.ProductUncheckedUpdateManyWithoutBusinessNestedInput
+  customers?: Prisma.CustomerUncheckedUpdateManyWithoutBusinessNestedInput
+  sales?: Prisma.SaleUncheckedUpdateManyWithoutBusinessNestedInput
+  saleItems?: Prisma.SaleItemUncheckedUpdateManyWithoutBusinessNestedInput
+  cashSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutBusinessNestedInput
+  categories?: Prisma.CategoryUncheckedUpdateManyWithoutBusinessNestedInput
+  roles?: Prisma.RoleUncheckedUpdateManyWithoutBusinessNestedInput
+  discounts?: Prisma.DiscountUncheckedUpdateManyWithoutBusinessNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutBusinessNestedInput
+  brands?: Prisma.BrandUncheckedUpdateManyWithoutBusinessNestedInput
+  userSessionLogs?: Prisma.UserSessionLogUncheckedUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUncheckedUpdateManyWithoutBusinessNestedInput
+}
+
+export type BusinessCreateWithoutShopsInput = {
+  id?: string
+  name: string
+  slug: string
+  email: string
+  phone?: string | null
+  address?: string | null
+  logoUrl?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  isEmailVerified?: boolean
+  onboardingStep?: number
+  isOnboarded?: boolean
+  workHrsStartTime?: Date | string | null
+  workHrsCloseTime?: Date | string | null
+  termsAgreement?: boolean
+  countryCode?: string | null
+  currencyCode?: string
+  currencySymbol?: string
+  locale?: string
+  dateFormat?: string | null
+  employee?: Prisma.EmployeeCreateNestedManyWithoutBusinessInput
+  products?: Prisma.ProductCreateNestedManyWithoutBusinessInput
+  productAttributes?: Prisma.VariantAttributeCreateNestedManyWithoutBusinessInput
+  customers?: Prisma.CustomerCreateNestedManyWithoutBusinessInput
+  sales?: Prisma.SaleCreateNestedManyWithoutBusinessInput
+  saleItems?: Prisma.SaleItemCreateNestedManyWithoutBusinessInput
+  cashSessions?: Prisma.CashSessionCreateNestedManyWithoutBusinessInput
+  categories?: Prisma.CategoryCreateNestedManyWithoutBusinessInput
+  roles?: Prisma.RoleCreateNestedManyWithoutBusinessInput
+  discounts?: Prisma.DiscountCreateNestedManyWithoutBusinessInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutBusinessInput
+  brands?: Prisma.BrandCreateNestedManyWithoutBusinessInput
+  userSessionLogs?: Prisma.UserSessionLogCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryCreateNestedManyWithoutBusinessInput
+}
+
+export type BusinessUncheckedCreateWithoutShopsInput = {
+  id?: string
+  name: string
+  slug: string
+  email: string
+  phone?: string | null
+  address?: string | null
+  logoUrl?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  isEmailVerified?: boolean
+  onboardingStep?: number
+  isOnboarded?: boolean
+  workHrsStartTime?: Date | string | null
+  workHrsCloseTime?: Date | string | null
+  termsAgreement?: boolean
+  countryCode?: string | null
+  currencyCode?: string
+  currencySymbol?: string
+  locale?: string
+  dateFormat?: string | null
+  employee?: Prisma.EmployeeUncheckedCreateNestedManyWithoutBusinessInput
+  products?: Prisma.ProductUncheckedCreateNestedManyWithoutBusinessInput
+  productAttributes?: Prisma.VariantAttributeUncheckedCreateNestedManyWithoutBusinessInput
+  customers?: Prisma.CustomerUncheckedCreateNestedManyWithoutBusinessInput
+  sales?: Prisma.SaleUncheckedCreateNestedManyWithoutBusinessInput
+  saleItems?: Prisma.SaleItemUncheckedCreateNestedManyWithoutBusinessInput
+  cashSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutBusinessInput
+  categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutBusinessInput
+  roles?: Prisma.RoleUncheckedCreateNestedManyWithoutBusinessInput
+  discounts?: Prisma.DiscountUncheckedCreateNestedManyWithoutBusinessInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutBusinessInput
+  brands?: Prisma.BrandUncheckedCreateNestedManyWithoutBusinessInput
+  userSessionLogs?: Prisma.UserSessionLogUncheckedCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryUncheckedCreateNestedManyWithoutBusinessInput
+}
+
+export type BusinessCreateOrConnectWithoutShopsInput = {
+  where: Prisma.BusinessWhereUniqueInput
+  create: Prisma.XOR<Prisma.BusinessCreateWithoutShopsInput, Prisma.BusinessUncheckedCreateWithoutShopsInput>
+}
+
+export type BusinessUpsertWithoutShopsInput = {
+  update: Prisma.XOR<Prisma.BusinessUpdateWithoutShopsInput, Prisma.BusinessUncheckedUpdateWithoutShopsInput>
+  create: Prisma.XOR<Prisma.BusinessCreateWithoutShopsInput, Prisma.BusinessUncheckedCreateWithoutShopsInput>
+  where?: Prisma.BusinessWhereInput
+}
+
+export type BusinessUpdateToOneWithWhereWithoutShopsInput = {
+  where?: Prisma.BusinessWhereInput
+  data: Prisma.XOR<Prisma.BusinessUpdateWithoutShopsInput, Prisma.BusinessUncheckedUpdateWithoutShopsInput>
+}
+
+export type BusinessUpdateWithoutShopsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  onboardingStep?: Prisma.IntFieldUpdateOperationsInput | number
+  isOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  workHrsStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  workHrsCloseTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  termsAgreement?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currencyCode?: Prisma.StringFieldUpdateOperationsInput | string
+  currencySymbol?: Prisma.StringFieldUpdateOperationsInput | string
+  locale?: Prisma.StringFieldUpdateOperationsInput | string
+  dateFormat?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  employee?: Prisma.EmployeeUpdateManyWithoutBusinessNestedInput
+  products?: Prisma.ProductUpdateManyWithoutBusinessNestedInput
+  productAttributes?: Prisma.VariantAttributeUpdateManyWithoutBusinessNestedInput
+  customers?: Prisma.CustomerUpdateManyWithoutBusinessNestedInput
+  sales?: Prisma.SaleUpdateManyWithoutBusinessNestedInput
+  saleItems?: Prisma.SaleItemUpdateManyWithoutBusinessNestedInput
+  cashSessions?: Prisma.CashSessionUpdateManyWithoutBusinessNestedInput
+  categories?: Prisma.CategoryUpdateManyWithoutBusinessNestedInput
+  roles?: Prisma.RoleUpdateManyWithoutBusinessNestedInput
+  discounts?: Prisma.DiscountUpdateManyWithoutBusinessNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutBusinessNestedInput
+  brands?: Prisma.BrandUpdateManyWithoutBusinessNestedInput
+  userSessionLogs?: Prisma.UserSessionLogUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUpdateManyWithoutBusinessNestedInput
+}
+
+export type BusinessUncheckedUpdateWithoutShopsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  onboardingStep?: Prisma.IntFieldUpdateOperationsInput | number
+  isOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  workHrsStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  workHrsCloseTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  termsAgreement?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currencyCode?: Prisma.StringFieldUpdateOperationsInput | string
+  currencySymbol?: Prisma.StringFieldUpdateOperationsInput | string
+  locale?: Prisma.StringFieldUpdateOperationsInput | string
+  dateFormat?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  employee?: Prisma.EmployeeUncheckedUpdateManyWithoutBusinessNestedInput
+  products?: Prisma.ProductUncheckedUpdateManyWithoutBusinessNestedInput
+  productAttributes?: Prisma.VariantAttributeUncheckedUpdateManyWithoutBusinessNestedInput
+  customers?: Prisma.CustomerUncheckedUpdateManyWithoutBusinessNestedInput
+  sales?: Prisma.SaleUncheckedUpdateManyWithoutBusinessNestedInput
+  saleItems?: Prisma.SaleItemUncheckedUpdateManyWithoutBusinessNestedInput
+  cashSessions?: Prisma.CashSessionUncheckedUpdateManyWithoutBusinessNestedInput
+  categories?: Prisma.CategoryUncheckedUpdateManyWithoutBusinessNestedInput
+  roles?: Prisma.RoleUncheckedUpdateManyWithoutBusinessNestedInput
+  discounts?: Prisma.DiscountUncheckedUpdateManyWithoutBusinessNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutBusinessNestedInput
+  brands?: Prisma.BrandUncheckedUpdateManyWithoutBusinessNestedInput
+  userSessionLogs?: Prisma.UserSessionLogUncheckedUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUncheckedUpdateManyWithoutBusinessNestedInput
+}
+
+export type BusinessCreateWithoutShopInventoriesInput = {
+  id?: string
+  name: string
+  slug: string
+  email: string
+  phone?: string | null
+  address?: string | null
+  logoUrl?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  isEmailVerified?: boolean
+  onboardingStep?: number
+  isOnboarded?: boolean
+  workHrsStartTime?: Date | string | null
+  workHrsCloseTime?: Date | string | null
+  termsAgreement?: boolean
+  countryCode?: string | null
+  currencyCode?: string
+  currencySymbol?: string
+  locale?: string
+  dateFormat?: string | null
+  employee?: Prisma.EmployeeCreateNestedManyWithoutBusinessInput
+  shops?: Prisma.ShopCreateNestedManyWithoutBusinessInput
+  products?: Prisma.ProductCreateNestedManyWithoutBusinessInput
+  productAttributes?: Prisma.VariantAttributeCreateNestedManyWithoutBusinessInput
+  customers?: Prisma.CustomerCreateNestedManyWithoutBusinessInput
+  sales?: Prisma.SaleCreateNestedManyWithoutBusinessInput
+  saleItems?: Prisma.SaleItemCreateNestedManyWithoutBusinessInput
+  cashSessions?: Prisma.CashSessionCreateNestedManyWithoutBusinessInput
+  categories?: Prisma.CategoryCreateNestedManyWithoutBusinessInput
+  roles?: Prisma.RoleCreateNestedManyWithoutBusinessInput
+  discounts?: Prisma.DiscountCreateNestedManyWithoutBusinessInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutBusinessInput
+  brands?: Prisma.BrandCreateNestedManyWithoutBusinessInput
+  userSessionLogs?: Prisma.UserSessionLogCreateNestedManyWithoutBusinessInput
+}
+
+export type BusinessUncheckedCreateWithoutShopInventoriesInput = {
+  id?: string
+  name: string
+  slug: string
+  email: string
+  phone?: string | null
+  address?: string | null
+  logoUrl?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  isEmailVerified?: boolean
+  onboardingStep?: number
+  isOnboarded?: boolean
+  workHrsStartTime?: Date | string | null
+  workHrsCloseTime?: Date | string | null
+  termsAgreement?: boolean
+  countryCode?: string | null
+  currencyCode?: string
+  currencySymbol?: string
+  locale?: string
+  dateFormat?: string | null
+  employee?: Prisma.EmployeeUncheckedCreateNestedManyWithoutBusinessInput
+  shops?: Prisma.ShopUncheckedCreateNestedManyWithoutBusinessInput
+  products?: Prisma.ProductUncheckedCreateNestedManyWithoutBusinessInput
+  productAttributes?: Prisma.VariantAttributeUncheckedCreateNestedManyWithoutBusinessInput
+  customers?: Prisma.CustomerUncheckedCreateNestedManyWithoutBusinessInput
+  sales?: Prisma.SaleUncheckedCreateNestedManyWithoutBusinessInput
+  saleItems?: Prisma.SaleItemUncheckedCreateNestedManyWithoutBusinessInput
+  cashSessions?: Prisma.CashSessionUncheckedCreateNestedManyWithoutBusinessInput
+  categories?: Prisma.CategoryUncheckedCreateNestedManyWithoutBusinessInput
+  roles?: Prisma.RoleUncheckedCreateNestedManyWithoutBusinessInput
+  discounts?: Prisma.DiscountUncheckedCreateNestedManyWithoutBusinessInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutBusinessInput
+  brands?: Prisma.BrandUncheckedCreateNestedManyWithoutBusinessInput
+  userSessionLogs?: Prisma.UserSessionLogUncheckedCreateNestedManyWithoutBusinessInput
+}
+
+export type BusinessCreateOrConnectWithoutShopInventoriesInput = {
+  where: Prisma.BusinessWhereUniqueInput
+  create: Prisma.XOR<Prisma.BusinessCreateWithoutShopInventoriesInput, Prisma.BusinessUncheckedCreateWithoutShopInventoriesInput>
+}
+
+export type BusinessUpsertWithoutShopInventoriesInput = {
+  update: Prisma.XOR<Prisma.BusinessUpdateWithoutShopInventoriesInput, Prisma.BusinessUncheckedUpdateWithoutShopInventoriesInput>
+  create: Prisma.XOR<Prisma.BusinessCreateWithoutShopInventoriesInput, Prisma.BusinessUncheckedCreateWithoutShopInventoriesInput>
+  where?: Prisma.BusinessWhereInput
+}
+
+export type BusinessUpdateToOneWithWhereWithoutShopInventoriesInput = {
+  where?: Prisma.BusinessWhereInput
+  data: Prisma.XOR<Prisma.BusinessUpdateWithoutShopInventoriesInput, Prisma.BusinessUncheckedUpdateWithoutShopInventoriesInput>
+}
+
+export type BusinessUpdateWithoutShopInventoriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  onboardingStep?: Prisma.IntFieldUpdateOperationsInput | number
+  isOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  workHrsStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  workHrsCloseTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  termsAgreement?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currencyCode?: Prisma.StringFieldUpdateOperationsInput | string
+  currencySymbol?: Prisma.StringFieldUpdateOperationsInput | string
+  locale?: Prisma.StringFieldUpdateOperationsInput | string
+  dateFormat?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  employee?: Prisma.EmployeeUpdateManyWithoutBusinessNestedInput
+  shops?: Prisma.ShopUpdateManyWithoutBusinessNestedInput
+  products?: Prisma.ProductUpdateManyWithoutBusinessNestedInput
+  productAttributes?: Prisma.VariantAttributeUpdateManyWithoutBusinessNestedInput
+  customers?: Prisma.CustomerUpdateManyWithoutBusinessNestedInput
+  sales?: Prisma.SaleUpdateManyWithoutBusinessNestedInput
+  saleItems?: Prisma.SaleItemUpdateManyWithoutBusinessNestedInput
+  cashSessions?: Prisma.CashSessionUpdateManyWithoutBusinessNestedInput
+  categories?: Prisma.CategoryUpdateManyWithoutBusinessNestedInput
+  roles?: Prisma.RoleUpdateManyWithoutBusinessNestedInput
+  discounts?: Prisma.DiscountUpdateManyWithoutBusinessNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutBusinessNestedInput
+  brands?: Prisma.BrandUpdateManyWithoutBusinessNestedInput
+  userSessionLogs?: Prisma.UserSessionLogUpdateManyWithoutBusinessNestedInput
+}
+
+export type BusinessUncheckedUpdateWithoutShopInventoriesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  onboardingStep?: Prisma.IntFieldUpdateOperationsInput | number
+  isOnboarded?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  workHrsStartTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  workHrsCloseTime?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  termsAgreement?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  countryCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  currencyCode?: Prisma.StringFieldUpdateOperationsInput | string
+  currencySymbol?: Prisma.StringFieldUpdateOperationsInput | string
+  locale?: Prisma.StringFieldUpdateOperationsInput | string
+  dateFormat?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  employee?: Prisma.EmployeeUncheckedUpdateManyWithoutBusinessNestedInput
+  shops?: Prisma.ShopUncheckedUpdateManyWithoutBusinessNestedInput
+  products?: Prisma.ProductUncheckedUpdateManyWithoutBusinessNestedInput
+  productAttributes?: Prisma.VariantAttributeUncheckedUpdateManyWithoutBusinessNestedInput
   customers?: Prisma.CustomerUncheckedUpdateManyWithoutBusinessNestedInput
   sales?: Prisma.SaleUncheckedUpdateManyWithoutBusinessNestedInput
   saleItems?: Prisma.SaleItemUncheckedUpdateManyWithoutBusinessNestedInput
@@ -2320,6 +2537,7 @@ export type BusinessCreateWithoutDiscountsInput = {
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessUncheckedCreateWithoutDiscountsInput = {
@@ -2356,6 +2574,7 @@ export type BusinessUncheckedCreateWithoutDiscountsInput = {
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandUncheckedCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryUncheckedCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessCreateOrConnectWithoutDiscountsInput = {
@@ -2408,6 +2627,7 @@ export type BusinessUpdateWithoutDiscountsInput = {
   auditLogs?: Prisma.AuditLogUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessUncheckedUpdateWithoutDiscountsInput = {
@@ -2444,6 +2664,7 @@ export type BusinessUncheckedUpdateWithoutDiscountsInput = {
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUncheckedUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUncheckedUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessCreateWithoutCustomersInput = {
@@ -2480,6 +2701,7 @@ export type BusinessCreateWithoutCustomersInput = {
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessUncheckedCreateWithoutCustomersInput = {
@@ -2516,6 +2738,7 @@ export type BusinessUncheckedCreateWithoutCustomersInput = {
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandUncheckedCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryUncheckedCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessCreateOrConnectWithoutCustomersInput = {
@@ -2568,6 +2791,7 @@ export type BusinessUpdateWithoutCustomersInput = {
   auditLogs?: Prisma.AuditLogUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessUncheckedUpdateWithoutCustomersInput = {
@@ -2604,6 +2828,7 @@ export type BusinessUncheckedUpdateWithoutCustomersInput = {
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUncheckedUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUncheckedUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessCreateWithoutSalesInput = {
@@ -2640,6 +2865,7 @@ export type BusinessCreateWithoutSalesInput = {
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessUncheckedCreateWithoutSalesInput = {
@@ -2676,6 +2902,7 @@ export type BusinessUncheckedCreateWithoutSalesInput = {
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandUncheckedCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryUncheckedCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessCreateOrConnectWithoutSalesInput = {
@@ -2728,6 +2955,7 @@ export type BusinessUpdateWithoutSalesInput = {
   auditLogs?: Prisma.AuditLogUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessUncheckedUpdateWithoutSalesInput = {
@@ -2764,6 +2992,7 @@ export type BusinessUncheckedUpdateWithoutSalesInput = {
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUncheckedUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUncheckedUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessCreateWithoutSaleItemsInput = {
@@ -2800,6 +3029,7 @@ export type BusinessCreateWithoutSaleItemsInput = {
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessUncheckedCreateWithoutSaleItemsInput = {
@@ -2836,6 +3066,7 @@ export type BusinessUncheckedCreateWithoutSaleItemsInput = {
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandUncheckedCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryUncheckedCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessCreateOrConnectWithoutSaleItemsInput = {
@@ -2888,6 +3119,7 @@ export type BusinessUpdateWithoutSaleItemsInput = {
   auditLogs?: Prisma.AuditLogUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessUncheckedUpdateWithoutSaleItemsInput = {
@@ -2924,6 +3156,7 @@ export type BusinessUncheckedUpdateWithoutSaleItemsInput = {
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUncheckedUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUncheckedUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessCreateWithoutCashSessionsInput = {
@@ -2960,6 +3193,7 @@ export type BusinessCreateWithoutCashSessionsInput = {
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessUncheckedCreateWithoutCashSessionsInput = {
@@ -2996,6 +3230,7 @@ export type BusinessUncheckedCreateWithoutCashSessionsInput = {
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandUncheckedCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryUncheckedCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessCreateOrConnectWithoutCashSessionsInput = {
@@ -3048,6 +3283,7 @@ export type BusinessUpdateWithoutCashSessionsInput = {
   auditLogs?: Prisma.AuditLogUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessUncheckedUpdateWithoutCashSessionsInput = {
@@ -3084,6 +3320,7 @@ export type BusinessUncheckedUpdateWithoutCashSessionsInput = {
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUncheckedUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUncheckedUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessCreateWithoutAuditLogsInput = {
@@ -3120,6 +3357,7 @@ export type BusinessCreateWithoutAuditLogsInput = {
   discounts?: Prisma.DiscountCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessUncheckedCreateWithoutAuditLogsInput = {
@@ -3156,6 +3394,7 @@ export type BusinessUncheckedCreateWithoutAuditLogsInput = {
   discounts?: Prisma.DiscountUncheckedCreateNestedManyWithoutBusinessInput
   brands?: Prisma.BrandUncheckedCreateNestedManyWithoutBusinessInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedCreateNestedManyWithoutBusinessInput
+  shopInventories?: Prisma.ShopInventoryUncheckedCreateNestedManyWithoutBusinessInput
 }
 
 export type BusinessCreateOrConnectWithoutAuditLogsInput = {
@@ -3208,6 +3447,7 @@ export type BusinessUpdateWithoutAuditLogsInput = {
   discounts?: Prisma.DiscountUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUpdateManyWithoutBusinessNestedInput
 }
 
 export type BusinessUncheckedUpdateWithoutAuditLogsInput = {
@@ -3244,6 +3484,7 @@ export type BusinessUncheckedUpdateWithoutAuditLogsInput = {
   discounts?: Prisma.DiscountUncheckedUpdateManyWithoutBusinessNestedInput
   brands?: Prisma.BrandUncheckedUpdateManyWithoutBusinessNestedInput
   userSessionLogs?: Prisma.UserSessionLogUncheckedUpdateManyWithoutBusinessNestedInput
+  shopInventories?: Prisma.ShopInventoryUncheckedUpdateManyWithoutBusinessNestedInput
 }
 
 
@@ -3266,6 +3507,7 @@ export type BusinessCountOutputType = {
   auditLogs: number
   brands: number
   userSessionLogs: number
+  shopInventories: number
 }
 
 export type BusinessCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3283,6 +3525,7 @@ export type BusinessCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensio
   auditLogs?: boolean | BusinessCountOutputTypeCountAuditLogsArgs
   brands?: boolean | BusinessCountOutputTypeCountBrandsArgs
   userSessionLogs?: boolean | BusinessCountOutputTypeCountUserSessionLogsArgs
+  shopInventories?: boolean | BusinessCountOutputTypeCountShopInventoriesArgs
 }
 
 /**
@@ -3393,6 +3636,13 @@ export type BusinessCountOutputTypeCountUserSessionLogsArgs<ExtArgs extends runt
   where?: Prisma.UserSessionLogWhereInput
 }
 
+/**
+ * BusinessCountOutputType without action
+ */
+export type BusinessCountOutputTypeCountShopInventoriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ShopInventoryWhereInput
+}
+
 
 export type BusinessSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -3429,6 +3679,7 @@ export type BusinessSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   auditLogs?: boolean | Prisma.Business$auditLogsArgs<ExtArgs>
   brands?: boolean | Prisma.Business$brandsArgs<ExtArgs>
   userSessionLogs?: boolean | Prisma.Business$userSessionLogsArgs<ExtArgs>
+  shopInventories?: boolean | Prisma.Business$shopInventoriesArgs<ExtArgs>
   _count?: boolean | Prisma.BusinessCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["business"]>
 
@@ -3517,6 +3768,7 @@ export type BusinessInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   auditLogs?: boolean | Prisma.Business$auditLogsArgs<ExtArgs>
   brands?: boolean | Prisma.Business$brandsArgs<ExtArgs>
   userSessionLogs?: boolean | Prisma.Business$userSessionLogsArgs<ExtArgs>
+  shopInventories?: boolean | Prisma.Business$shopInventoriesArgs<ExtArgs>
   _count?: boolean | Prisma.BusinessCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type BusinessIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -3539,6 +3791,7 @@ export type $BusinessPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
     brands: Prisma.$BrandPayload<ExtArgs>[]
     userSessionLogs: Prisma.$UserSessionLogPayload<ExtArgs>[]
+    shopInventories: Prisma.$ShopInventoryPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -3969,6 +4222,7 @@ export interface Prisma__BusinessClient<T, Null = never, ExtArgs extends runtime
   auditLogs<T extends Prisma.Business$auditLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Business$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   brands<T extends Prisma.Business$brandsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Business$brandsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BrandPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   userSessionLogs<T extends Prisma.Business$userSessionLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Business$userSessionLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserSessionLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  shopInventories<T extends Prisma.Business$shopInventoriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Business$shopInventoriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShopInventoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -4744,6 +4998,30 @@ export type Business$userSessionLogsArgs<ExtArgs extends runtime.Types.Extension
   take?: number
   skip?: number
   distinct?: Prisma.UserSessionLogScalarFieldEnum | Prisma.UserSessionLogScalarFieldEnum[]
+}
+
+/**
+ * Business.shopInventories
+ */
+export type Business$shopInventoriesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ShopInventory
+   */
+  select?: Prisma.ShopInventorySelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ShopInventory
+   */
+  omit?: Prisma.ShopInventoryOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ShopInventoryInclude<ExtArgs> | null
+  where?: Prisma.ShopInventoryWhereInput
+  orderBy?: Prisma.ShopInventoryOrderByWithRelationInput | Prisma.ShopInventoryOrderByWithRelationInput[]
+  cursor?: Prisma.ShopInventoryWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ShopInventoryScalarFieldEnum | Prisma.ShopInventoryScalarFieldEnum[]
 }
 
 /**

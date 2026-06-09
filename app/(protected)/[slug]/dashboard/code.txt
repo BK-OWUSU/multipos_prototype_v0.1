@@ -1,0 +1,398 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { useAuthStore } from "@/store/useAuthStore";
+import { useParams, useRouter } from "next/navigation";
+import { 
+  TrendingUp, 
+  ShoppingCart, 
+  Users, 
+  DollarSign, 
+  ArrowUpRight, 
+  Package, 
+  Store, 
+  AlertTriangle,
+  ChevronDown
+} from "lucide-react";
+import hasAccess from "@/lib/accessPermissionSecurity";
+
+// Shadcn primitives
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+
+// Recharts components for real charts implementation
+import { 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell
+} from "recharts";
+
+// Mock Data matching your image parameters precisely
+const SALES_OVERVIEW_DATA = [
+  { name: "May 1", sales: 1200 },
+  { name: "May 6", sales: 2100 },
+  { name: "May 11", sales: 1600 },
+  { name: "May 16", sales: 2200 },
+  { name: "May 21", sales: 2450 },
+  { name: "May 26", sales: 1900 },
+  { name: "May 31", sales: 2350 },
+];
+
+const CATEGORY_DATA = [
+  { name: "Electronics", value: 11106, color: "#6366f1" },
+  { name: "Accessories", value: 6170, color: "#3b82f6" },
+  { name: "Office Supplies", value: 3702, color: "#10b981" },
+  { name: "Others", value: 3702, color: "#f59e0b" },
+];
+
+const TOP_PRODUCTS = [
+  { name: "Laptop", sold: 45, revenue: "₵6,750.00" },
+  { name: "Wireless Headphone", sold: 60, revenue: "₵1,800.00" },
+  { name: "Keyboard", sold: 80, revenue: "₵1,600.00" },
+  { name: "USB Cable", sold: 120, revenue: "₵600.00" },
+  { name: "Mouse", sold: 75, revenue: "₵525.00" },
+];
+
+const RECENT_TRANSACTIONS = [
+  { invoice: "INV-10081", customer: "Walk-in Customer", amount: "₵120.00", status: "Completed" },
+  { invoice: "INV-10080", customer: "James Smith", amount: "₵250.00", status: "Completed" },
+  { invoice: "INV-10079", customer: "Emily Johnson", amount: "₵75.00", status: "Completed" },
+  { invoice: "INV-10078", customer: "Michael Brown", amount: "₵310.00", status: "Pending" },
+  { invoice: "INV-10077", customer: "Sarah Davis", amount: "₵95.00", status: "Completed" },
+];
+
+const LOW_STOCK_ALERTS = [
+  { name: "Wireless Mouse", stock: 3 },
+  { name: "USB Cable", stock: 5 },
+  { name: "Ink Cartridge", stock: 2 },
+  { name: "HDMI Cable", stock: 4 },
+  { name: "Keyboard", stock: 6 },
+];
+
+type StatCardProps = {
+  title: string;
+  value: string;
+  growth: string;
+  timeline: string;
+  icon: React.ReactNode;
+  iconColor: string;
+};
+
+function TopStatCard({ title, value, growth, timeline, icon, iconColor }: StatCardProps) {
+  return (
+    <Card className="rounded-2xl border border-slate-100 bg-white shadow-sm">
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className={`p-3 rounded-xl ${iconColor}`}>
+            {icon}
+          </div>
+        </div>
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{title}</p>
+        <h3 className="text-2xl font-black text-slate-900 tracking-tight mt-1">{value}</h3>
+        <div className="flex items-center gap-1.5 mt-2 text-xs">
+          <span className="text-emerald-600 font-bold flex items-center gap-0.5">
+            <TrendingUp className="w-3 h-3" /> {growth}
+          </span>
+          <span className="text-slate-400 font-medium">{timeline}</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function BusinessDashboard() {
+  const { slug } = useParams();
+  const { user, currentSlug } = useAuthStore();
+  const router = useRouter();
+  const [timeframe, setTimeframe] = useState("Daily");
+
+  useEffect(() => {
+    if (!hasAccess(user, "dashboard")) {
+      router.push(`/${user?.business.slug}/dashboard`);
+    }
+  }, [user, router]);
+
+  if (slug !== currentSlug) {
+    router.push(`/${user?.business.slug}/dashboard`);
+  }
+
+  if (!user || !hasAccess(user, "dashboard")) return null;
+
+  return (
+    <div className="min-h-screen bg-slate-50/50 p-4 lg:p-8 text-slate-900">
+      
+      {/* HEADER ACTION HEADER BAR */}
+      <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">
+            Overviewing <span className="font-semibold text-indigo-600">{user?.business.name}</span> management metrics.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="text-right hidden sm:block">
+            <p className="text-sm font-bold">{user?.firstName} {user?.lastName}</p>
+            <p className="text-xs text-slate-400 font-medium capitalize">{user?.role.name}</p>
+          </div>
+          <div className="h-10 w-10 rounded-xl bg-indigo-900 flex items-center justify-center text-white text-sm font-bold shadow-sm">
+            {user?.firstName?.[0]}{user?.lastName?.[0]}
+          </div>
+        </div>
+      </header>
+
+      {/* 🚀 TOP ROW STAT CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+        <TopStatCard 
+          title="Total Sales" 
+          value="₵24,680.00" 
+          growth="+12.5%" 
+          timeline="vs Apr 1 - Apr 30"
+          icon={<DollarSign className="w-5 h-5" />} 
+          iconColor="bg-indigo-50 text-indigo-600"
+        />
+        <TopStatCard 
+          title="Total Orders" 
+          value="320" 
+          growth="+8.2%" 
+          timeline="vs Apr 1 - Apr 30"
+          icon={<ShoppingCart className="w-5 h-5" />} 
+          iconColor="bg-emerald-50 text-emerald-600"
+        />
+        <TopStatCard 
+          title="New Customers" 
+          value="48" 
+          growth="+15.0%" 
+          timeline="vs Apr 1 - Apr 30"
+          icon={<Users className="w-5 h-5" />} 
+          iconColor="bg-sky-50 text-sky-600"
+        />
+        <TopStatCard 
+          title="Total Profit" 
+          value="₵6,850.00" 
+          growth="+10.3%" 
+          timeline="vs Apr 1 - Apr 30"
+          icon={<TrendingUp className="w-5 h-5" />} 
+          iconColor="bg-purple-50 text-purple-600"
+        />
+      </div>
+
+      {/* 📊 MIDDLE CHARTS SECTION */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+        
+        {/* LINE GRAPH CHART CONTAINER */}
+        <Card className="lg:col-span-8 rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="font-bold text-sm text-slate-900">Sales Overview</h3>
+              </div>
+              <Button variant="outline" size="sm" className="h-8 text-xs rounded-lg border-slate-200 gap-1 font-semibold">
+                {timeframe} <ChevronDown className="w-3 h-3 text-slate-400" />
+              </Button>
+            </div>
+            <div className="w-full h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={SALES_OVERVIEW_DATA} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px" }} />
+                  <Line type="monotone" dataKey="sales" stroke="#6366f1" strokeWidth={3} dot={{ fill: "#6366f1", r: 4 }} activeDot={{ r: 6 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* PIE CHART SEGMENT CONTAINER */}
+        <Card className="lg:col-span-4 rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-sm text-slate-900">Sales by Category</h3>
+              <Button variant="ghost" size="sm" className="h-8 text-xs font-bold text-indigo-600 hover:text-indigo-700">View Report</Button>
+            </div>
+            
+            <div className="flex items-center justify-center h-48 relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={CATEGORY_DATA} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={4} dataKey="value">
+                    {CATEGORY_DATA.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute flex flex-col items-center">
+                <span className="text-xl font-black text-slate-900">₵24.6K</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Total Sales</span>
+              </div>
+            </div>
+
+            {/* Micro Category Legends List */}
+            <div className="space-y-2 mt-2">
+              {CATEGORY_DATA.map((cat, i) => (
+                <div key={i} className="flex items-center justify-between text-xs font-medium">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />
+                    <span className="text-slate-500 font-semibold">{cat.name}</span>
+                  </div>
+                  <span className="text-slate-900 font-bold">₵{cat.value.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 🗂️ BOTTOM ROW DATA VIEWS BLOCK */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+        
+        {/* TOP SELLING PRODUCTS FEED */}
+        <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+              <h4 className="font-bold text-sm text-slate-900">Top Selling Products</h4>
+              <Button variant="ghost" className="h-6 text-xs text-indigo-600 font-bold p-0">View All</Button>
+            </div>
+            <div className="space-y-4">
+              {TOP_PRODUCTS.map((prod, idx) => (
+                <div key={idx} className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center text-slate-400">
+                      <Package className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-900">{prod.name}</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{prod.sold} Sold</p>
+                    </div>
+                  </div>
+                  <span className="font-black text-slate-900">{prod.revenue}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* RECENT TRANSACTION LEDGER */}
+        <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+              <h4 className="font-bold text-sm text-slate-900">Recent Transactions</h4>
+              <Button variant="ghost" className="h-6 text-xs text-indigo-600 font-bold p-0">View All</Button>
+            </div>
+            <div className="space-y-3">
+              {RECENT_TRANSACTIONS.map((tx, idx) => (
+                <div key={idx} className="flex items-center justify-between text-xs py-0.5">
+                  <div>
+                    <p className="font-bold text-slate-900">{tx.customer}</p>
+                    <p className="text-[10px] font-mono text-slate-400">{tx.invoice}</p>
+                  </div>
+                  <div className="text-right flex items-center gap-3">
+                    <span className="font-bold text-slate-900">{tx.amount}</span>
+                    <Badge variant="outline" className={`text-[10px] font-bold rounded-md px-1.5 py-0 ${
+                      tx.status === "Completed" ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-amber-50 text-amber-700 border-amber-100"
+                    }`}>
+                      {tx.status}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* LOCALIZED LOW STOCK MONITOR */}
+        <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+              <h4 className="font-bold text-sm text-slate-900">Low Stock Alerts</h4>
+              <Button variant="ghost" className="h-6 text-xs text-indigo-600 font-bold p-0">View All</Button>
+            </div>
+            <div className="space-y-4">
+              {LOW_STOCK_ALERTS.map((alert, idx) => (
+                <div key={idx} className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-rose-50 border border-rose-100 rounded-lg flex items-center justify-center text-rose-500">
+                      <AlertTriangle className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-900">{alert.name}</p>
+                      <p className="text-[10px] font-bold text-slate-400">Current Stock: <span className="text-rose-600 font-extrabold">{alert.stock}</span></p>
+                    </div>
+                  </div>
+                  <Badge className="bg-rose-50 text-rose-700 hover:bg-rose-50 text-[10px] font-bold border border-rose-100 rounded-md">
+                    Low Stock
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 🏢 BOTTOM GLOBAL ENTITY DIRECTORY NAV STRIP */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <Card className="rounded-2xl border border-slate-100 bg-white shadow-sm">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-indigo-600">
+                <Package className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Products</span>
+                <span className="text-xl font-black text-slate-900 tracking-tight">1,245</span>
+              </div>
+            </div>
+            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600 rounded-xl">
+              <ArrowUpRight className="w-4 h-4" />
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-slate-100 bg-white shadow-sm">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-emerald-600">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Customers</span>
+                <span className="text-xl font-black text-slate-900 tracking-tight">832</span>
+              </div>
+            </div>
+            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600 rounded-xl">
+              <ArrowUpRight className="w-4 h-4" />
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-slate-100 bg-white shadow-sm">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-sky-600">
+                <Store className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Outlets</span>
+                <span className="text-xl font-black text-slate-900 tracking-tight">5</span>
+              </div>
+            </div>
+            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600 rounded-xl" onClick={() => router.push(`/${slug}/shops`)}>
+              <ArrowUpRight className="w-4 h-4" />
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+    </div>
+  );
+}

@@ -493,6 +493,14 @@ export type TimeCardUncheckedUpdateManyWithoutEmployeeNestedInput = {
   deleteMany?: Prisma.TimeCardScalarWhereInput | Prisma.TimeCardScalarWhereInput[]
 }
 
+export type NullableDecimalFieldUpdateOperationsInput = {
+  set?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  increment?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  decrement?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  multiply?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  divide?: runtime.Decimal | runtime.DecimalJsLike | number | string
+}
+
 export type TimeCardCreateNestedManyWithoutShopInput = {
   create?: Prisma.XOR<Prisma.TimeCardCreateWithoutShopInput, Prisma.TimeCardUncheckedCreateWithoutShopInput> | Prisma.TimeCardCreateWithoutShopInput[] | Prisma.TimeCardUncheckedCreateWithoutShopInput[]
   connectOrCreate?: Prisma.TimeCardCreateOrConnectWithoutShopInput | Prisma.TimeCardCreateOrConnectWithoutShopInput[]
@@ -533,14 +541,6 @@ export type TimeCardUncheckedUpdateManyWithoutShopNestedInput = {
   update?: Prisma.TimeCardUpdateWithWhereUniqueWithoutShopInput | Prisma.TimeCardUpdateWithWhereUniqueWithoutShopInput[]
   updateMany?: Prisma.TimeCardUpdateManyWithWhereWithoutShopInput | Prisma.TimeCardUpdateManyWithWhereWithoutShopInput[]
   deleteMany?: Prisma.TimeCardScalarWhereInput | Prisma.TimeCardScalarWhereInput[]
-}
-
-export type NullableDecimalFieldUpdateOperationsInput = {
-  set?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
-  increment?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  decrement?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  multiply?: runtime.Decimal | runtime.DecimalJsLike | number | string
-  divide?: runtime.Decimal | runtime.DecimalJsLike | number | string
 }
 
 export type TimeCardCreateWithoutEmployeeInput = {
