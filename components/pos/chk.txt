@@ -1,0 +1,123 @@
+"use client";
+
+import { useState } from "react";
+// 1. Import your strict structural input types from your Zod schema file
+import { POSCheckoutInput } from "@/types/schema/pos";
+// 2. Import the response interface from the declaration layer we just defined
+import { PaystackResponse } from "@paystack/inline-js";
+import { toast } from "sonner";
+
+interface CheckoutButtonProps {
+  checkoutPayload: POSCheckoutInput; // 👈 Cleans up the long manual inline block
+  onSuccess: (saleId: string) => void;
+}
+
+export default function CheckoutButton({ checkoutPayload, onSuccess }: CheckoutButtonProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const executeCheckout = async () => {
+    setIsProcessing(true);
+    try {
+      // const res = await fetch("/api/business/sales/pos/checkout", {
+      const res = await fetch("/api/business/sales/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(checkoutPayload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        toast.error(data.error || "Checkout initial tracking failed.");
+        setIsProcessing(false);
+        return;
+      }
+
+      // Action A: If purely a completed cash balance, finish instantly
+      if (data.data.paymentMethod === "CASH") {
+        onSuccess(data.data.saleId);
+        setIsProcessing(false);
+        return;
+      }
+      
+
+      // Action B: Load inline popup overlay safely with strict tracking parameters
+      const PaystackPop = (await import("@paystack/inline-js")).default;
+      const popup = new PaystackPop();
+
+      popup.loadIframe({
+        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "",
+        email: checkoutPayload.customerEmail || "walkin-customer@multiPos.com",
+        amount: 0, // Paystack securely relies on values tied to your pre-generated server reference
+        ref: data.data.reference,
+        onCancel: () => {
+          alert("Payment channel exited by cashier.");
+          setIsProcessing(false);
+        },
+        // 3. 🟢 FIX: Typed response parameter ensures no implicit or explicit 'any' styles
+        callback: (response: PaystackResponse) => {
+          if (response.status === "success") {
+            onSuccess(data.data.saleId);
+          } else {
+            alert("Payment verification unconfirmed.");
+          }
+          setIsProcessing(false);
+        },
+      });
+
+    } catch (error) {
+      console.error("FRONTEND_PAYMENT_TRIGGER_ERROR:", error);
+      alert("Error initializing payment flow framework.");
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={executeCheckout}
+      disabled={isProcessing}
+      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all disabled:opacity-50"
+    >
+      {isProcessing ? "Processing Transaction..." : "Complete Order & Charge"}
+    </button>
+  );
+}
+
+
+
+
+///
+
+      // // Modern @paystack/inline-js installations use newTransaction instead of loadIframe
+      // popup.newTransaction({
+      //   key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "",
+      //   email: checkoutPayload.customerEmail || "bismarko416@gmail.com",
+      //   amount: Math.round(checkoutPayload.totalAmount * 100), // Minor units (pesewas)
+      //   ref: transactionalReference,
+      //   // Paystack SDK modern method structures map the channels constraint inside an options array
+      //   metadata: {
+      //       sale_id: verifiedSaleId, // Direct key insertion is safer for custom tracking inside Paystack Webhooks
+      //       custom_fields: [
+      //         {
+      //           display_name: "Sale ID",
+      //           variable_name: "sale_id", // Clean lowercase snake_case without weird characters
+      //           value: String(verifiedSaleId),
+      //         },
+      //       ],
+      //     },
+      //   onSuccess: (response: PaystackResponse) => {
+      //     // Modern versions use onSuccess and onCancel direct keys instead of callback wrappers
+      //     if (response.status === "success" || response.message === "Approved") {
+      //       onSuccess(verifiedSaleId);
+      //     } else {
+      //       toast.error("Payment verification unconfirmed.");
+      //     }
+      //     setIsProcessing(false);
+      //   },
+      //   onCancel: () => {
+      //     toast.info("Payment channel exited by cashier.");
+      //     setIsProcessing(false);
+      //   },
+      // });
+
+      // We pass the transaction reference that was created by the backend Paystack initialize call

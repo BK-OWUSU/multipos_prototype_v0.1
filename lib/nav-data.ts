@@ -5,24 +5,12 @@ import hasAccess from "./accessPermissionSecurity";
 
 import {
   ChartNetwork, ShoppingBasket, Settings, HelpCircle, Users, FileUser, PackageSearch,
-  LayoutDashboard, HandCoins, ChartColumnStacked, BookUser, Banknote,ShelvingUnit,
-  Monitor, ArrowRightLeft, FileText, List, Layers, Percent, PackagePlus,AlertTriangle,
+  LayoutDashboard, HandCoins, ChartColumnStacked, BookUser, Banknote,
+  Monitor, ArrowRightLeft, FileText, List, Layers, Percent, PackagePlus,
   UserRoundCog, Clock, Hourglass, Contact2, Trophy, ShieldCheck,
-  Store, MessageSquare, Globe,Dices,CircleGauge,HousePlus,
+  Store, MessageSquare, Globe,Dices,
+  icons
 } from "lucide-react";
-
-
-// Explicit list of sub-features that require a distinct branch store location parameter context
-const SHOP_SCOPED_KEYS = [
-  "invoices",
-  "time_cards",
-  "total_hours_worked",
-  "transactions",
-  "sales_terminal",
-  "shop_dashboard",
-  "cash_register",
-  
-];
 
 
 export const navConfig = [
@@ -31,26 +19,37 @@ export const navConfig = [
     accessKey: "dashboard",
     icon: LayoutDashboard,
   },
-    {
-      title: "Product",
-      accessKey: "product",
-      icon: PackageSearch,
-      items: [
-        { title: "Product List", accessKey: "product_list", icon: List },
+  {
+    title: "Reports",
+    accessKey: "reports",
+    icon: ChartNetwork,
+    items: [
+      { title: "Sales Summary", accessKey: "sale_summary", icon: Banknote },
+      { title: "Sale By Category", accessKey: "sale_category", icon: ChartColumnStacked },
+      { title: "Sale By Employee", accessKey: "sale_employee", icon: BookUser },
+      { title: "Sale By Payment", accessKey: "sale_payment-type", icon: HandCoins },
+    ],
+  },
+  {
+    title: "POS",
+    accessKey: "pos",
+    icon: ShoppingBasket,
+    items: [
+      { title: "Sales Terminal", accessKey: "sales_terminal", icon: Monitor },
+      { title: "Transactions", accessKey: "transactions", icon: ArrowRightLeft },
+      { title: "Invoices", accessKey: "invoices", icon: FileText },
+    ],
+  },
+  {
+    title: "Product",
+    accessKey: "product",
+    icon: PackageSearch,
+    items: [
+      { title: "Product List", accessKey: "product_list", icon: List },
       { title: "Add Product", accessKey: "add_product", icon: PackagePlus },
       { title: "Categories", accessKey: "categories", icon: Layers },
       { title: "Brands", accessKey: "brands", icon: Dices },
       { title: "Discount", accessKey: "discount", icon: Percent },
-    ],
-  },
-    {
-    // TODO: Consider merging Inventory into Product or clearly delineating the difference in features to avoid confusion
-    title: "Inventory",
-    accessKey: "inventory",
-    icon: ShelvingUnit,
-    items: [
-      { title: "Stock Levels", accessKey: "stock_levels", icon: List },
-      { title: "Low Stock Alerts", accessKey: "low_stock_alerts", icon: AlertTriangle },
     ],
   },
   {
@@ -73,35 +72,12 @@ export const navConfig = [
     ],
   },
   {
-    title: "Reports",
-    accessKey: "reports",
-    icon: ChartNetwork,
-    items: [
-      { title: "Sales Summary", accessKey: "sale_summary", icon: Banknote },
-      { title: "Sale By Category", accessKey: "sale_category", icon: ChartColumnStacked },
-      { title: "Sale By Employee", accessKey: "sale_employee", icon: BookUser },
-      { title: "Sale By Payment", accessKey: "sale_payment-type", icon: HandCoins },
-    ],
-  },  
-  {
-    title: "Shops",
-    accessKey: "shop",
-    icon: Store,
-    items: [
-      { title: "Manage Shops", accessKey: "shops", icon: HousePlus },
-      { title: "Shop Dashboard", accessKey: "shop_dashboard", icon: CircleGauge },
-      { title: "Sales Terminal", accessKey: "sales_terminal", icon: Monitor },
-      { title: "Transactions", accessKey: "transactions", icon: ArrowRightLeft },
-      { title: "Cash Register", accessKey: "cash_register", icon: HandCoins },
-      { title: "Invoices", accessKey: "invoices", icon: FileText },
-    ],
-  },
-  {
     title: "Settings",
     accessKey: "settings",
     icon: Settings,
     items: [
       { title: "Access Controls", accessKey: "access_controls", icon: ShieldCheck },
+      { title: "Shops", accessKey: "shops", icon: Store },
     ],
   },
   {
@@ -115,28 +91,17 @@ export const navConfig = [
   },
 ];
 
-export const getNavData = (slug: string, shopSlug?: string | null): NavGroup[] => {
-  return navConfig.map((group) => {
-    let groupUrl = "#";
-    if (group.accessKey === "shop_dashboard") {
-      groupUrl = shopSlug ? `/${slug}/shops/${shopSlug}/shop_dashboard` : `/${slug}`;
-    } else if (group.accessKey === "dashboard") {
-      groupUrl = `/${slug}/dashboard`;
-    }
-
-    return {
-      ...group,
-      url: groupUrl,
-      items: group.items?.map((item) => {
-        // Automatically inject shopSlug if the feature requires a branch location context
-        const isShopRoute = SHOP_SCOPED_KEYS.includes(item.accessKey);
-        const compiledUrl = (isShopRoute && shopSlug)
-          ? `/${slug}/shops/${shopSlug}/${item.accessKey}`
-          : `/${slug}/${item.accessKey}`;
-        return { ...item, url: compiledUrl };
-      }),
-    };
-  });
+export const getNavData = (slug: string): NavGroup[] => {
+  return navConfig.map((group) => ({
+    ...group,
+    url: group.accessKey === "dashboard"
+      ? `/${slug}/dashboard`
+      : "#",
+    items: group.items?.map((item) => ({
+      ...item,
+      url: `/${slug}/${item.accessKey}`,
+    })),
+  }));
 };
 
 

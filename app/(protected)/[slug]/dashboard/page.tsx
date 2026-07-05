@@ -1,451 +1,126 @@
 "use client";
-
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useParams, useRouter } from "next/navigation";
-import { 
-  TrendingUp, 
-  ShoppingCart, 
-  Users, 
-  DollarSign, 
-  ArrowUpRight, 
-  Package, 
-  Store, 
-  AlertTriangle,
-  ChevronDown
-} from "lucide-react";
+import { useParams ,useRouter} from "next/navigation";
+import { useEffect } from "react";
+import { LayoutDashboard, Users, ShoppingCart, CreditCard } from "lucide-react";
 import hasAccess from "@/lib/accessPermissionSecurity";
 
-// Shadcn UI primitives
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+type CardColor = "blue" | "green" | "purple" | "orange";
 
-// Recharts layout engine primitives
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  PieChart, 
-  Pie, 
-  Cell 
-} from "recharts";
-
-// Shadcn charting runtime providers
-import { 
-  ChartConfig, 
-  ChartContainer, 
-  ChartTooltip, 
-  ChartTooltipContent 
-} from "@/components/ui/chart";
-
-// ============================================================================
-// BRAND COLOR PALETTE CONFIGURATION (Matches Mock Image Purple & Accents)
-// ============================================================================
-const BRAND_COLORS = {
-  purple: "#6366f1",     // Sales line & Electronics
-  blue: "#3b82f6",       // Accessories
-  emerald: "#10b981",    // Office Supplies
-  amber: "#f59e0b",      // Others
-  gridLine: "#e2e8f0",   // Light grid line border
-  textMuted: "#94a3b8"   // Axis label colors
-};
-
-const lineChartConfig = {
-  sales: {
-    label: "Sales Amount",
-    color: BRAND_COLORS.purple,
-  },
-} satisfies ChartConfig;
-
-const pieChartConfig = {
-  electronics: { label: "Electronics", color: BRAND_COLORS.purple },
-  accessories: { label: "Accessories", color: BRAND_COLORS.blue },
-  office: { label: "Office Supplies", color: BRAND_COLORS.emerald },
-  others: { label: "Others", color: BRAND_COLORS.amber },
-} satisfies ChartConfig;
-
-// ============================================================================
-// METRIC DATA FEEDS
-// ============================================================================
-const SALES_OVERVIEW_DATA = [
-  { name: "May 1", sales: 1200 },
-  { name: "May 6", sales: 2100 },
-  { name: "May 11", sales: 1600 },
-  { name: "May 16", sales: 2200 },
-  { name: "May 21", sales: 2450 },
-  { name: "May 26", sales: 1900 },
-  { name: "May 31", sales: 2350 },
-];
-
-const CATEGORY_DATA = [
-  { name: "Electronics", value: 11106, fill: BRAND_COLORS.purple },
-  { name: "Accessories", value: 6170, fill: BRAND_COLORS.blue },
-  { name: "Office Supplies", value: 3702, fill: BRAND_COLORS.emerald },
-  { name: "Others", value: 3702, fill: BRAND_COLORS.amber },
-];
-
-const TOP_PRODUCTS = [
-  { name: "Laptop", sold: 45, revenue: "₵6,750.00" },
-  { name: "Wireless Headphone", sold: 60, revenue: "₵1,800.00" },
-  { name: "Keyboard", sold: 80, revenue: "₵1,600.00" },
-  { name: "USB Cable", sold: 120, revenue: "₵600.00" },
-  { name: "Mouse", sold: 75, revenue: "₵525.00" },
-];
-
-const RECENT_TRANSACTIONS = [
-  { invoice: "INV-10081", customer: "Walk-in Customer", amount: "₵120.00", status: "Completed" },
-  { invoice: "INV-10080", customer: "James Smith", amount: "₵250.00", status: "Completed" },
-  { invoice: "INV-10079", customer: "Emily Johnson", amount: "₵75.00", status: "Completed" },
-  { invoice: "INV-10078", customer: "Michael Brown", amount: "₵310.00", status: "Pending" },
-  { invoice: "INV-10077", customer: "Sarah Davis", amount: "₵95.00", status: "Completed" },
-];
-
-const LOW_STOCK_ALERTS = [
-  { name: "Wireless Mouse", stock: 3 },
-  { name: "USB Cable", stock: 5 },
-  { name: "Ink Cartridge", stock: 2 },
-  { name: "HDMI Cable", stock: 4 },
-  { name: "Keyboard", stock: 6 },
-];
-
-// ============================================================================
-// TOP LINE HERO CARD COMPONENT
-// ============================================================================
 type StatCardProps = {
   title: string;
   value: string;
-  growth: string;
-  timeline: string;
   icon: React.ReactNode;
-  iconColor: string;
+  color?: CardColor;
 };
 
-function TopStatCard({ title, value, growth, timeline, icon, iconColor }: StatCardProps) {
+// Reusable Stat Card Component (Outside Dashboard)
+function StatCard({ 
+  title, 
+  value, 
+  icon, 
+  color = "blue" 
+}: StatCardProps) {
+
+  const colors: Record<CardColor, string> = {
+    blue:   "bg-blue-50 text-blue-600",
+    green:  "bg-green-50 text-green-600",
+    purple: "bg-purple-50 text-purple-600",
+    orange: "bg-orange-50 text-orange-600",
+  };
+
   return (
-    <Card className="rounded-2xl border border-slate-100 bg-white shadow-sm">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className={`p-3 rounded-xl ${iconColor}`}>
-            {icon}
-          </div>
-        </div>
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{title}</p>
-        <h3 className="text-2xl font-black text-slate-900 tracking-tight mt-1">{value}</h3>
-        <div className="flex items-center gap-1.5 mt-2 text-xs">
-          <span className="text-emerald-600 font-bold flex items-center gap-0.5">
-            <TrendingUp className="w-3 h-3" /> {growth}
-          </span>
-          <span className="text-slate-400 font-medium">{timeline}</span>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
+      <div className={`p-3 rounded-lg ${colors[color]}`}>
+        {icon}
+      </div>
+      <div>
+        <p className="text-sm text-gray-500 font-medium">{title}</p>
+        <p className="text-xl font-bold text-gray-900">{value}</p>
+      </div>
+    </div>
   );
 }
 
-// ============================================================================
-// MAIN PAGE CONTROLLER MODULE
-// ============================================================================
-export default function BusinessDashboard() {
+export default function Dashboard() {
   const { slug } = useParams();
   const { user, currentSlug } = useAuthStore();
   const router = useRouter();
-  const [timeframe, setTimeframe] = useState("Daily");
-
-  useEffect(() => {
+   useEffect(() => {
     if (!hasAccess(user, "dashboard")) {
       router.push(`/${user?.business.slug}/dashboard`);
     }
-  }, [user, router]);
+  }, [user,router]);
 
   if (slug !== currentSlug) {
-    router.push(`/${user?.business.slug}/dashboard`);
+     router.push(`/${user?.business.slug}/dashboard`);
   }
-
+  
   if (!user || !hasAccess(user, "dashboard")) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50/50 p-4 lg:p-8 text-slate-900">
-      
-      {/* 👤 APP PANEL HEADER BAR */}
-      <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="min-h-screen bg-gray-50 p-6">
+      {/* Header Section */}
+      <header className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">
-            Overviewing <span className="font-semibold text-indigo-600">{user?.business.name}</span> management metrics.
+          <h1 className="text-2xl font-bold text-gray-900">
+            Welcome back, {user?.firstName}! 👋
+          </h1>
+          <p className="text-gray-500">
+            Managing <span className="font-semibold text-blue-900">{user?.business.name}</span>
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-bold">{user?.firstName} {user?.lastName}</p>
-            <p className="text-xs text-slate-400 font-medium capitalize">{user?.role.name}</p>
-          </div>
-          <div className="h-10 w-10 rounded-xl bg-indigo-900 flex items-center justify-center text-white text-sm font-bold shadow-sm">
+        {/* Role Badge */}
+        <div className="flex items-center gap-2">
+          <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200 uppercase tracking-wider">
+            {user?.role.name}
+          </span>
+          <div className="h-10 w-10 rounded-full bg-blue-950 flex items-center justify-center text-white font-bold">
             {user?.firstName?.[0]}{user?.lastName?.[0]}
           </div>
         </div>
       </header>
 
-      {/* 🚀 HERO METRIC SUMMARY RAILS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
-        <TopStatCard 
+      {/* Quick Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard 
           title="Total Sales" 
-          value="₵24,680.00" 
-          growth="+12.5%" 
-          timeline="vs Apr 1 - Apr 30"
-          icon={<DollarSign className="w-5 h-5" />} 
-          iconColor="bg-indigo-50 text-indigo-600"
+          value="GHS 0.00" 
+          icon={<CreditCard size={20} />} 
+          color="blue" 
         />
-        <TopStatCard 
-          title="Total Orders" 
-          value="320" 
-          growth="+8.2%" 
-          timeline="vs Apr 1 - Apr 30"
-          icon={<ShoppingCart className="w-5 h-5" />} 
-          iconColor="bg-emerald-50 text-emerald-600"
+        <StatCard 
+          title="Orders" 
+          value="0" 
+          icon={<ShoppingCart size={20} />} 
+          color="green" 
         />
-        <TopStatCard 
-          title="New Customers" 
-          value="48" 
-          growth="+15.0%" 
-          timeline="vs Apr 1 - Apr 30"
-          icon={<Users className="w-5 h-5" />} 
-          iconColor="bg-sky-50 text-sky-600"
+        <StatCard 
+          title="Customers" 
+          value="0" 
+          icon={<Users size={20} />} 
+          color="purple" 
         />
-        <TopStatCard 
-          title="Total Profit" 
-          value="₵6,850.00" 
-          growth="+10.3%" 
-          timeline="vs Apr 1 - Apr 30"
-          icon={<TrendingUp className="w-5 h-5" />} 
-          iconColor="bg-purple-50 text-purple-600"
+        <StatCard 
+          title="Inventory" 
+          value="Low Stock: 0" 
+          icon={<LayoutDashboard size={20} />} 
+          color="orange" 
         />
       </div>
 
-      {/* 📊 DATA GRAPH ARRAYS SECTION */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
-        
-        {/* LINE RENDERING ELEMENT BLOCK */}
-        <Card className="lg:col-span-8 rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-bold text-sm text-slate-900">Sales Overview</h3>
-              <Button variant="outline" size="sm" className="h-8 text-xs rounded-lg border-slate-200 gap-1 font-semibold">
-                {timeframe} <ChevronDown className="w-3 h-3 text-slate-400" />
-              </Button>
-            </div>
-
-            <ChartContainer config={lineChartConfig} className="w-full h-72">
-              <LineChart data={SALES_OVERVIEW_DATA} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
-                {/* Fixed explicitly to a clean slate hex value to align with Tailwind v4 layers */}
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={BRAND_COLORS.gridLine} />
-                <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} stroke={BRAND_COLORS.textMuted} fontSize={11} />
-                <YAxis tickLine={false} axisLine={false} tickMargin={8} stroke={BRAND_COLORS.textMuted} fontSize={11} />
-                
-                <ChartTooltip content={<ChartTooltipContent />} />
-                
-                {/* Appended precise stroke string assignments to repair layout drawing paths instantly */}
-                <Line 
-                  type="monotone" 
-                  dataKey="sales" 
-                  stroke={BRAND_COLORS.purple} 
-                  strokeWidth={2.5} 
-                  dot={{ fill: BRAND_COLORS.purple, stroke: "#fff", strokeWidth: 1.5, r: 4 }} 
-                  activeDot={{ r: 6, strokeWidth: 0 }} 
-                />
-              </LineChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        {/* DONUT CATEGORY RENDERING PANEL */}
-        <Card className="lg:col-span-4 rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-sm text-slate-900">Sales by Category</h3>
-              <Button variant="ghost" size="sm" className="h-8 text-xs font-bold text-indigo-600 hover:text-indigo-700">View Report</Button>
-            </div>
-            
-            <div className="flex items-center justify-center h-48 relative">
-              <ChartContainer config={pieChartConfig} className="w-full h-full">
-                <PieChart>
-                  <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                  <Pie data={CATEGORY_DATA} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={4} dataKey="value">
-                    {CATEGORY_DATA.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ChartContainer>
-              <div className="absolute flex flex-col items-center">
-                <span className="text-xl font-black text-slate-900">₵24.6K</span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Total Sales</span>
-              </div>
-            </div>
-
-            {/* Micro Category Legends List */}
-            <div className="space-y-2 mt-2">
-              {CATEGORY_DATA.map((cat, i) => {
-                const configKey = cat.name.toLowerCase().replace(" ", "") as keyof typeof pieChartConfig;
-                const color = pieChartConfig[configKey]?.color || "#000";
-                return (
-                  <div key={i} className="flex items-center justify-between text-xs font-medium">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
-                      <span className="text-slate-500 font-semibold">{cat.name}</span>
-                    </div>
-                    <span className="text-slate-900 font-bold">₵{cat.value.toLocaleString()}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Main Content Area */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-64 flex items-center justify-center">
+          <p className="text-gray-400 italic">Sales Chart Placeholder</p>
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-64">
+          <h3 className="font-semibold mb-4">Recent Activity</h3>
+          <div className="text-sm text-gray-500">No recent transactions.</div>
+        </div>
       </div>
-
-      {/* 🗂️ TRANSACTIONAL FEED REGISTERS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-        
-        {/* PRODUCT FEED ROW */}
-        <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
-              <h4 className="font-bold text-sm text-slate-900">Top Selling Products</h4>
-              <Button variant="ghost" className="h-6 text-xs text-indigo-600 font-bold p-0">View All</Button>
-            </div>
-            <div className="space-y-4">
-              {TOP_PRODUCTS.map((prod, idx) => (
-                <div key={idx} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center text-slate-400">
-                      <Package className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-slate-900">{prod.name}</p>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{prod.sold} Sold</p>
-                    </div>
-                  </div>
-                  <span className="font-black text-slate-900">{prod.revenue}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* LEDGER TRANSACTIONS AUDIT */}
-        <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
-              <h4 className="font-bold text-sm text-slate-900">Recent Transactions</h4>
-              <Button variant="ghost" className="h-6 text-xs text-indigo-600 font-bold p-0">View All</Button>
-            </div>
-            <div className="space-y-3">
-              {RECENT_TRANSACTIONS.map((tx, idx) => (
-                <div key={idx} className="flex items-center justify-between text-xs py-0.5">
-                  <div>
-                    <p className="font-bold text-slate-900">{tx.customer}</p>
-                    <p className="text-[10px] font-mono text-slate-400">{tx.invoice}</p>
-                  </div>
-                  <div className="text-right flex items-center gap-3">
-                    <span className="font-bold text-slate-900">{tx.amount}</span>
-                    <Badge variant="outline" className={`text-[10px] font-bold rounded-md px-1.5 py-0 ${
-                      tx.status === "Completed" ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-amber-50 text-amber-700 border-amber-100"
-                    }`}>
-                      {tx.status}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* CRITICAL LOW STOCK WARNING PANELS */}
-        <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
-              <h4 className="font-bold text-sm text-slate-900">Low Stock Alerts</h4>
-              <Button variant="ghost" className="h-6 text-xs text-indigo-600 font-bold p-0">View All</Button>
-            </div>
-            <div className="space-y-4">
-              {LOW_STOCK_ALERTS.map((alert, idx) => (
-                <div key={idx} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-rose-50 border border-rose-100 rounded-lg flex items-center justify-center text-rose-500">
-                      <AlertTriangle className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-slate-900">{alert.name}</p>
-                      <p className="text-[10px] font-bold text-slate-400">Current Stock: <span className="text-rose-600 font-extrabold">{alert.stock}</span></p>
-                    </div>
-                  </div>
-                  <Badge className="bg-rose-50 text-rose-700 hover:bg-rose-50 text-[10px] font-bold border border-rose-100 rounded-md">
-                    Low Stock
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* 🏢 BOTTOM THREE-WAY HUB LINK BAR */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <Card className="rounded-2xl border border-slate-100 bg-white shadow-sm">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-indigo-600">
-                <Package className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Products</span>
-                <span className="text-xl font-black text-slate-900 tracking-tight">1,245</span>
-              </div>
-            </div>
-            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600 rounded-xl">
-              <ArrowUpRight className="w-4 h-4" />
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl border border-slate-100 bg-white shadow-sm">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-emerald-600">
-                <Users className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Customers</span>
-                <span className="text-xl font-black text-slate-900 tracking-tight">832</span>
-              </div>
-            </div>
-            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600 rounded-xl">
-              <ArrowUpRight className="w-4 h-4" />
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl border border-slate-100 bg-white shadow-sm">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-sky-600">
-                <Store className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Outlets</span>
-                <span className="text-xl font-black text-slate-900 tracking-tight">5</span>
-              </div>
-            </div>
-            <Button variant="ghost" size="icon" className="text-slate-400 hover:text-indigo-600 rounded-xl" onClick={() => router.push(`/${slug}/shops`)}>
-              <ArrowUpRight className="w-4 h-4" />
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
     </div>
   );
 }

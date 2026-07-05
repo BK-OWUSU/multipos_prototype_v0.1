@@ -1,0 +1,174 @@
+"use client";
+
+import React from "react";
+import { 
+  ShoppingCart, 
+  RefreshCw, 
+  ArrowLeftRight, 
+  PackageCheck, 
+  FileEdit,
+  ArrowUpRight
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+// Types matching your Prisma schema fields + included data
+export interface StockLogWithRelations {
+  id: string;
+  change: number;
+  reason: string | null;
+  createdAt: string; // Pre-formatted or parsed string timestamp
+  variant: {
+    name: string;
+    sku: string;
+  };
+  employee: {
+    name: string;
+  };
+}
+
+interface RecentInventoryActivityProps {
+  logs: StockLogWithRelations[];
+  onViewAllClick?: () => void;
+}
+
+export default function RecentInventoryActivity({ logs, onViewAllClick }: RecentInventoryActivityProps) {
+  
+  // Helper to dynamically match reasons/types to design assets
+  const getActivityMeta = (change: number, reason: string | null) => {
+    const normalizedReason = reason?.toUpperCase() || "";
+    
+    if (normalizedReason.includes("SALE")) {
+      return {
+        label: "Sold",
+        icon: ShoppingCart,
+        iconClass: "bg-emerald-50 text-emerald-600 border-emerald-100/60"
+      };
+    }
+    if (normalizedReason.includes("TRANSFER")) {
+      return {
+        label: "Transferred",
+        icon: ArrowLeftRight,
+        iconClass: "bg-blue-50 text-blue-600 border-blue-100/60"
+      };
+    }
+    if (normalizedReason.includes("RECEIVE") || change > 0 && normalizedReason.includes("RESTOCK")) {
+      return {
+        label: "Received",
+        icon: PackageCheck,
+        iconClass: "bg-indigo-50 text-indigo-600 border-indigo-100/60"
+      };
+    }
+    // Default manual or fall-back inventory stock adjustments
+    return {
+      label: change > 0 ? "Added" : "Adjusted",
+      icon: FileEdit,
+      iconClass: change > 0 
+        ? "bg-amber-50 text-amber-600 border-amber-100/60" 
+        : "bg-rose-50 text-rose-600 border-rose-100/60"
+    };
+  };
+
+  return (
+    <Card className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden flex flex-col h-full">
+      <CardHeader className="p-5 pb-3 flex flex-row items-center justify-between border-b border-slate-50 shrink-0">
+        <CardTitle className="text-sm font-black text-blue-950 tracking-tight">
+          Recent Inventory Activity
+        </CardTitle>
+        <Button 
+          variant="ghost" 
+          onClick={onViewAllClick}
+          className="text-[11px] font-black text-indigo-600 hover:bg-indigo-50/60 h-7 px-2.5 rounded-lg transition-colors"
+        >
+          View all
+        </Button>
+      </CardHeader>
+
+      <CardContent className="p-5 flex-1 overflow-y-auto space-y-4">
+        {logs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center text-slate-400">
+            <RefreshCw className="w-8 h-8 stroke-[1.5] animate-spin text-slate-300 mb-2" />
+            <p className="text-xs font-medium">No recent adjustments logged today</p>
+          </div>
+        ) : (
+          logs.map((log) => {
+            const meta = getActivityMeta(log.change, log.reason);
+            const IconComponent = meta.icon;
+            const isNegative = log.change < 0;
+
+            return (
+              <div key={log.id} className="flex items-start gap-3 text-xs font-medium group transition-all">
+                {/* Colored Icon Badge Type wrapper */}
+                <div className={cn("w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 shadow-sm", meta.iconClass)}>
+                  <IconComponent className="w-4 h-4 stroke-[2.5]" />
+                </div>
+
+                {/* Main Content Details string assembler */}
+                <div className="flex-1 min-w-0 pt-0.5">
+                  <p className="text-slate-700 leading-tight">
+                    <span className="font-black text-slate-900">{meta.label} </span>
+                    <span className="font-bold text-slate-900">{Math.abs(log.change)}</span> 
+                    <span className="text-slate-400 font-normal"> × </span>
+                    <span className="font-black text-blue-950">{log.variant.name}</span>
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-semibold mt-1">
+                    by {log.employee.name}
+                  </p>
+                </div>
+
+                {/* Right Side Metadata Metric Block */}
+                <div className="text-right shrink-0 pt-0.5">
+                  <span className="text-[11px] font-bold text-slate-400 block">
+                    {log.createdAt}
+                  </span>
+                  
+                  {/* Visual validation helper confirming change count payload */}
+                  <span className={cn(
+                    "text-[10px] font-black tracking-wide mt-1 inline-block px-1.5 py-0.5 rounded-md font-mono",
+                    isNegative 
+                      ? "text-rose-600 bg-rose-50/50" 
+                      : "text-emerald-600 bg-emerald-50/50"
+                  )}>
+                    {isNegative ? "" : "+"}{log.change}
+                  </span>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </CardContent>
+
+      {/* Bottom Floating Dynamic Navigation Link anchor block */}
+      {logs.length > 0 && (
+        <div className="p-4 bg-slate-50/40 border-t border-slate-100 text-center shrink-0">
+          <Button 
+            variant="ghost" 
+            onClick={onViewAllClick}
+            className="w-full text-xs font-black text-indigo-600 hover:bg-white border border-transparent hover:border-slate-200/60 shadow-none hover:shadow-sm h-9 rounded-xl gap-1"
+          >
+            View all movements <ArrowUpRight className="w-3.5 h-3.5 stroke-[2.5]" />
+          </Button>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+
+
+/////
+
+const logs = await prisma.stockLog.findMany({
+  where: { 
+    shopId: params.shopSlug // Limits tracking context exclusively to current store storefront
+  },
+  take: 5, // Trims stack list to capture current active viewport payload
+  orderBy: { 
+    createdAt: "desc" 
+  },
+  include: {
+    variant: true,   // Provides name + custom master global SKU
+    employee: true   // Pulls name profile context (e.g. "Ama Asante")
+  }
+});

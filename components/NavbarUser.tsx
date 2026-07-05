@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown, User, LogOut, Settings } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
+import Link from "next/link";
 
 export function NavbarUser() {
   const router = useRouter();
@@ -53,12 +54,11 @@ export function NavbarUser() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => router.push(`/${user.business.slug}/profile`)}>
+        <DropdownMenuItem onClick={() => router.push("/profile")}>
           <User className="mr-2 h-4 w-4" />
-          <span>Profile</span>
+          <Link href={`/${user.business.slug}/profile`}>Profile</Link>
         </DropdownMenuItem>
-        {/* <DropdownMenuItem onClick={() => router.push(`/${user.business.slug}/settings`)}> */}
-        <DropdownMenuItem onClick={() => router.push(`/${user.business.slug}/access_controls`)}>
+        <DropdownMenuItem onClick={() => router.push(`/${user.business.slug}/settings`)}>
           <Settings className="mr-2 h-4 w-4" />
           <span>Settings</span>
         </DropdownMenuItem>

@@ -62,6 +62,7 @@
     │   ├── receive-stock
     │   ├── transfers
     │   └── adjustments
+    |   └── purchase-orders
 
     ├── customers
 

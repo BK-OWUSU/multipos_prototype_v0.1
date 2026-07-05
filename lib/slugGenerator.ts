@@ -9,9 +9,7 @@ function generateSlug(name: string): string {
     .replace(/-+/g, "-");         // remove duplicate dashes
 }
 
-
-//SLUG GENERATOR FOR BUSINESS
-export async function generateUniqueBusinessSlug(name: string): Promise<string> {
+export async function generateUniqueSlug(name: string): Promise<string> {
     const baseSlug = generateSlug(name);
     let slug = baseSlug;
     let count =1;
@@ -22,32 +20,6 @@ export async function generateUniqueBusinessSlug(name: string): Promise<string> 
         })
         if (!existing) break;
         slug =  `${baseSlug}-${count}`;;
-        count++;
-    }
-    return slug;
-}
-
-
-/**
- * Generates a unique slug for a Shop SCOPED to a specific Business.
- */
-export async function generateUniqueShopSlug(name: string, businessId: string): Promise<string> {
-    const baseSlug = generateSlug(name);
-    let slug = baseSlug;
-    let count = 1;
-
-    while (true) {
-        // Check for uniqueness using the new composite key rule
-        const existing = await prisma.shop.findUnique({
-            where: {
-                businessId_slug: {
-                    businessId: businessId,
-                    slug: slug
-                }
-            }
-        });
-        if (!existing) break;
-        slug = `${baseSlug}-${count}`;
         count++;
     }
     return slug;

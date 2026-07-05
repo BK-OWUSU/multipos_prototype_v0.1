@@ -33,11 +33,6 @@ export type OTPVerification = Prisma.OTPVerificationModel
  */
 export type Employee = Prisma.EmployeeModel
 /**
- * Model EmployeeShop
- * 
- */
-export type EmployeeShop = Prisma.EmployeeShopModel
-/**
  * Model User
  * 
  */
@@ -52,6 +47,11 @@ export type UserSessionLog = Prisma.UserSessionLogModel
  * 
  */
 export type Role = Prisma.RoleModel
+/**
+ * Model Shop
+ * 
+ */
+export type Shop = Prisma.ShopModel
 /**
  * Model TimeCard
  * 
@@ -97,16 +97,6 @@ export type VariantAttributeValue = Prisma.VariantAttributeValueModel
  * 
  */
 export type ProductVariantOption = Prisma.ProductVariantOptionModel
-/**
- * Model Shop
- * 
- */
-export type Shop = Prisma.ShopModel
-/**
- * Model ShopInventory
- * 
- */
-export type ShopInventory = Prisma.ShopInventoryModel
 /**
  * Model Discount
  * 

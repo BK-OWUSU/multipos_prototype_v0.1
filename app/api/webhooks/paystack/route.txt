@@ -1,0 +1,117 @@
+import { NextResponse } from "next/server";
+import crypto from "crypto";
+import { prisma } from "@/lib/dbHelper";
+
+export async function POST(req: Request) {
+  try {
+    const rawBody = await req.text();
+    const signature = req.headers.get("x-paystack-signature");
+
+    if (!signature) {
+      return NextResponse.json({ error: "Missing authentication header signature." }, { status: 401 });
+    }
+
+    // Verify the webhook genuinely originated from Paystack's cloud nodes
+    const computedHash = crypto
+      .createHmac("sha512", process.env.PAYSTACK_SECRET_KEY ?? "")
+      .update(rawBody)
+      .digest("hex");
+
+    if (computedHash !== signature) {
+      return NextResponse.json({ error: "Signature verification challenge failure." }, { status: 401 });
+    }
+
+    const payload = JSON.parse(rawBody);
+
+    // Filter event hooks specifically for successful customer network confirmation captures
+    if (payload.event === "charge.success") {
+      const { reference, authorization, metadata } = payload.data;
+      
+      // Paystack metadata arrives stringified or formatted based on your client SDK initialization flags
+      const parsedMetadata = typeof metadata === "string" ? JSON.parse(metadata) : metadata;
+      const { saleId, shopId, businessId, employeeId } = parsedMetadata;
+
+      const networkCarrier = authorization?.brand ?? "MOBILE_MONEY"; // MTN, Telecel, AT
+
+      await prisma.$transaction(async (tx) => {
+        // Look up corresponding record
+        const targetPayment = await tx.payment.findUnique({
+          where: { reference }
+        });
+
+        // Guard against processing duplicate events or matching an already settled row index
+        if (!targetPayment || targetPayment.status === "COMPLETED") return;
+
+        // A. Finalize specific Payment ledger slice details
+        await tx.payment.update({
+          where: { reference },
+          data: {
+            status: "COMPLETED",
+            momoNetwork: networkCarrier
+          }
+        });
+
+        // B. Advance primary Parent Sale status out of holding patterns
+        await tx.sale.update({
+          where: { id: saleId },
+          data: { status: "COMPLETED" }
+        });
+
+        // C. If your system runs delayed inventory matching, fetch and decrement stock entries here:
+        const invoiceItems = await tx.saleItem.findMany({
+          where: { saleId }
+        });
+
+        for (const item of invoiceItems) {
+          const inventoryRecord = await tx.shopInventory.update({
+            where: { shopId_productVariantId: { shopId, productVariantId: item.productVariantId } },
+            data: { stock: { decrement: item.quantity } }
+          });
+
+          await tx.stockLog.create({
+            data: {
+              productVariantId: item.productVariantId,
+              shopInventoryId: inventoryRecord.id,
+              employeeId,
+              businessId,
+              shopId,
+              change: -item.quantity,
+              reason: `POS MoMo Webhook Payment Confirmation Settle - Sale ID: ${saleId}`
+            }
+          });
+        }
+      });
+    }
+
+    return NextResponse.json({ received: true }, { status: 200 });
+
+  } catch (error) {
+    console.error("WEBHOOK_INGESTION_EXCEPTION:", error);
+    return NextResponse.json({ error: "Internal ledger synchronization failure." }, { status: 500 });
+  }
+}
+
+
+
+///
+npx cloudflared tunnel --url http://localhost:3000
+
+What to look for:
+Once the tunnel starts, look for the Forwarding or URL field in your terminal window. It will look like this:
+https://a1b2-34-56-78.ngrok-free.app or https://xxxx.trycloudflare.com
+
+🌐 Step 2: Configure Paystack to hit your Tunnel
+Log into your Paystack Dashboard.
+
+Head over to Settings ➡️ API Keys & Webhooks.
+
+Under the Webhook URL field, paste your brand new forwarding address and append your specific endpoint path:
+
+Plaintext
+https://a1b2-34-56-78.ngrok-free.app/api/webhooks/paystack
+Click Save Changes. Now, whenever a mobile operator confirms a customer payment, Paystack will push that notification straight into your terminal environment!
+
+🪝 Step 3: Implement the Local Webhook Endpoint
+Now let's write the corresponding backend endpoint. This handles incoming data payloads securely, processes signatures to prevent fake injection triggers, and executes stock drops via your transaction layer if your checkout sequence relies on delayed fulfillment tracking.
+
+Create app/api/webhooks/paystack/route.ts:

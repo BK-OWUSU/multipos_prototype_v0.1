@@ -1,0 +1,127 @@
+"use client";
+
+import { useState } from "react";
+// 1. Import your strict structural input types from your Zod schema file
+import { POSCheckoutInput } from "@/types/schema/pos";
+// 2. Import the response interface from the declaration layer we just defined
+import { PaystackResponse } from "@paystack/inline-js";
+import { toast } from "sonner";
+
+interface CheckoutButtonProps {
+  checkoutPayload: POSCheckoutInput; // 👈 Cleans up the long manual inline block
+  onSuccess: (saleId: string) => void;
+  disabled?: boolean; // 👈 Added prop to support disabling button when cart is empty
+}
+
+export default function CheckoutButton({ checkoutPayload, onSuccess, disabled }: CheckoutButtonProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const executeCheckout = async () => {
+    setIsProcessing(true);
+    try {
+const res = await fetch("/api/business/sales/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(checkoutPayload),
+      });
+
+      const responseData = await res.json();
+
+      if (!res.ok || !responseData.success) {
+        toast.error(responseData.error || "Checkout initial tracking failed.");
+        setIsProcessing(false);
+        return;
+      }
+
+      // 1. 🔍 TEMP DEBUG LOG: Press F12 in your browser to inspect this exact object structure!
+      console.log("=== POS CHECKOUT API FULL RESPONSE DATA ===");
+      console.log(responseData);
+      console.log("===========================================");
+
+      // 2. High-resiliency multi-tier fallback lookup blocks
+      const dataLayer = responseData.data || responseData.sale || responseData.order || responseData;
+      
+      const verifiedSaleId = 
+        responseData.id || 
+        responseData.saleId || 
+        dataLayer?.id || 
+        dataLayer?.saleId || 
+        dataLayer?.sale?.id;
+
+      const explicitPaymentMethod = 
+        dataLayer?.paymentMethod || 
+        responseData.paymentMethod || 
+        checkoutPayload.paymentMethod;
+
+      // Extract transaction reference fields safely
+      const transactionalReference = 
+        dataLayer?.reference || 
+        responseData.reference || 
+        dataLayer?.paystackReference ||
+        responseData.ref;
+
+      const authorizationUrl = dataLayer?.authorizationUrl || responseData.authorizationUrl;  
+
+      // 3. Gate validation
+      if (!verifiedSaleId) {
+        console.error("MAPPING_CRITICAL_FAILURE - Server Response Payload Structure:", responseData);
+        toast.error("Transaction resolved, but no valid Sale ID was found.");
+        setIsProcessing(false);
+        return;
+      }
+
+      // Action A: If purely a completed cash balance, finish instantly
+      if (explicitPaymentMethod === "CASH") {
+        onSuccess(verifiedSaleId);
+        setIsProcessing(false);
+        return;
+      }
+      
+      // Action B: Load inline popup overlay safely with strict tracking parameters
+      const PaystackPop = (await import("@paystack/inline-js")).default;
+      const popup = new PaystackPop() as any;;
+
+  
+      console.log("TRANSACTION REFERENCE: ", transactionalReference);
+      console.log("TRANSACTION REFERENCE TO RESUME: ", transactionalReference);
+
+      popup.resumeTransaction(transactionalReference, {
+        onSuccess: (response: PaystackResponse) => {
+          // When Paystack returns a successful transaction object
+          if (response.status === "success" || response.message === "Approved") {
+            onSuccess(verifiedSaleId);
+          } else {
+            toast.error("Payment verification unconfirmed.");
+          }
+          setIsProcessing(false);
+        },
+        onCancel: () => {
+          toast.info("Payment channel exited by cashier.");
+          setIsProcessing(false);
+        },
+      });
+
+    } catch (error) {
+      console.error("FRONTEND_PAYMENT_TRIGGER_ERROR:", error);
+      toast.error("Error initializing payment flow framework.");
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={executeCheckout}
+      disabled={isProcessing || disabled}
+      className="w-full bg-blue-950 hover:bg-blue-900 text-white font-bold py-4 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex items-center justify-center gap-2"
+    >
+      {isProcessing ? (
+        <>
+          <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          <span>Processing Transaction...</span>
+        </>
+      ) : (
+        <span>Complete Order & Charge</span>
+      )}
+    </button>
+  );
+}

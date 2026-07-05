@@ -14,12 +14,9 @@ import { NavbarUser } from "@/components/NavbarUser"
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, fetchUser, loading } = useAuthStore();
+  const { user, currentSlug, fetchUser, loading } = useAuthStore();
   const router = useRouter();
   const hasToasted = useRef(false);
-
-  const currentSlug = user?.business.slug || null;
-  const shopSlug = user?.shop?.shopSlug || null;
 
 
   //Rendering User Session Details
@@ -129,7 +126,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   // 5. STANDARD DASHBOARD LAYOUT
   return (
      <SidebarProvider>
-      <AppSidebar shopSlug={shopSlug} slug={currentSlug || ""} />
+      <AppSidebar />
       <SidebarInset>
         <header className="flex bg-transparent z-10  backdrop-blur-md sticky top-0  border-b p-2 h-16 shrink-0 items-center gap-2 transition-[width,height] justify-between ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
@@ -141,7 +138,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
-                 <BreadcrumbLink href={`/${slug}/${user?.shop?.shopSlug || ""}/dashboard`}>multiPOS</BreadcrumbLink>
+                 <BreadcrumbLink href={`/${slug}/dashboard`}>multiPOS</BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>

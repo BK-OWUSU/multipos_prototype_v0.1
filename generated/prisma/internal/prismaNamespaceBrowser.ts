@@ -54,10 +54,10 @@ export const ModelName = {
   Business: 'Business',
   OTPVerification: 'OTPVerification',
   Employee: 'Employee',
-  EmployeeShop: 'EmployeeShop',
   User: 'User',
   UserSessionLog: 'UserSessionLog',
   Role: 'Role',
+  Shop: 'Shop',
   TimeCard: 'TimeCard',
   Category: 'Category',
   Brand: 'Brand',
@@ -67,8 +67,6 @@ export const ModelName = {
   VariantAttribute: 'VariantAttribute',
   VariantAttributeValue: 'VariantAttributeValue',
   ProductVariantOption: 'ProductVariantOption',
-  Shop: 'Shop',
-  ShopInventory: 'ShopInventory',
   Discount: 'Discount',
   StockLog: 'StockLog',
   Customer: 'Customer',
@@ -148,7 +146,7 @@ export const EmployeeScalarFieldEnum = {
   hireDate: 'hireDate',
   businessId: 'businessId',
   roleId: 'roleId',
-  currentShopId: 'currentShopId',
+  shopId: 'shopId',
   isActive: 'isActive',
   isDeleted: 'isDeleted',
   deletedAt: 'deletedAt',
@@ -158,15 +156,6 @@ export const EmployeeScalarFieldEnum = {
 } as const
 
 export type EmployeeScalarFieldEnum = (typeof EmployeeScalarFieldEnum)[keyof typeof EmployeeScalarFieldEnum]
-
-
-export const EmployeeShopScalarFieldEnum = {
-  employeeId: 'employeeId',
-  shopId: 'shopId',
-  businessId: 'businessId'
-} as const
-
-export type EmployeeShopScalarFieldEnum = (typeof EmployeeShopScalarFieldEnum)[keyof typeof EmployeeShopScalarFieldEnum]
 
 
 export const UserScalarFieldEnum = {
@@ -218,6 +207,22 @@ export const RoleScalarFieldEnum = {
 } as const
 
 export type RoleScalarFieldEnum = (typeof RoleScalarFieldEnum)[keyof typeof RoleScalarFieldEnum]
+
+
+export const ShopScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  address: 'address',
+  phone: 'phone',
+  isActive: 'isActive',
+  businessId: 'businessId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  isDeleted: 'isDeleted',
+  deletedAt: 'deletedAt'
+} as const
+
+export type ShopScalarFieldEnum = (typeof ShopScalarFieldEnum)[keyof typeof ShopScalarFieldEnum]
 
 
 export const TimeCardScalarFieldEnum = {
@@ -294,6 +299,8 @@ export const ProductVariantScalarFieldEnum = {
   barcode: 'barcode',
   price: 'price',
   costPrice: 'costPrice',
+  stock: 'stock',
+  lowStockAlert: 'lowStockAlert',
   weight: 'weight',
   length: 'length',
   width: 'width',
@@ -353,45 +360,6 @@ export const ProductVariantOptionScalarFieldEnum = {
 export type ProductVariantOptionScalarFieldEnum = (typeof ProductVariantOptionScalarFieldEnum)[keyof typeof ProductVariantOptionScalarFieldEnum]
 
 
-export const ShopScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  slug: 'slug',
-  address: 'address',
-  phone: 'phone',
-  businessId: 'businessId',
-  city: 'city',
-  region: 'region',
-  country: 'country',
-  gpsAddress: 'gpsAddress',
-  latitude: 'latitude',
-  longitude: 'longitude',
-  openingTime: 'openingTime',
-  closingTime: 'closingTime',
-  isActive: 'isActive',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  isDeleted: 'isDeleted',
-  deletedAt: 'deletedAt'
-} as const
-
-export type ShopScalarFieldEnum = (typeof ShopScalarFieldEnum)[keyof typeof ShopScalarFieldEnum]
-
-
-export const ShopInventoryScalarFieldEnum = {
-  id: 'id',
-  businessId: 'businessId',
-  shopId: 'shopId',
-  productVariantId: 'productVariantId',
-  stock: 'stock',
-  lowStockAlert: 'lowStockAlert',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type ShopInventoryScalarFieldEnum = (typeof ShopInventoryScalarFieldEnum)[keyof typeof ShopInventoryScalarFieldEnum]
-
-
 export const DiscountScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -415,8 +383,6 @@ export const StockLogScalarFieldEnum = {
   productVariantId: 'productVariantId',
   employeeId: 'employeeId',
   businessId: 'businessId',
-  shopId: 'shopId',
-  shopInventoryId: 'shopInventoryId',
   change: 'change',
   reason: 'reason',
   createdAt: 'createdAt'
